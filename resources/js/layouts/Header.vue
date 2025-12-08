@@ -98,70 +98,86 @@
     </header>
 </template>
 
-<script setup>
+<script>
 import { Link } from '@inertiajs/vue3';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
-// import { router } from '@inertiajs/vue3'; // kalau nanti mau kirim ke backend
 
-const headerRef = ref(null);
+export default {
+    components: {
+        Link, // ✅ WAJIB supaya <Link> dikenali
+    },
 
-const userMenuOpen = ref(false);
-const branchMenuOpen = ref(false);
+    data() {
+        const branches = [
+            { id: 'all', name: 'Semua Cabang' },
+            { id: 'malang', name: 'Malang' },
+            { id: 'surabaya', name: 'Surabaya' },
+            { id: 'bandung', name: 'Bandung' },
+            { id: 'bekasi', name: 'Bekasi' },
+        ];
 
-const toggleUserMenu = () => {
-    userMenuOpen.value = !userMenuOpen.value;
-    if (userMenuOpen.value) branchMenuOpen.value = false;
-};
+        return {
+            userMenuOpen: false,
+            branchMenuOpen: false,
 
-const toggleBranchMenu = () => {
-    branchMenuOpen.value = !branchMenuOpen.value;
-    if (branchMenuOpen.value) userMenuOpen.value = false;
-};
+            branches,
+            activeBranch: branches[0], // ✅ TIDAK null
 
-const handleClickOutside = (event) => {
-    if (headerRef.value && !headerRef.value.contains(event.target)) {
-        userMenuOpen.value = false;
-        branchMenuOpen.value = false;
-    }
-};
+            dayName: '',
+            dateText: '',
+        };
+    },
 
-onMounted(() => {
-    window.addEventListener('click', handleClickOutside);
-});
+    mounted() {
+        // inisialisasi tanggal
+        const now = new Date();
+        this.dayName = new Intl.DateTimeFormat('id-ID', {
+            weekday: 'long',
+        }).format(now);
 
-onBeforeUnmount(() => {
-    window.removeEventListener('click', handleClickOutside);
-});
+        this.dateText = new Intl.DateTimeFormat('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        }).format(now);
 
-/** FORMAT HARI & TANGGAL (LOKAL ID) **/
-const now = new Date();
-const dayName = new Intl.DateTimeFormat('id-ID', {
-    weekday: 'long',
-}).format(now);
-const dateText = new Intl.DateTimeFormat('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-}).format(now);
+        this.activeBranch = this.branches[0];
 
-/** CABANG DUMMY – sesuaikan nanti dengan data real */
-const branches = ref([
-    { id: 'all', name: 'Semua Cabang' },
-    { id: 'malang', name: 'Malang' },
-    { id: 'surabaya', name: 'Surabaya' },
-    { id: 'bandung', name: 'Bandung' },
-    { id: 'bekasi', name: 'Bekasi' },
-]);
+        window.addEventListener('click', this.handleClickOutside);
+    },
 
-const activeBranch = ref(branches.value[0]);
+    beforeUnmount() {
+        window.removeEventListener('click', this.handleClickOutside);
+    },
 
-const selectBranch = (branch) => {
-    activeBranch.value = branch;
-    branchMenuOpen.value = false;
+    methods: {
+        toggleUserMenu() {
+            this.userMenuOpen = !this.userMenuOpen;
+            if (this.userMenuOpen) this.branchMenuOpen = false;
+        },
 
-    // TODO: integrasi dengan backend kalau perlu
-    // router.get(route('dashboard'), { cabang: branch.id }, { preserveState: true });
-    console.log('Cabang aktif:', branch.id);
+        toggleBranchMenu() {
+            this.branchMenuOpen = !this.branchMenuOpen;
+            if (this.branchMenuOpen) this.userMenuOpen = false;
+        },
+
+        handleClickOutside(event) {
+            if (
+                this.$refs.headerRef &&
+                !this.$refs.headerRef.contains(event.target)
+            ) {
+                this.userMenuOpen = false;
+                this.branchMenuOpen = false;
+            }
+        },
+
+        selectBranch(branch) {
+            this.activeBranch = branch;
+            this.branchMenuOpen = false;
+
+            console.log('Cabang aktif:', branch.id);
+            // nanti bisa dikirim ke backend via Inertia router
+        },
+    },
 };
 </script>
 

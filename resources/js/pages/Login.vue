@@ -36,16 +36,19 @@
                     <p class="subtitle">
                         Gunakan NIK dan kata sandi yang sudah didaftarkan.
                     </p>
-
                     <form @submit.prevent="handleLogin">
                         <div class="form-group">
                             <label>NIK</label>
                             <input
                                 v-model="nik"
-                                type="nik"
+                                type="text"
                                 placeholder="contoh: 111222333444"
+                                :class="{ 'has-error': errors.nik }"
                                 required
                             />
+                            <small v-if="errors.nik" class="error">
+                                {{ errors.nik[0] }}
+                            </small>
                         </div>
 
                         <div class="form-group">
@@ -56,6 +59,7 @@
                                     :type="showPassword ? 'text' : 'password'"
                                     placeholder="Masukkan kata sandi"
                                     minlength="6"
+                                    :class="{ 'has-error': errors.password }"
                                     required
                                 />
                                 <button
@@ -66,6 +70,9 @@
                                     {{ showPassword ? '🙈' : '👁️' }}
                                 </button>
                             </div>
+                            <small v-if="errors.password" class="error">
+                                {{ errors.password[0] }}
+                            </small>
                             <div class="helper-row">
                                 <small>* minimal 6 karakter</small>
                                 <a class="forgot" href="#">Lupa Kata Sandi?</a>
@@ -86,21 +93,44 @@
     </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
+<script>
+import axios from 'axios';
 
-const showPassword = ref(false);
-const nik = ref('');
-const password = ref('');
+export default {
+    data() {
+        return {
+            nik: '',
+            password: '',
+            processing: false,
+            errors: {},
+            showPassword: false,
+        };
+    },
 
-const handleLogin = () => {
-    // implementasi login di sini
-    console.log('NIK:', nik.value);
-    console.log('Password:', password.value);
-};
+    methods: {
+        async handleLogin() {
+            this.processing = true;
+            this.errors = {};
 
-const loginWithSSO = () => {
-    console.log('Login SSO clicked');
+            try {
+                const response = await axios.post('/login', {
+                    nik: this.nik,
+                    password: this.password,
+                });
+
+                this.$inertia.visit('/dashboard');
+            } catch (error) {
+                if (error.response && error.response.status === 422) {
+                    this.errors = error.response.data.errors || {};
+                } else {
+                    console.error('Error login:', error);
+                }
+            } finally {
+                this.processing = false;
+                this.form.password = '';
+            }
+        },
+    },
 };
 </script>
 
@@ -152,6 +182,31 @@ const loginWithSSO = () => {
     background: #a7f3d0; /* hijau lembut */
     bottom: -60px;
     left: -60px;
+}
+/* error text */
+.form-group .error {
+    margin-top: 6px;
+    color: #d93025; /* merah standar error */
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* input dengan error */
+.form-group input.has-error {
+    border-color: #d93025;
+    background-color: #fff5f5;
+}
+
+/* focus state tetap jelas */
+.form-group input.has-error:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(217, 48, 37, 0.2);
+}
+
+/* spacing agar tidak saling nabrak */
+.form-group {
+    display: flex;
+    flex-direction: column;
 }
 
 .auth-container {
