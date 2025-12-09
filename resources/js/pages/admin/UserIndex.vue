@@ -276,8 +276,22 @@
                     <Button variant="secondary" @click="closeImportModal">
                         Batal
                     </Button>
-                    <Button variant="primary" @click="submitImport">
-                        Upload &amp; Proses
+                    <Button
+                        variant="primary"
+                        :disabled="importProcessing"
+                        @click="submitImport"
+                        class="d-flex align-items-center justify-content-center gap-2"
+                    >
+                        <template v-if="importProcessing">
+                            <span
+                                class="spinner-border spinner-border-sm"
+                                role="status"
+                                aria-hidden="true"
+                            ></span>
+                            <span>Memproses...</span>
+                        </template>
+
+                        <template v-else> Upload &amp; Proses </template>
                     </Button>
                 </div>
             </Modal>
@@ -290,6 +304,7 @@ import Button from '@/components/Button.vue';
 import Modal from '@/components/Modal.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import axios from 'axios';
+import { triggerAlert } from '../../Utils/alert';
 
 export default {
     components: { Button, Modal, AppLayout },
@@ -364,7 +379,11 @@ export default {
             showImportModal: false,
             selectedFile: null,
 
+            importId: null,
+            importResult: null,
+            pollingTimer: null,
             loadingImport: false,
+            importProcessing: false,
         };
     },
 
@@ -455,28 +474,61 @@ export default {
         },
         async submitImport() {
             if (!this.selectedFile) {
-                alert('Silakan pilih file terlebih dahulu.');
+                triggerAlert('warning', 'Silakan pilih file terlebih dahulu.');
                 return;
             }
 
             this.loadingImport = true;
+            this.importProcessing = true;
             const formData = new FormData();
             formData.append('file', this.selectedFile);
 
             try {
-                await axios.post('/employee/import', formData, {
+                const res = await axios.post('/employee/import', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' },
                 });
 
-                alert('Import berhasil diproses.');
-                // closeImportModal();
+                // ✅ ambil import_id dari backend
+                this.importId = res.data.import_id;
+                triggerAlert(
+                    'info',
+                    'Import sedang diproses. Mohon tunggu sampai selesai.',
+                );
+                // ✅ mulai polling hasil
+                this.startPollingImportResult();
             } catch (err) {
                 console.error(err);
-                alert('Gagal import data.');
-            } finally {
+                triggerAlert('error', 'Gagal memulai proses import.');
                 this.loadingImport = false;
             }
-            // this.closeImportModal();
+        },
+
+        startPollingImportResult() {
+            this.pollingTimer = setInterval(async () => {
+                const res = await axios.get(
+                    `/employee/import-log/${this.importId}`,
+                );
+                const log = res.data;
+
+                this.importResult = log;
+
+                // ⛔ JANGAN triggerAlert di sini selama processing
+
+                if (log.status === 'completed') {
+                    clearInterval(this.pollingTimer);
+                    this.pollingTimer = null;
+
+                    this.importProcessing = false;
+                    this.loadingImport = false;
+
+                    triggerAlert(
+                        'success',
+                        `Import selesai. Sukses: ${log.success}, Gagal: ${log.failed}`,
+                    );
+
+                    this.closeImportModal();
+                }
+            }, 2000);
         },
 
         openDetail(u) {

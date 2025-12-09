@@ -8,18 +8,7 @@ class Employee extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'nrp',
-        'user_id',
-        'nama',
-        'jenis_kelamin',
-        'tempat_lahir',
-        'tanggal_lahir',
-        'agama',
-        'status_active',
-        'status_perkawinan',
-        'kewarganegaraan',
-    ];
+    protected $guarded = [];
 
     protected $casts = [
         'tanggal_lahir' => 'date',

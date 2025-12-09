@@ -8,14 +8,7 @@ class EmployeeFamily extends Model
 {
     protected $table = 'employee_family_members';
 
-    protected $fillable = [
-        'employee_id',
-        'nama',
-        'hubungan',
-        'jenis_kelamin',
-        'tanggal_lahir',
-        'pekerjaan',
-    ];
+    protected $guarded = [];
 
     protected $casts = [
         'tanggal_lahir' => 'date',

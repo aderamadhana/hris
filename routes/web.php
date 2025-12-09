@@ -21,6 +21,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/profil/{id}', [EmployeeController::class, 'profil']);
         Route::get('/get-data/{id}', [EmployeeController::class, 'getData']);
         Route::post('/import', [EmployeeController::class, 'import']);
+        Route::get('/import-log/{id}', [EmployeeController::class, 'showImportLog']);
     });
 
     Route::prefix('admin')->group(function () {

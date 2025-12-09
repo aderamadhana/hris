@@ -9,6 +9,7 @@ use App\Models\EmployeeAddress;
 use App\Models\EmployeeHealth;
 use App\Models\EmployeeEducation;
 use App\Models\EmployeeEmployment;
+use App\Models\ImportLog;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -18,13 +19,28 @@ use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterImport;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
-class EmployeesImport implements ToCollection, WithHeadingRow, WithChunkReading, ShouldQueue
+class EmployeesImport implements 
+    ToCollection,
+    WithHeadingRow,
+    WithChunkReading,
+    ShouldQueue,
+    WithEvents
 {
+    private $logId;
+
+    public function __construct($logId)
+    {
+        $this->logId = $logId;
+    }
+
     public function collection(Collection $rows)
     {
-        Log::info($rows);
+        // Log::info($rows);
+        ImportLog::where('id', $this->logId)->increment('total');
         foreach ($rows as $row) {
             $nrp            = trim($row['nrp'] ?? '');
             $userIdExcel   = trim($row['user_id'] ?? '');
@@ -250,31 +266,81 @@ class EmployeesImport implements ToCollection, WithHeadingRow, WithChunkReading,
                 );
 
                 /** EMPLOYMENT HISTORY */
-                EmployeeEmployment::create([
-                    'employee_id'   => $employee->id,
-                    'perusahaan'    => $perusahaan,
-                    'jabatan'       => $jobRole,
-                    'penempatan'    => $penempatan,
-                    'tgl_awal_kerja'=> $tglAwalKerja,
-                    'tgl_akhir_kerja'=> $tglAkhirKerja,
-                    'jenis_kontrak' => $jenisKontrak,
-                    'status'        => $statusKerja,
-                ]);
+                EmployeeEmployment::updateOrCreate(
+                    [
+                        'employee_id'    => $employee->id,
+                        'perusahaan'     => $perusahaan,
+                        'tgl_awal_kerja' => $tglAwalKerja,
+                    ],
+                    [
+                        'jabatan'        => $jobRole,
+                        'penempatan'     => $penempatan,
+                        'tgl_akhir_kerja'=> $tglAkhirKerja,
+                        'jenis_kontrak'  => $jenisKontrak,
+                        'status'         => $statusKerja,
+                    ]
+                );
+
 
                 DB::commit();
+
+                ImportLog::where('id', $this->logId)->increment('success');
             } catch (\Throwable $e) {
                 DB::rollBack();
 
-                Log::error('Import employee gagal', [
-                    'nrp'    => $nrp,
-                    'email'  => $email,
-                    'error'  => $e->getMessage(),
+                ImportLog::where('id', $this->logId)->increment('failed');
+
+                ImportLog::where('id', $this->logId)->update([
+                    'errors' => DB::raw(
+                        "JSON_ARRAY_APPEND(
+                            COALESCE(errors, JSON_ARRAY()),
+                            '$',
+                            JSON_OBJECT(
+                                'nrp', '".addslashes($nrp)."',
+                                'email', '".addslashes($email)."',
+                                'error', '".addslashes($e->getMessage())."'
+                            )
+                        )"
+                    )
                 ]);
 
-                // lanjut ke baris berikutnya
+                Log::error('Import employee gagal', [
+                    'nrp'   => $nrp,
+                    'email' => $email,
+                    'error' => $e->getMessage(),
+                ]);
+
                 continue;
             }
+
+            // ✅ cek selesai SETIAP ROW
+            // $log = ImportLog::find($this->logId);
+
+            // if (($log->success + $log->failed) >= $log->expected_total) {
+            //     ImportLog::where('id', $this->logId)->update([
+            //         'status' => 'completed'
+            //     ]);
+            // }
         }
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterImport::class => function (AfterImport $event) {
+                ImportLog::where('id', $this->logId)->update([
+                    'status' => 'completed',
+                ]);
+            },
+        ];
+    }
+
+    public function rules(): array
+    {
+        return [
+            'email' => 'required|email',
+            'nama'  => 'required',
+        ];
     }
 
     public function chunkSize(): int
@@ -319,16 +385,21 @@ class EmployeesImport implements ToCollection, WithHeadingRow, WithChunkReading,
 
     private function parseYear($value)
     {
-        if (!$value) {
+        if ($value === null || $value === '') {
             return null;
         }
 
-        // kalau numeric tapi besar (excel serial)
-        if (is_numeric($value) && $value > 2155) {
-            return null;
+        // Excel serial date
+        if (is_numeric($value) && $value > 1000) {
+            try {
+                $date = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value);
+                return (int) $date->format('Y');
+            } catch (\Exception $e) {
+                return null;
+            }
         }
 
-        // ambil 4 digit tahun
+        // Ambil 4 digit tahun dari string
         if (preg_match('/(19|20)\d{2}/', (string) $value, $match)) {
             $year = (int) $match[0];
             return ($year >= 1901 && $year <= 2155) ? $year : null;

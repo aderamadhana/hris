@@ -8,15 +8,7 @@ class EmployeeEducation extends Model
 {
     protected $table = 'employee_educations';
 
-    protected $fillable = [
-        'employee_id',
-        'pendidikan',
-        'jurusan',
-        'jenjang',
-        'institusi',
-        'sekolah',
-        'tahun_lulus',
-    ];
+    protected $guarded = [];
 
     public function employee()
     {

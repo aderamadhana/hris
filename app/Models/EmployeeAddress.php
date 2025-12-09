@@ -5,20 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmployeeAddress extends Model
 {
-    protected $fillable = [
-        'employee_id',
-        'alamat_lengkap',
-        'jalan',
-        'desa',
-        'rt',
-        'rw',
-        'kelurahan',
-        'kecamatan',
-        'kota',
-        'kode_pos',
-        'provinsi',
-        'alamat_domisili',
-    ];
+    protected $guarded = [];
 
     public function employee()
     {

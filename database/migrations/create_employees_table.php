@@ -67,7 +67,7 @@ return new class extends Migration
             $table->integer('tinggi_badan')->nullable(); // cm
             $table->integer('berat_badan')->nullable(); // kg
 
-            $table->string('gol_darah', 5)->nullable();
+            $table->string('gol_darah', 10)->nullable();
             $table->boolean('buta_warna')->nullable();
 
             $table->string('hasil_drug_test')->nullable();
@@ -115,6 +115,18 @@ return new class extends Migration
             $table->string('jenis_kontrak')->nullable(); // PKWT, PKWTT
             $table->string('status')->nullable(); // aktif, resign, dll
 
+            $table->timestamps();
+        });
+
+        Schema::create('import_logs', function (Blueprint $table) {
+            $table->id();
+            $table->string('file');
+            $table->integer('total')->default(0);
+            $table->integer('success')->default(0);
+            $table->integer('failed')->default(0);
+            $table->integer('expected_total')->default(0);
+            $table->string('status')->default('processing'); // processing, completed, failed
+            $table->json('errors')->nullable();
             $table->timestamps();
         });
 

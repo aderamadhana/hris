@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
+use App\Models\ImportLog;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Excel as ExcelExcel;
 use App\Jobs\ImportEmployeesJob;
 use Illuminate\Http\Request;
 use App\Imports\EmployeesImport;
@@ -136,17 +138,45 @@ class EmployeeController extends Controller
             'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
         ]);
 
-        // simpan file ke storage
+        // simpan ke storage
         $path = $request->file('file')->store('imports');
 
-        // kirim ke queue
-        Excel::queueImport(
-            new EmployeesImport,
-            $path
-        );
-        // ImportEmployeesJob::dispatch(storage_path('app/'.$path));
+        // BUAT LOG dasar, tanpa expected_total
+        $log = ImportLog::create([
+            'file'   => $path,
+            'status' => 'processing',
+            'total'  => 0,
+            'success'=> 0,
+            'failed' => 0,
+            'errors' => null,
+        ]);
 
-        return back()->with('status', 'File diterima. Proses import sedang berjalan di background.');
+        // QUEUE IMPORT – path + disk saja (aman di-serialize)
+        Excel::queueImport(
+            new EmployeesImport($log->id),
+            $path,
+            'local',
+            ExcelExcel::XLSX
+        );
+
+        return response()->json([
+            'import_id' => $log->id,
+        ]);
+    }
+
+    public function showImportLog($id)
+    {
+        $log = ImportLog::findOrFail($id);
+
+        return response()->json([
+            'id' => $log->id,
+            'status' => $log->status,
+            'total' => $log->total,
+            'success' => $log->success,
+            'failed' => $log->failed,
+            'errors' => json_decode($log->errors, true),
+            'updated_at' => $log->updated_at,
+        ]);
     }
 
 }

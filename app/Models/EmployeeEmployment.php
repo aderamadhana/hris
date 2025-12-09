@@ -7,21 +7,7 @@ class EmployeeEmployment extends Model
 {
     protected $table = 'employee_employment_histories';
 
-    protected $fillable = [
-        'employee_id',
-        'perusahaan',
-        'penempatan',
-        'job_role',
-        'cost_center',
-        'no_kontrak',
-        'jenis_kontrak',
-        'status_karyawan',
-        'tgl_daftar',
-        'tgl_mulai_kerja',
-        'tgl_selesai_kerja',
-        'pola_kerja',
-        'hari_kerja',
-    ];
+    protected $guarded = [];
 
     protected $casts = [
         'tgl_daftar' => 'date',
