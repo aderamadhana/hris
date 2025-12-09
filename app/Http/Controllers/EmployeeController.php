@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Excel as ExcelExcel;
 use App\Jobs\ImportEmployeesJob;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use App\Imports\EmployeesImport;
 
 class EmployeeController extends Controller
@@ -77,7 +78,7 @@ class EmployeeController extends Controller
                 'perkawinan'=> $employee->status_perkawinan ?? null,
                 'kewarganegaraan' => $employee->kewarganegaraan ?? null,
                 'tempat_lahir' => $employee->tempat_lahir ?? null,
-                'tanggal_lahir'=> $employee->tanggal_lahir ?? null,
+                'tanggal_lahir'=> Carbon::parse($employee->tanggal_lahir)->format('d M Y') ?? null,
                 'usia' => optional($employee->tanggal_lahir)
                             ? now()->diffInYears($employee->tanggal_lahir)
                             : null,

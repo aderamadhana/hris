@@ -2,30 +2,12 @@
 import { computed, useAttrs } from 'vue';
 
 const props = defineProps({
-    variant: {
-        type: String,
-        default: 'primary', // primary | secondary | ghost | danger
-    },
-    size: {
-        type: String,
-        default: 'md', // sm | md | lg
-    },
-    block: {
-        type: Boolean,
-        default: false,
-    },
-    loading: {
-        type: Boolean,
-        default: false,
-    },
-    disabled: {
-        type: Boolean,
-        default: false,
-    },
-    iconOnly: {
-        type: Boolean,
-        default: false,
-    },
+    variant: { type: String, default: 'primary' }, // primary | secondary | ghost | danger | success | warning | outline
+    size: { type: String, default: 'md' }, // sm | md | lg
+    block: Boolean,
+    loading: Boolean,
+    disabled: Boolean,
+    iconOnly: Boolean,
 });
 
 const attrs = useAttrs();
@@ -39,13 +21,13 @@ const classes = computed(() => [
         'btn--icon-only': props.iconOnly,
         'is-loading': props.loading,
     },
-    attrs.class, // biar class tambahan tetap kepakai
+    attrs.class,
 ]);
 </script>
 
 <template>
     <button :class="classes" :disabled="disabled || loading" v-bind="attrs">
-        <span v-if="loading" class="btn-spinner" aria-hidden="true"></span>
+        <span v-if="loading" class="btn-spinner" aria-hidden="true" />
         <span class="btn-label">
             <slot />
         </span>
@@ -53,105 +35,52 @@ const classes = computed(() => [
 </template>
 
 <style scoped>
+/* ================= BASE ================= */
 .btn-base {
+    --bg: #fff;
+    --bg-hover: #f3f4f6;
+    --bg-active: #e5e7eb;
+    --border: transparent;
+    --color: #111827;
+    --shadow: none;
+    --shadow-hover: none;
+    --shadow-active: none;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    padding-inline: 16px;
     border-radius: 999px;
-    border: 1px solid transparent;
-    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--color);
     font-weight: 500;
     letter-spacing: 0.01em;
     white-space: nowrap;
+    cursor: pointer;
+    box-shadow: var(--shadow);
     transition:
         background-color 0.14s ease,
         border-color 0.14s ease,
         color 0.14s ease,
         box-shadow 0.14s ease,
         transform 0.08s ease;
-    outline: none;
 }
 
-/* SIZE */
-.btn--sm {
-    padding: 6px 12px;
-    font-size: 13px;
-}
-
-.btn--md {
-    padding: 9px 16px;
-    font-size: 14px;
-}
-
-.btn--lg {
-    padding: 11px 20px;
-    font-size: 15px;
-}
-
-/* BLOCK */
-.btn--block {
-    width: 100%;
-}
-
-/* ICON ONLY */
-.btn--icon-only {
-    padding-inline: 10px;
-}
-
-/* VARIANT: PRIMARY */
-.btn--primary {
-    background: linear-gradient(135deg, #0ea5e9, #3b82f6);
-    border-color: transparent;
-    color: #ffffff;
-    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
-}
-
-.btn--primary:hover:not(:disabled) {
+/* ================= STATE ================= */
+.btn-base:hover:not(:disabled) {
+    background: var(--bg-hover);
+    box-shadow: var(--shadow-hover);
     transform: translateY(-1px);
-    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.45);
 }
 
-.btn--primary:active:not(:disabled) {
+.btn-base:active:not(:disabled) {
+    background: var(--bg-active);
+    box-shadow: var(--shadow-active);
     transform: translateY(0);
-    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
 }
 
-/* VARIANT: SECONDARY */
-.btn--secondary {
-    background: #e5e7eb;
-    border-color: #d1d5db;
-    color: #111827;
-    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
-}
-
-.btn--secondary:hover:not(:disabled) {
-    background: #d1d5db;
-}
-
-/* VARIANT: GHOST */
-.btn--ghost {
-    background: #ffffff;
-    border-color: #e5e7eb;
-    color: #111827;
-}
-
-.btn--ghost:hover:not(:disabled) {
-    background: #f9fafb;
-}
-
-/* VARIANT: DANGER */
-.btn--danger {
-    background: #fee2e2;
-    border-color: #fecaca;
-    color: #b91c1c;
-}
-
-.btn--danger:hover:not(:disabled) {
-    background: #fecaca;
-}
-
-/* DISABLED & LOADING */
 button:disabled,
 .is-loading {
     opacity: 0.6;
@@ -160,21 +89,114 @@ button:disabled,
     transform: none;
 }
 
-/* SPINNER */
+/* ================= SIZE ================= */
+.btn--sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+.btn--md {
+    padding: 9px 16px;
+    font-size: 14px;
+}
+.btn--lg {
+    padding: 11px 20px;
+    font-size: 15px;
+}
+
+/* ================= MODIFIER ================= */
+.btn--block {
+    width: 100%;
+}
+.btn--icon-only {
+    padding-inline: 10px;
+}
+
+/* ================= VARIANTS ================= */
+
+/* PRIMARY */
+.btn--primary {
+    --bg: linear-gradient(135deg, #0ea5e9, #3b82f6);
+    --bg-hover: linear-gradient(135deg, #0284c7, #2563eb);
+    --bg-active: linear-gradient(135deg, #0369a1, #1d4ed8);
+    --color: #ffffff;
+    --shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+    --shadow-hover: 0 10px 22px rgba(37, 99, 235, 0.45);
+    --shadow-active: 0 6px 14px rgba(37, 99, 235, 0.35);
+}
+
+/* SECONDARY */
+.btn--secondary {
+    --bg: #e5e7eb;
+    --bg-hover: #d1d5db;
+    --bg-active: #cbd5f5;
+    --border: #d1d5db;
+    --color: #111827;
+    --shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+}
+
+/* GHOST */
+.btn--ghost {
+    --bg: #ffffff;
+    --bg-hover: #f9fafb;
+    --bg-active: #f3f4f6;
+    --border: #e5e7eb;
+    --color: #111827;
+}
+
+/* DANGER */
+.btn--danger {
+    --bg: #fee2e2;
+    --bg-hover: #fecaca;
+    --bg-active: #fca5a5;
+    --border: #fecaca;
+    --color: #b91c1c;
+}
+
+/* SUCCESS */
+.btn--success {
+    --bg: #dcfce7;
+    --bg-hover: #bbf7d0;
+    --bg-active: #86efac;
+    --border: #bbf7d0;
+    --color: #166534;
+}
+
+/* WARNING */
+.btn--warning {
+    --bg: #fef3c7;
+    --bg-hover: #fde68a;
+    --bg-active: #fcd34d;
+    --border: #fde68a;
+    --color: #92400e;
+}
+
+/* OUTLINE */
+.btn--outline {
+    --bg: transparent;
+    --bg-hover: #f9fafb;
+    --bg-active: #f3f4f6;
+    --border: #d1d5db;
+    --color: #111827;
+}
+
+/* ================= SPINNER ================= */
 .btn-spinner {
     width: 16px;
     height: 16px;
     border-radius: 999px;
     border: 2px solid rgba(255, 255, 255, 0.6);
-    border-top-color: rgba(255, 255, 255, 1);
+    border-top-color: #ffffff;
     animation: spin 0.7s linear infinite;
 }
 
 .btn--secondary .btn-spinner,
 .btn--ghost .btn-spinner,
-.btn--danger .btn-spinner {
-    border-color: rgba(148, 163, 184, 0.8);
-    border-top-color: rgba(55, 65, 81, 1);
+.btn--danger .btn-spinner,
+.btn--success .btn-spinner,
+.btn--warning .btn-spinner,
+.btn--outline .btn-spinner {
+    border-color: rgba(148, 163, 184, 0.7);
+    border-top-color: #374151;
 }
 
 .btn-label {

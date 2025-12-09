@@ -15,7 +15,7 @@
                 </div>
 
                 <div class="page-actions">
-                    <Button variant="primary" @click="openCreateModal">
+                    <Button variant="primary" @click="fiturBelumTersedia">
                         ➕ Tambah Karyawan
                     </Button>
 
@@ -23,10 +23,7 @@
                         ⬆️ Import Karyawan
                     </Button>
 
-                    <Button
-                        variant="outline-secondary"
-                        @click="fiturBelumTersedia"
-                    >
+                    <Button variant="success" @click="fiturBelumTersedia">
                         🧾 Import Payslip
                     </Button>
                 </div>
@@ -162,7 +159,7 @@
                                         type="button"
                                         class="action-icon view"
                                         title="Detail karyawan"
-                                        @click="fiturBelumTersedia(u)"
+                                        @click="openDetail(u.id)"
                                     >
                                         <svg viewBox="0 0 24 24">
                                             <path
@@ -184,7 +181,7 @@
                                         </svg>
                                     </button>
 
-                                    <button
+                                    <!-- <button
                                         type="button"
                                         class="action-icon edit"
                                         title="Edit karyawan"
@@ -218,7 +215,7 @@
                                                 stroke-linejoin="round"
                                             />
                                         </svg>
-                                    </button>
+                                    </button> -->
                                 </div>
                             </td>
                         </tr>
@@ -325,6 +322,7 @@
 import Button from '@/components/Button.vue';
 import Modal from '@/components/Modal.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { triggerAlert } from '../../Utils/alert';
 
@@ -511,7 +509,7 @@ export default {
         },
 
         openDetail(u) {
-            alert(`Detail: ${u.name}`);
+            router.visit(`/employee/profil/${u}`);
         },
         editUser(u) {
             alert(`Edit: ${u.name}`);

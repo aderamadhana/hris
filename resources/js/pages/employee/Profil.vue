@@ -36,7 +36,7 @@
                                     }}
                                 </span>
                                 <span class="tag tag-id">
-                                    NIK: {{ employee.nrp }}
+                                    NRP: {{ employee.nrp }}
                                 </span>
                             </div>
 
@@ -183,16 +183,12 @@
                                                     {{ job.jabatan || '-' }}
                                                 </div>
                                                 <div class="job-company">
-                                                    {{
-                                                        job.perusahaan || '-'
-                                                    }}
+                                                    {{ job.perusahaan || '-' }}
                                                     – {{ job.bagian || '-' }}
                                                 </div>
                                                 <div class="job-meta">
                                                     No. Kontrak:
-                                                    {{
-                                                        job.no_kontrak || '-'
-                                                    }}
+                                                    {{ job.no_kontrak || '-' }}
                                                     | Cost Center:
                                                     {{ job.cost_center || '-' }}
                                                 </div>
@@ -385,8 +381,9 @@ export default {
 
     methods: {
         fetchEmployee() {
+            const id = window.location.pathname.split('/').pop();
             axios
-                .get(`/employee/get-data/${this.user.id}`)
+                .get(`/employee/get-data/${id}`)
                 .then((res) => {
                     this.employee = res.data.employee || {};
                     this.alamat = res.data.alamat || {};
