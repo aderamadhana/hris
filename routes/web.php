@@ -20,6 +20,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('employee')->group(function () {
         Route::get('/profil/{id}', [EmployeeController::class, 'profil']);
         Route::get('/get-data/{id}', [EmployeeController::class, 'getData']);
+        Route::post('/import', [EmployeeController::class, 'import']);
     });
 
     Route::prefix('admin')->group(function () {

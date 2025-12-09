@@ -12,6 +12,8 @@ class EmployeeEducation extends Model
         'employee_id',
         'pendidikan',
         'jurusan',
+        'jenjang',
+        'institusi',
         'sekolah',
         'tahun_lulus',
     ];

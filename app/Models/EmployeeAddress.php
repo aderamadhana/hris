@@ -9,6 +9,7 @@ class EmployeeAddress extends Model
         'employee_id',
         'alamat_lengkap',
         'jalan',
+        'desa',
         'rt',
         'rw',
         'kelurahan',

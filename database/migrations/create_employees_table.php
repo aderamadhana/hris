@@ -93,7 +93,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('employee_id')->constrained()->cascadeOnDelete();
 
-            $table->string('jenjang'); // SMA, D3, S1
+            $table->string('jenjang')->nullable();
             $table->string('jurusan')->nullable();
             $table->string('institusi')->nullable();
             $table->year('tahun_lulus')->nullable();
@@ -106,10 +106,10 @@ return new class extends Migration
             $table->foreignId('employee_id')->constrained()->cascadeOnDelete();
 
             $table->string('perusahaan');
-            $table->string('jabatan');
+            $table->string('jabatan')->nullable();
             $table->string('penempatan')->nullable();
 
-            $table->date('tgl_awal_kerja');
+            $table->date('tgl_awal_kerja')->nullable();
             $table->date('tgl_akhir_kerja')->nullable();
 
             $table->string('jenis_kontrak')->nullable(); // PKWT, PKWTT

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('role_id');
+            $table->string('role_id')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
@@ -35,6 +35,14 @@ return new class extends Migration
             $table->text('user_agent')->nullable();
             $table->longText('payload');
             $table->integer('last_activity')->index();
+        });
+
+        Schema::create('employee_import_errors', function (Blueprint $table) {
+            $table->id();
+            $table->integer('row_number');
+            $table->string('nrp')->nullable();
+            $table->text('error');
+            $table->timestamps();
         });
     }
 

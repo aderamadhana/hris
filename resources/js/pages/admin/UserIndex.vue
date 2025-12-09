@@ -250,7 +250,11 @@
             <Modal v-if="showImportModal">
                 <div class="modal-header">
                     <h3>Import Data Karyawan</h3>
-                    <button class="modal-close" @click="closeImportModal">
+                    <button
+                        class="modal-close"
+                        :disabled="loadingImport"
+                        @click="closeImportModal"
+                    >
                         ✕
                     </button>
                 </div>
@@ -281,208 +285,218 @@
     </AppLayout>
 </template>
 
-<script setup>
+<script>
 import Button from '@/components/Button.vue';
 import Modal from '@/components/Modal.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { computed, ref, watch } from 'vue';
+import axios from 'axios';
 
-// dummy data sedikit lebih kaya
-const rawUsers = ref([
-    {
-        id: 1,
-        name: 'Budi Santoso',
-        nik: 'KKI001',
-        department: 'Operasional Klinik',
-        position: 'Perawat',
-        status: 'Aktif',
+export default {
+    components: { Button, Modal, AppLayout },
+
+    data() {
+        return {
+            rawUsers: [
+                {
+                    id: 1,
+                    name: 'Budi Santoso',
+                    nik: 'KKI001',
+                    department: 'Operasional Klinik',
+                    position: 'Perawat',
+                    status: 'Aktif',
+                },
+                {
+                    id: 2,
+                    name: 'Sari Dewi',
+                    nik: 'KKI002',
+                    department: 'HR & GA',
+                    position: 'Staff HR',
+                    status: 'Aktif',
+                },
+                {
+                    id: 3,
+                    name: 'Andi Pratama',
+                    nik: 'KKI003',
+                    department: 'Finance',
+                    position: 'Accountant',
+                    status: 'Aktif',
+                },
+                {
+                    id: 4,
+                    name: 'Rina Putri',
+                    nik: 'KKI004',
+                    department: 'Marketing',
+                    position: 'Digital Marketer',
+                    status: 'Nonaktif',
+                },
+                {
+                    id: 5,
+                    name: 'Dewi Anggraini',
+                    nik: 'KKI005',
+                    department: 'Front Office',
+                    position: 'CS Klinik',
+                    status: 'Aktif',
+                },
+                {
+                    id: 6,
+                    name: 'Joko Susilo',
+                    nik: 'KKI006',
+                    department: 'IT',
+                    position: 'Support',
+                    status: 'Nonaktif',
+                },
+                {
+                    id: 7,
+                    name: 'Tina Maharani',
+                    nik: 'KKI007',
+                    department: 'Dokter',
+                    position: 'Dokter Aesthetic',
+                    status: 'Aktif',
+                },
+            ],
+
+            search: '',
+            perPage: 5,
+            currentPage: 1,
+            sortKey: 'name',
+            sortDir: 'asc',
+
+            showImportModal: false,
+            selectedFile: null,
+
+            loadingImport: false,
+        };
     },
-    {
-        id: 2,
-        name: 'Sari Dewi',
-        nik: 'KKI002',
-        department: 'HR & GA',
-        position: 'Staff HR',
-        status: 'Aktif',
+
+    computed: {
+        totalEmployees() {
+            return this.rawUsers.length;
+        },
+        activeEmployees() {
+            return this.rawUsers.filter((u) => u.status === 'Aktif').length;
+        },
+        inactiveEmployees() {
+            return this.rawUsers.filter((u) => u.status !== 'Aktif').length;
+        },
+
+        filteredUsers() {
+            let data = this.rawUsers;
+
+            if (this.search.trim()) {
+                const q = this.search.toLowerCase();
+                data = data.filter(
+                    (u) =>
+                        u.name.toLowerCase().includes(q) ||
+                        u.nik.toLowerCase().includes(q) ||
+                        u.position.toLowerCase().includes(q),
+                );
+            }
+
+            return [...data].sort((a, b) => {
+                const aVal = a[this.sortKey].toLowerCase();
+                const bVal = b[this.sortKey].toLowerCase();
+                return this.sortDir === 'asc'
+                    ? aVal.localeCompare(bVal)
+                    : bVal.localeCompare(aVal);
+            });
+        },
+
+        totalItems() {
+            return this.filteredUsers.length;
+        },
+
+        totalPages() {
+            return this.totalItems === 0
+                ? 0
+                : Math.ceil(this.totalItems / this.perPage);
+        },
+
+        startIndex() {
+            return (this.currentPage - 1) * this.perPage;
+        },
+
+        endIndex() {
+            return Math.min(this.startIndex + this.perPage, this.totalItems);
+        },
+
+        paginatedUsers() {
+            return this.filteredUsers.slice(this.startIndex, this.endIndex);
+        },
+
+        pages() {
+            return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+        },
     },
-    {
-        id: 3,
-        name: 'Andi Pratama',
-        nik: 'KKI003',
-        department: 'Finance',
-        position: 'Accountant',
-        status: 'Aktif',
+
+    watch: {
+        search() {
+            this.currentPage = 1;
+        },
+        perPage() {
+            this.currentPage = 1;
+        },
     },
-    {
-        id: 4,
-        name: 'Rina Putri',
-        nik: 'KKI004',
-        department: 'Marketing',
-        position: 'Digital Marketer',
-        status: 'Nonaktif',
+
+    methods: {
+        goToPage(page) {
+            if (page < 1 || page > this.totalPages) return;
+            this.currentPage = page;
+        },
+
+        openImportModal() {
+            this.showImportModal = true;
+        },
+        closeImportModal() {
+            this.showImportModal = false;
+            this.selectedFile = null;
+        },
+        handleFileChange(e) {
+            this.selectedFile = e.target.files?.[0] || null;
+        },
+        async submitImport() {
+            if (!this.selectedFile) {
+                alert('Silakan pilih file terlebih dahulu.');
+                return;
+            }
+
+            this.loadingImport = true;
+            const formData = new FormData();
+            formData.append('file', this.selectedFile);
+
+            try {
+                await axios.post('/employee/import', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+
+                alert('Import berhasil diproses.');
+                // closeImportModal();
+            } catch (err) {
+                console.error(err);
+                alert('Gagal import data.');
+            } finally {
+                this.loadingImport = false;
+            }
+            // this.closeImportModal();
+        },
+
+        openDetail(u) {
+            alert(`Detail: ${u.name}`);
+        },
+        editUser(u) {
+            alert(`Edit: ${u.name}`);
+        },
+        deleteUser(u) {
+            if (confirm(`Hapus ${u.name}?`)) {
+                alert('Deleted');
+            }
+        },
+        createUser() {
+            alert('Tambah karyawan');
+        },
     },
-    {
-        id: 5,
-        name: 'Dewi Anggraini',
-        nik: 'KKI005',
-        department: 'Front Office',
-        position: 'CS Klinik',
-        status: 'Aktif',
-    },
-    {
-        id: 6,
-        name: 'Joko Susilo',
-        nik: 'KKI006',
-        department: 'IT',
-        position: 'Support',
-        status: 'Nonaktif',
-    },
-    {
-        id: 7,
-        name: 'Tina Maharani',
-        nik: 'KKI007',
-        department: 'Dokter',
-        position: 'Dokter Aesthetic',
-        status: 'Aktif',
-    },
-]);
-
-// ringkasan
-const totalEmployees = computed(() => rawUsers.value.length);
-const activeEmployees = computed(
-    () => rawUsers.value.filter((u) => u.status === 'Aktif').length,
-);
-const inactiveEmployees = computed(
-    () => rawUsers.value.filter((u) => u.status !== 'Aktif').length,
-);
-
-// DATATABLE STATE
-const search = ref('');
-const perPage = ref(5);
-const currentPage = ref(1);
-const sortKey = ref('name');
-const sortDir = ref('asc');
-
-// filter + sort
-const filteredUsers = computed(() => {
-    let data = rawUsers.value;
-
-    if (search.value.trim() !== '') {
-        const q = search.value.toLowerCase();
-        data = data.filter((u) => {
-            return (
-                u.name.toLowerCase().includes(q) ||
-                u.nik.toLowerCase().includes(q) ||
-                u.position.toLowerCase().includes(q)
-            );
-        });
-    }
-
-    if (sortKey.value) {
-        data = [...data].sort((a, b) => {
-            const valA = (a[sortKey.value] ?? '').toString().toLowerCase();
-            const valB = (b[sortKey.value] ?? '').toString().toLowerCase();
-
-            if (valA < valB) return sortDir.value === 'asc' ? -1 : 1;
-            if (valA > valB) return sortDir.value === 'asc' ? 1 : -1;
-            return 0;
-        });
-    }
-
-    return data;
-});
-
-// pagination
-const totalItems = computed(() => filteredUsers.value.length);
-const totalPages = computed(() =>
-    totalItems.value === 0 ? 0 : Math.ceil(totalItems.value / perPage.value),
-);
-
-const startIndex = computed(() => {
-    if (totalItems.value === 0) return 0;
-    return (currentPage.value - 1) * perPage.value;
-});
-
-const endIndex = computed(() => {
-    if (totalItems.value === 0) return 0;
-    const end = startIndex.value + perPage.value;
-    return end > totalItems.value ? totalItems.value : end;
-});
-
-const paginatedUsers = computed(() =>
-    filteredUsers.value.slice(startIndex.value, endIndex.value),
-);
-
-const pages = computed(() => {
-    const arr = [];
-    for (let i = 1; i <= totalPages.value; i++) arr.push(i);
-    return arr;
-});
-
-const goToPage = (page) => {
-    if (page < 1 || page > totalPages.value) return;
-    currentPage.value = page;
-};
-
-watch([search, perPage], () => {
-    currentPage.value = 1;
-});
-
-// SORT TOGGLER
-const toggleSort = (key) => {
-    if (sortKey.value === key) {
-        sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc';
-    } else {
-        sortKey.value = key;
-        sortDir.value = 'asc';
-    }
-};
-
-// MODAL IMPORT
-const showImportModal = ref(false);
-const selectedFile = ref(null);
-
-const openImportModal = () => {
-    showImportModal.value = true;
-};
-
-const closeImportModal = () => {
-    showImportModal.value = false;
-    selectedFile.value = null;
-};
-
-const handleFileChange = (e) => {
-    const files = e.target.files;
-    selectedFile.value = files && files.length ? files[0] : null;
-};
-
-const submitImport = () => {
-    if (!selectedFile.value) {
-        alert('Silakan pilih file terlebih dahulu.');
-        return;
-    }
-    alert(`Import file: ${selectedFile.value.name}`);
-    closeImportModal();
-};
-
-// AKSI BARIS
-const openDetail = (user) => {
-    alert(`Detail karyawan: ${user.name}`);
-};
-
-const editUser = (user) => {
-    alert(`Edit karyawan: ${user.name}`);
-};
-
-const deleteUser = (user) => {
-    if (!confirm(`Yakin ingin menghapus karyawan: ${user.name}?`)) return;
-    alert(`Hapus karyawan: ${user.name}`);
-};
-
-const createUser = () => {
-    alert('Form tambah karyawan');
 };
 </script>
+
 <style scoped>
 .employees-page {
     display: flex;

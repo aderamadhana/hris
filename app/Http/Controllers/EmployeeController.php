@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Jobs\ImportEmployeesJob;
+use Illuminate\Http\Request;
+use App\Imports\EmployeesImport;
 
 class EmployeeController extends Controller
 {
@@ -124,6 +128,25 @@ class EmployeeController extends Controller
                 'buta_warna' => $employee->health->buta_warna,
             ] : null,
         ]);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
+        ]);
+
+        // simpan file ke storage
+        $path = $request->file('file')->store('imports');
+
+        // kirim ke queue
+        Excel::queueImport(
+            new EmployeesImport,
+            $path
+        );
+        // ImportEmployeesJob::dispatch(storage_path('app/'.$path));
+
+        return back()->with('status', 'File diterima. Proses import sedang berjalan di background.');
     }
 
 }
