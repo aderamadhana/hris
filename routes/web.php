@@ -18,6 +18,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::prefix('employee')->group(function () {
+        Route::get('/', [EmployeeController::class, 'index']);
         Route::get('/profil/{id}', [EmployeeController::class, 'profil']);
         Route::get('/get-data/{id}', [EmployeeController::class, 'getData']);
         Route::post('/import', [EmployeeController::class, 'import']);

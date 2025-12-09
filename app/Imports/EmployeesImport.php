@@ -9,6 +9,7 @@ use App\Models\EmployeeAddress;
 use App\Models\EmployeeHealth;
 use App\Models\EmployeeEducation;
 use App\Models\EmployeeEmployment;
+use App\Models\EmployeeFamily;
 use App\Models\ImportLog;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -39,7 +40,7 @@ class EmployeesImport implements
 
     public function collection(Collection $rows)
     {
-        // Log::info($rows);
+        Log::info($rows);
         ImportLog::where('id', $this->logId)->increment('total');
         foreach ($rows as $row) {
             $nrp            = trim($row['nrp'] ?? '');
@@ -50,10 +51,6 @@ class EmployeesImport implements
             $tempatLahir   = trim($row['tempat_lahir'] ?? '');
             $tanggalLahir = $this->parseDate($row['tanggal_lahir'] ?? null);
 
-            // Log::info('Parsed tanggal lahir', [
-            //     'raw' => $row['tanggal_lahir'],
-            //     'parsed' => optional($tanggalLahir)->format('Y-m-d'),
-            // ]);
 
             $jalan          = trim($row['jl_gg_dsn_dkh_perum'] ?? '');
             $rt             = trim($row['rt'] ?? '');
@@ -115,8 +112,9 @@ class EmployeesImport implements
             $ktpPasangan    = trim($row['no_ktp_suami_istri'] ?? '');
             $jkPasangan     = trim($row['jk_istri'] ?? '');
 
-            $tempatLahirPasangan = trim($row['tempat_lahir_suami_istri'] ?? '');
-            $tglLahirPasangan    = $this->parseDate($row['tanggal_lahir_suami_istri'] ?? null);
+            $tempatLahirPasangan = trim($row['tempat_lahir_suamiistri'] ?? '');
+            $tglLahirPasangan    = $this->parseDate($row['tanggal_lahir_suamiistri'] ?? null);
+            Log::info(optional($tglLahirPasangan)->format('Y-m-d'));
 
             $tglNikah       = $this->parseDate($row['tgl_perkawinan'] ?? null);
 
@@ -161,6 +159,7 @@ class EmployeesImport implements
 
             $isActiveRaw    = trim($row['1_0'] ?? '');
             $keterangan     = trim($row['keterangan'] ?? '');
+            $keterangan_status     = trim($row['keterangan_status'] ?? '');
 
             if ($nrp === '' || $nama === '') {
                  Log::warning('Row dilewati: NRP/Nama kosong', $row->toArray());
@@ -181,7 +180,7 @@ class EmployeesImport implements
                             ['email' => $emailKey],
                             [
                                 'name'     => $nama,
-                                'password' => Hash::make('123456'),
+                                'password' => Hash::make($noKtp),
                                 'role_id'  => 2,
                             ]
                         );
@@ -253,17 +252,15 @@ class EmployeesImport implements
                 );
 
                 /** EDUCATION */
-                EmployeeEducation::updateOrCreate(
-                    [
-                        'employee_id' => $employee->id,
-                        'jenjang'     => $pendidikan
-                    ],
-                    [
-                        'jurusan'     => $jurusan,
-                        'institusi'   => $sekolahAsal,
-                        'tahun_lulus' => $tahunLulus,
-                    ]
-                );
+                if (!empty($pendidikan)) {
+                    EmployeeEducation::where('employee_id', $employee->id)
+                        ->where('jenjang', $pendidikan)
+                        ->update([
+                            'jurusan'     => $jurusan,
+                            'institusi'   => $sekolahAsal,
+                            'tahun_lulus' => $tahunLulus,
+                        ]);
+                }
 
                 /** EMPLOYMENT HISTORY */
                 EmployeeEmployment::updateOrCreate(
@@ -278,8 +275,63 @@ class EmployeesImport implements
                         'tgl_akhir_kerja'=> $tglAkhirKerja,
                         'jenis_kontrak'  => $jenisKontrak,
                         'status'         => $statusKerja,
+                        'no_kontrak'         => $noKontrak,
+                        'cost_center'         => $costCenter,
+                        'tgl_daftar'         => $tglDaftar,
+                        'keterangan_status'  => $keterangan_status,
+                        'job_roll'         => $jobRole,
+                        'masa_kerja'         => $masaKerja,
+                        'pola_kerja'         => $polaKerja,
+                        'jenis_kerja'         => $jenisKerja,
+                        'hari_kerja'         => $hariKerja,
                     ]
                 );
+
+                if (!empty($namaAyah)) {
+                    EmployeeFamily::updateOrCreate(
+                        [
+                            'employee_id' => $employee->id,
+                            'hubungan'    => 'ayah',
+                        ],
+                        [
+                            'nama'          => $namaAyah,
+                            'tanggal_lahir' => optional($tglLahirPasangan)->format('Y-m-d'),
+                            'tempat_lahir' => $tempatLahirPasangan
+                        ]
+                    );
+                }
+
+
+                if (!empty($namaIbu)) {
+                    EmployeeFamily::updateOrCreate(
+                        [
+                            'employee_id' => $employee->id,
+                            'hubungan'    => 'ibu',
+                        ],
+                        [
+                            'nama'          => $namaIbu,
+                            'tanggal_lahir' => optional($tglLahirPasangan)->format('Y-m-d'),
+                        ]
+                    );
+                }
+
+                $anakList = [$anak1, $anak2, $anak3];
+
+                foreach ($anakList as $anak) {
+                    if (!empty($anak)) {
+                        EmployeeFamily::updateOrCreate(
+                            [
+                                'employee_id' => $employee->id,
+                                'hubungan'    => 'anak',
+                                'nama'        => $anak,
+                            ],
+                            [
+                                'nama' => $anak,
+                                'hubungan'    => 'anak',
+                            ]
+                        );
+                    }
+                }
 
 
                 DB::commit();

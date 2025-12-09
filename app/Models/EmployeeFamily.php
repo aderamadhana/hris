@@ -10,9 +10,9 @@ class EmployeeFamily extends Model
 
     protected $guarded = [];
 
-    protected $casts = [
-        'tanggal_lahir' => 'date',
-    ];
+    // protected $casts = [
+    //     'tanggal_lahir' => 'date',
+    // ];
 
     public function employee()
     {

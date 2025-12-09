@@ -17,21 +17,27 @@ class EmployeeController extends Controller
     /**
      * Tampilkan halaman employee
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Proteksi ekstra (walau idealnya pakai middleware)
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
+        $employees = Employee::with('personal','employments')
+            ->orderBy('nama')
+            ->get()
+            ->map(function ($e) {
+                return [
+                    'id' => $e->id,
+                    'name' => $e->nama,
+                    'nik' => $e->personal->no_ktp ?? '-',
+                    'tanggal_lahir' => $e->tanggal_lahir
+                    ? \Carbon\Carbon::parse($e->tanggal_lahir)->format('d/m/Y')
+                    : '-',
+                    'perusahaan' =>$e->employments->perusahaan ?? '-',
+                    'department' => $e->employments->jabatan ?? '-',
+                    'position' =>$e->employments->penempatan ?? '-',
+                    'status' => $e->status_active ? 'Aktif' : 'Nonaktif',
+                ];
+            });
 
-        $user = Auth::user()->load([
-            'employee',
-            'role',
-        ]);
-        
-        return Inertia::render('Dashboard', [
-            'user' => $user,
-        ]);
+        return response()->json($employees);
     }
 
     public function profil($id)
@@ -51,7 +57,7 @@ class EmployeeController extends Controller
             'personal',
             'address',
             'educations',
-            'employments',
+            'employmentss',
             'families',
             'health'
         ])->findOrFail($id);
@@ -63,16 +69,17 @@ class EmployeeController extends Controller
             'employee' => [
                 'id'        => $employee->id,
                 'nrp'       => $employee->nrp,
-                'status'    => $employee->status_actiive,
+                'nik'       => $employee->personal->nik,
+                'status'    => $employee->status_active,
                 'nama'      => $employee->nama ?? null,
                 'jk'        => $employee->jenis_kelamin ?? null,
                 'agama'     => $employee->agama ?? null,
-                'perkawinan'=> $employee->personal->status_perkawinan ?? null,
-                'kewarganegaraan' => $employee->personal->kewarganegaraan ?? null,
+                'perkawinan'=> $employee->status_perkawinan ?? null,
+                'kewarganegaraan' => $employee->kewarganegaraan ?? null,
                 'tempat_lahir' => $employee->tempat_lahir ?? null,
-                'tanggal_lahir'=> $employee->personal->tanggal_lahir ?? null,
-                'usia' => optional($employee->personal->tanggal_lahir)
-                            ? now()->diffInYears($employee->personal->tanggal_lahir)
+                'tanggal_lahir'=> $employee->tanggal_lahir ?? null,
+                'usia' => optional($employee->tanggal_lahir)
+                            ? now()->diffInYears($employee->tanggal_lahir)
                             : null,
             ],
 
@@ -101,13 +108,21 @@ class EmployeeController extends Controller
             /* ===============================
              | TAB: RIWAYAT KERJA
              ===============================*/
-            'pekerjaan' => $employee->employments->map(fn ($j) => [
-                'jabatan'    => $j->job_role,
-                'perusahaan' => $j->perusahaan,
-                'bagian'     => $j->penempatan,
-                'mulai'      => $j->tgl_awal_kerja,
-                'selesai'    => $j->tgl_akhir_kerja,
-                'jenis_kontrak' => $j->jenis_kontrak,
+            'pekerjaan' => $employee->employmentss->map(fn ($j) => [
+                'perusahaan'      => $j->perusahaan,
+                'jabatan'         => $j->jabatan ?? $j->job_roll, // pilih salah satu sesuai model
+                'bagian'          => $j->penempatan,
+                'mulai'           => $j->tgl_awal_kerja,
+                'selesai'         => $j->tgl_akhir_kerja,
+                'jenis_kontrak'   => $j->jenis_kontrak,
+                'no_kontrak'      => $j->no_kontrak,
+                'cost_center'     => $j->cost_center,
+                'tgl_daftar'      => $j->tgl_daftar,
+                'status_kontrak'  => $j->keterangan_status ?? $j->status,
+                'masa_kerja'      => $j->masa_kerja,
+                'pola_kerja'      => $j->pola_kerja,
+                'jenis_kerja'     => $j->jenis_kerja,
+                'hari_kerja'      => $j->hari_kerja,
             ]),
 
             /* ===============================
@@ -124,10 +139,12 @@ class EmployeeController extends Controller
              | DATA KESEHATAN (opsional tab)
              ===============================*/
             'kesehatan' => $employee->health ? [
-                'tinggi' => $employee->health->tb,
-                'berat'  => $employee->health->bb,
-                'tensi'  => $employee->health->tensi,
-                'buta_warna' => $employee->health->buta_warna,
+                'tinggi_badan'      => $employee->health->tinggi_badan,
+                'berat_badan'       => $employee->health->berat_badan,
+                'gol_darah'         => $employee->health->gol_darah,
+                'buta_warna'        => $employee->health->buta_warna,
+                'riwayat_penyakit'  => $employee->health->riwayat_penyakit,
+                'tanggal_mcu'       => $employee->health->tanggal_mcu,
             ] : null,
         ]);
     }

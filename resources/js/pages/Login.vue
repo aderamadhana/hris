@@ -42,7 +42,7 @@
                             <input
                                 v-model="nik"
                                 type="text"
-                                placeholder="contoh: 111222333444"
+                                placeholder="Masukkan username"
                                 :class="{ 'has-error': errors.nik }"
                                 required
                             />
@@ -57,8 +57,8 @@
                                 <input
                                     v-model="password"
                                     :type="showPassword ? 'text' : 'password'"
-                                    placeholder="Masukkan kata sandi"
-                                    minlength="6"
+                                    placeholder="Masukkan password"
+                                    minlength="5"
                                     :class="{ 'has-error': errors.password }"
                                     required
                                 />
@@ -74,7 +74,7 @@
                                 {{ errors.password[0] }}
                             </small>
                             <div class="helper-row">
-                                <small>* minimal 6 karakter</small>
+                                <small>* minimal 5 karakter</small>
                                 <a class="forgot" href="#">Lupa Kata Sandi?</a>
                             </div>
                         </div>

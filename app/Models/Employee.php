@@ -39,6 +39,11 @@ class Employee extends Model
 
     public function employments()
     {
+        return $this->hasOne(EmployeeEmployment::class);
+    }
+
+    public function employmentss()
+    {
         return $this->hasMany(EmployeeEmployment::class);
     }
 

@@ -21,9 +21,22 @@
                             <h3 class="tab-title">Profil Karyawan</h3>
 
                             <div class="tag-row">
-                                <span class="tag tag-status">Aktif</span>
+                                <span
+                                    class="tag tag-status"
+                                    :class="
+                                        employee.status == 1
+                                            ? 'is-active'
+                                            : 'is-inactive'
+                                    "
+                                >
+                                    {{
+                                        employee.status == 1
+                                            ? 'Aktif'
+                                            : 'Tidak Aktif'
+                                    }}
+                                </span>
                                 <span class="tag tag-id">
-                                    NRP: {{ employee.nrp }}
+                                    NIK: {{ employee.nrp }}
                                 </span>
                             </div>
 
@@ -170,8 +183,18 @@
                                                     {{ job.jabatan || '-' }}
                                                 </div>
                                                 <div class="job-company">
-                                                    {{ job.perusahaan }} –
-                                                    {{ job.bagian }}
+                                                    {{
+                                                        job.perusahaan || '-'
+                                                    }}
+                                                    – {{ job.bagian || '-' }}
+                                                </div>
+                                                <div class="job-meta">
+                                                    No. Kontrak:
+                                                    {{
+                                                        job.no_kontrak || '-'
+                                                    }}
+                                                    | Cost Center:
+                                                    {{ job.cost_center || '-' }}
                                                 </div>
                                             </div>
                                             <div class="job-period">
@@ -181,7 +204,26 @@
                                         </div>
 
                                         <div class="job-type">
-                                            {{ job.jenis_kontrak }}
+                                            {{ job.jenis_kontrak || '-' }}
+                                        </div>
+
+                                        <div class="job-extra">
+                                            <div>
+                                                Jenis Kerja:
+                                                {{ job.jenis_kerja || '-' }}
+                                            </div>
+                                            <div>
+                                                Pola Kerja:
+                                                {{ job.pola_kerja || '-' }}
+                                            </div>
+                                            <div>
+                                                Hari Kerja:
+                                                {{ job.hari_kerja || '-' }}
+                                            </div>
+                                            <div>
+                                                Status:
+                                                {{ job.status_kontrak || '-' }}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -247,21 +289,23 @@
                                 <div class="field">
                                     <div class="field-label">Tinggi Badan</div>
                                     <div class="field-value">
-                                        {{ kesehatan.tinggi || '-' }}
+                                        {{ kesehatan.tinggi_badan || '-' }} cm
                                     </div>
                                 </div>
 
                                 <div class="field">
                                     <div class="field-label">Berat Badan</div>
                                     <div class="field-value">
-                                        {{ kesehatan.berat || '-' }}
+                                        {{ kesehatan.berat_badan || '-' }} kg
                                     </div>
                                 </div>
 
                                 <div class="field">
-                                    <div class="field-label">Tensi</div>
+                                    <div class="field-label">
+                                        Golongan Darah
+                                    </div>
                                     <div class="field-value">
-                                        {{ kesehatan.tensi || '-' }}
+                                        {{ kesehatan.gol_darah || '-' }}
                                     </div>
                                 </div>
 
@@ -273,6 +317,15 @@
                                                 ? 'Ya'
                                                 : 'Tidak'
                                         }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        Riwayat Penyakit
+                                    </div>
+                                    <div class="field-value">
+                                        {{ kesehatan.riwayat_penyakit || '-' }}
                                     </div>
                                 </div>
                             </div>
@@ -349,3 +402,14 @@ export default {
     },
 };
 </script>
+<style scoped>
+.tag-status.is-active {
+    background-color: #e6f7ec;
+    color: #1e7e34;
+}
+
+.tag-status.is-inactive {
+    background-color: #fdecea;
+    color: #c0392b;
+}
+</style>

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Employee;
+use App\Models\EmployeePersonal;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -68,16 +69,29 @@ class DatabaseSeeder extends Seeder
             ],
         ]);
 
-        DB::table('employee_personals')->insert([
-            'employee_id'         => 2,
-            'no_ktp'              => '3573012509900002',
-            'no_kk'               => '3573011205123456',
-            'npwp'                => '12.345.678.9-123.000',
-            'agama'               => 'Islam',
-            'status_perkawinan'   => 'Menikah',
-            'kewarganegaraan'     => 'Indonesia',
-            'created_at'          => $now,
-            'updated_at'          => $now,
+        EmployeePersonal::insert([
+            [
+                'employee_id' => 1,
+                'no_ktp' => 'admin',
+                'no_kk' => '3507120101010001',
+                'npwp' => '12.345.678.9-012.000',
+                'agama' => 'Islam',
+                'status_perkawinan' => 'Menikah',
+                'kewarganegaraan' => 'Indonesia',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'employee_id' => 2,
+                'no_ktp' => 'employee',
+                'no_kk' => '3507050202020002',
+                'npwp' => '98.765.432.1-987.000',
+                'agama' => 'Islam',
+                'status_perkawinan' => 'Menikah',
+                'kewarganegaraan' => 'Indonesia',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
         ]);
 
         /** ADDRESS */

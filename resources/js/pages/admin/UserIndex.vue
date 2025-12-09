@@ -15,11 +15,19 @@
                 </div>
 
                 <div class="page-actions">
-                    <Button variant="secondary" @click="openImportModal">
-                        📥 Import
+                    <Button variant="primary" @click="openCreateModal">
+                        ➕ Tambah Karyawan
                     </Button>
-                    <Button variant="primary" @click="createUser">
-                        ➕ Tambah
+
+                    <Button variant="secondary" @click="openImportModal">
+                        ⬆️ Import Karyawan
+                    </Button>
+
+                    <Button
+                        variant="outline-secondary"
+                        @click="fiturBelumTersedia"
+                    >
+                        🧾 Import Payslip
                     </Button>
                 </div>
             </div>
@@ -28,7 +36,7 @@
             <div class="overview-row">
                 <div class="overview-card primary">
                     <div class="overview-label">Total Karyawan</div>
-                    <div class="overview-value">{{ totalEmployees }}</div>
+                    <div class="overview-value">{{ totalItems }}</div>
                     <div class="overview-meta">
                         Termasuk karyawan aktif dan nonaktif.
                     </div>
@@ -85,6 +93,8 @@
                             <th class="col-no">#</th>
                             <th class="col-name">Nama</th>
                             <th class="col-nik">NIK</th>
+                            <th class="col-tanggal-lahir">Tanggal Lahir</th>
+                            <th class="col-perusahaan">Perusahaan</th>
                             <th class="col-position">Jabatan</th>
                             <th class="col-status">Status</th>
                             <th class="col-action">Aksi</th>
@@ -92,8 +102,8 @@
                     </thead>
                     <tbody>
                         <tr v-if="paginatedUsers.length === 0">
-                            <td colspan="6" class="empty-row">
-                                Tidak ada data yang cocok.
+                            <td colspan="8" class="empty-row">
+                                Tidak ada data ...
                             </td>
                         </tr>
 
@@ -120,6 +130,18 @@
                                 <span class="cell-nik">{{ u.nik }}</span>
                             </td>
 
+                            <td>
+                                <span class="cell-tanggal-lahir">{{
+                                    u.tanggal_lahir
+                                }}</span>
+                            </td>
+
+                            <td>
+                                <span class="cell-perusahaan">{{
+                                    u.perusahaan
+                                }}</span>
+                            </td>
+
                             <td>{{ u.position }}</td>
 
                             <td>
@@ -140,7 +162,7 @@
                                         type="button"
                                         class="action-icon view"
                                         title="Detail karyawan"
-                                        @click="openDetail(u)"
+                                        @click="fiturBelumTersedia(u)"
                                     >
                                         <svg viewBox="0 0 24 24">
                                             <path
@@ -166,7 +188,7 @@
                                         type="button"
                                         class="action-icon edit"
                                         title="Edit karyawan"
-                                        @click="editUser(u)"
+                                        @click="fiturBelumTersedia(u)"
                                     >
                                         <svg viewBox="0 0 24 24">
                                             <path
@@ -184,7 +206,7 @@
                                         type="button"
                                         class="action-icon delete"
                                         title="Hapus karyawan"
-                                        @click="deleteUser(u)"
+                                        @click="fiturBelumTersedia(u)"
                                     >
                                         <svg viewBox="0 0 24 24">
                                             <path
@@ -284,7 +306,7 @@
                     >
                         <template v-if="importProcessing">
                             <span
-                                class="spinner-border spinner-border-sm"
+                                class="spinner-border spinner-border-sm spinner"
                                 role="status"
                                 aria-hidden="true"
                             ></span>
@@ -311,68 +333,12 @@ export default {
 
     data() {
         return {
-            rawUsers: [
-                {
-                    id: 1,
-                    name: 'Budi Santoso',
-                    nik: 'KKI001',
-                    department: 'Operasional Klinik',
-                    position: 'Perawat',
-                    status: 'Aktif',
-                },
-                {
-                    id: 2,
-                    name: 'Sari Dewi',
-                    nik: 'KKI002',
-                    department: 'HR & GA',
-                    position: 'Staff HR',
-                    status: 'Aktif',
-                },
-                {
-                    id: 3,
-                    name: 'Andi Pratama',
-                    nik: 'KKI003',
-                    department: 'Finance',
-                    position: 'Accountant',
-                    status: 'Aktif',
-                },
-                {
-                    id: 4,
-                    name: 'Rina Putri',
-                    nik: 'KKI004',
-                    department: 'Marketing',
-                    position: 'Digital Marketer',
-                    status: 'Nonaktif',
-                },
-                {
-                    id: 5,
-                    name: 'Dewi Anggraini',
-                    nik: 'KKI005',
-                    department: 'Front Office',
-                    position: 'CS Klinik',
-                    status: 'Aktif',
-                },
-                {
-                    id: 6,
-                    name: 'Joko Susilo',
-                    nik: 'KKI006',
-                    department: 'IT',
-                    position: 'Support',
-                    status: 'Nonaktif',
-                },
-                {
-                    id: 7,
-                    name: 'Tina Maharani',
-                    nik: 'KKI007',
-                    department: 'Dokter',
-                    position: 'Dokter Aesthetic',
-                    status: 'Aktif',
-                },
-            ],
+            users: [], // ← DATA DARI /employee
+            currentPage: 1,
+            perPage: 10,
+            loadingUsers: false,
 
             search: '',
-            perPage: 5,
-            currentPage: 1,
             sortKey: 'name',
             sortDir: 'asc',
 
@@ -388,35 +354,29 @@ export default {
     },
 
     computed: {
-        totalEmployees() {
-            return this.rawUsers.length;
-        },
         activeEmployees() {
-            return this.rawUsers.filter((u) => u.status === 'Aktif').length;
+            return this.filteredUsers.filter((u) => u.status === 'Aktif')
+                .length;
         },
+
         inactiveEmployees() {
-            return this.rawUsers.filter((u) => u.status !== 'Aktif').length;
+            return this.filteredUsers.filter((u) => u.status !== 'Aktif')
+                .length;
         },
 
         filteredUsers() {
-            let data = this.rawUsers;
-
-            if (this.search.trim()) {
-                const q = this.search.toLowerCase();
-                data = data.filter(
-                    (u) =>
-                        u.name.toLowerCase().includes(q) ||
-                        u.nik.toLowerCase().includes(q) ||
-                        u.position.toLowerCase().includes(q),
-                );
+            if (!this.search) {
+                return this.users;
             }
 
-            return [...data].sort((a, b) => {
-                const aVal = a[this.sortKey].toLowerCase();
-                const bVal = b[this.sortKey].toLowerCase();
-                return this.sortDir === 'asc'
-                    ? aVal.localeCompare(bVal)
-                    : bVal.localeCompare(aVal);
+            const keyword = this.search.toLowerCase();
+
+            return this.users.filter((u) => {
+                return (
+                    u.name.toLowerCase().includes(keyword) ||
+                    u.nik.toLowerCase().includes(keyword) ||
+                    u.position.toLowerCase().includes(keyword)
+                );
             });
         },
 
@@ -425,9 +385,7 @@ export default {
         },
 
         totalPages() {
-            return this.totalItems === 0
-                ? 0
-                : Math.ceil(this.totalItems / this.perPage);
+            return Math.ceil(this.totalItems / this.perPage);
         },
 
         startIndex() {
@@ -455,8 +413,27 @@ export default {
             this.currentPage = 1;
         },
     },
-
+    mounted() {
+        this.fetchEmployees();
+    },
     methods: {
+        fiturBelumTersedia() {
+            triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
+        },
+        async fetchEmployees() {
+            this.loadingUsers = true;
+
+            try {
+                const res = await axios.get('/employee');
+                this.users = res.data;
+                this.currentPage = 1; // reset pagination
+            } catch (err) {
+                console.error(err);
+                triggerAlert('error', 'Gagal memuat data karyawan.');
+            } finally {
+                this.loadingUsers = false;
+            }
+        },
         goToPage(page) {
             if (page < 1 || page > this.totalPages) return;
             this.currentPage = page;
@@ -500,6 +477,7 @@ export default {
                 console.error(err);
                 triggerAlert('error', 'Gagal memulai proses import.');
                 this.loadingImport = false;
+                this.fetchEmployees();
             }
         },
 
@@ -527,6 +505,7 @@ export default {
                     );
 
                     this.closeImportModal();
+                    this.fetchEmployees();
                 }
             }, 2000);
         },

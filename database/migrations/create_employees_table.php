@@ -84,6 +84,7 @@ return new class extends Migration
 
             $table->string('nama');
             $table->string('hubungan'); // Ayah, Ibu, Istri, Anak
+            $table->string('tempat_lahir')->nullable();
             $table->date('tanggal_lahir')->nullable();
 
             $table->timestamps();
@@ -108,6 +109,15 @@ return new class extends Migration
             $table->string('perusahaan');
             $table->string('jabatan')->nullable();
             $table->string('penempatan')->nullable();
+            $table->string('no_kontrak')->nullable();
+            $table->string('cost_center')->nullable();
+            $table->string('tgl_daftar')->nullable();
+            $table->string('keterangan_status')->nullable();
+            $table->string('job_roll')->nullable();
+            $table->string('masa_kerja')->nullable();
+            $table->string('pola_kerja')->nullable();
+            $table->string('jenis_kerja')->nullable();
+            $table->string('hari_kerja')->nullable();
 
             $table->date('tgl_awal_kerja')->nullable();
             $table->date('tgl_akhir_kerja')->nullable();

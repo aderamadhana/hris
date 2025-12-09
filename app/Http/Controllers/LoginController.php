@@ -27,11 +27,15 @@ class LoginController extends Controller
         // Validasi input
         $request->validate([
             'nik' => ['required', 'string'],
-            'password' => ['required', 'string', 'min:6'],
+            'password' => ['required', 'string', 'min:5'],
         ]);
 
         // Cari employee berdasarkan NRP (NIK)
-        $employee = Employee::where('nrp', $request->nik)->where('status_active', 1)->first();
+        $employee = Employee::where('status_active', 1)
+        ->whereHas('personal', function ($q) use ($request) {
+            $q->where('no_ktp', $request->nik);
+        })
+        ->first();
 
         // Validasi: Employee tidak ditemukan
         if (!$employee) {
