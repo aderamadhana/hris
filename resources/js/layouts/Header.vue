@@ -9,7 +9,7 @@
             </div>
 
             <!-- SWITCH CABANG -->
-            <div class="branch-wrapper">
+            <div class="branch-wrapper" v-if="user.role_id == 1">
                 <button
                     type="button"
                     class="branch-pill"
@@ -61,8 +61,8 @@
                 </div>
 
                 <div class="user-info">
-                    <div class="user-name">Admin</div>
-                    <div class="user-role">System Administrator</div>
+                    <div class="user-name">{{ user?.name }}</div>
+                    <div class="user-role">{{ user?.role?.role_name }}</div>
                 </div>
 
                 <!-- PEMBATAS -->
@@ -79,7 +79,11 @@
 
             <!-- DROPDOWN USER -->
             <div v-if="userMenuOpen" class="user-menu">
-                <Link href="/profile" class="user-menu-item">
+                <Link
+                    href="#"
+                    class="user-menu-item"
+                    @click.prevent="goProfile"
+                >
                     <span>👤</span>
                     <span>Profile</span>
                 </Link>
@@ -99,14 +103,15 @@
 </template>
 
 <script>
-import { Link } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 
 export default {
     components: {
-        Link, // ✅ WAJIB supaya <Link> dikenali
+        Link,
     },
 
     data() {
+        const page = usePage();
         const branches = [
             { id: 'all', name: 'Semua Cabang' },
             { id: 'malang', name: 'Malang' },
@@ -116,6 +121,7 @@ export default {
         ];
 
         return {
+            user: page.props.auth.user,
             userMenuOpen: false,
             branchMenuOpen: false,
 
@@ -176,6 +182,10 @@ export default {
 
             console.log('Cabang aktif:', branch.id);
             // nanti bisa dikirim ke backend via Inertia router
+        },
+
+        goProfile() {
+            router.visit(`/employee/profil/${this.user.id}`);
         },
     },
 };

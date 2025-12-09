@@ -16,6 +16,7 @@ class Employee extends Model
         'tempat_lahir',
         'tanggal_lahir',
         'agama',
+        'status_active',
         'status_perkawinan',
         'kewarganegaraan',
     ];
@@ -30,5 +31,35 @@ class Employee extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function personal()
+    {
+        return $this->hasOne(EmployeePersonal::class);
+    }
+
+    public function address()
+    {
+        return $this->hasOne(EmployeeAddress::class);
+    }
+
+    public function educations()
+    {
+        return $this->hasMany(EmployeeEducation::class);
+    }
+
+    public function employments()
+    {
+        return $this->hasMany(EmployeeEmployment::class);
+    }
+
+    public function families()
+    {
+        return $this->hasMany(EmployeeFamily::class);
+    }
+
+    public function health()
+    {
+        return $this->hasOne(EmployeeHealth::class);
     }
 }

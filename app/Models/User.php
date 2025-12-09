@@ -39,6 +39,11 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class, 'user_id', 'id');
     }
 
+    public function role()
+    {
+        return $this->hasOne(Role::class, 'id', 'role_id');
+    }
+
     /**
      * Get NIK dari employee
      */

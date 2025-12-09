@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmployeeController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
@@ -13,11 +15,12 @@ Route::middleware('guest')->group(function () {
 // Authenticated routes (untuk user yang sudah login)
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
-    
-    // Contoh route yang dilindungi
-    Route::get('/dashboard', function () {
-        return inertia('Dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::prefix('employee')->group(function () {
+        Route::get('/profil/{id}', [EmployeeController::class, 'profil']);
+        Route::get('/get-data/{id}', [EmployeeController::class, 'getData']);
+    });
 
     Route::prefix('admin')->group(function () {
         Route::get('/users', function () {

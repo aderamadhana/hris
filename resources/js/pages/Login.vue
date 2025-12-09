@@ -79,8 +79,16 @@
                             </div>
                         </div>
 
-                        <button class="btn-login" type="submit">
-                            Masuk sekarang
+                        <button
+                            class="btn-login"
+                            type="submit"
+                            :disabled="processing"
+                        >
+                            <span v-if="!processing">Masuk sekarang</span>
+                            <span v-else class="btn-loading">
+                                <span class="spinner"></span>
+                                Memproses...
+                            </span>
                         </button>
                     </form>
 
@@ -127,7 +135,7 @@ export default {
                 }
             } finally {
                 this.processing = false;
-                this.form.password = '';
+                this.password = '';
             }
         },
     },
@@ -565,6 +573,33 @@ small {
     .login-card {
         max-width: 100%;
         padding: 22px 18px 18px;
+    }
+}
+
+.btn-login:disabled {
+    opacity: 0.85;
+    cursor: not-allowed;
+}
+
+.btn-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* spinner kecil, halus, tidak norak */
+.spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
     }
 }
 </style>

@@ -10,7 +10,7 @@ const page = usePage();
             <span class="brand-text">HRIS</span>
         </div>
 
-        <nav class="sidebar-nav">
+        <nav class="sidebar-nav" v-if="user.role_id == 1">
             <Link
                 href="/dashboard"
                 class="sidebar-item"
@@ -27,6 +27,16 @@ const page = usePage();
             >
                 <span class="icon">👥</span>
                 <span class="label">Users</span>
+            </Link>
+        </nav>
+        <nav class="sidebar-nav" v-if="user.role_id == 2">
+            <Link
+                href="/dashboard"
+                class="sidebar-item"
+                :class="{ active: page.url === '/dashboard' }"
+            >
+                <span class="icon">🏠</span>
+                <span class="label">Dashboard</span>
             </Link>
 
             <Link
@@ -49,3 +59,13 @@ const page = usePage();
         </nav>
     </aside>
 </template>
+<script>
+export default {
+    data() {
+        const page = usePage();
+        return {
+            user: page.props.auth.user,
+        };
+    },
+};
+</script>

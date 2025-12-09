@@ -10,7 +10,7 @@
 body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, sans-serif;
-  font-size: 15px; /* base lebih besar */
+  font-size: 16px; /* base lebih besar */
   line-height: 1.6;
   background: radial-gradient(circle at top left, #E0F2FE 0%, #F9FAFB 55%, #F3F4F6 100%);
   color: #1F2933;
@@ -550,14 +550,14 @@ body {
 
 .page-title {
   margin: 0;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
   color: #111827;
 }
 
 .page-subtitle {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: 16px;
   color: #6b7280;
 }
 
@@ -601,6 +601,22 @@ body {
   .card,
   .card.large {
     grid-column: span 12;
+  }
+
+  body {
+    font-size: 15.5px;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .tab-title {
+    font-size: 17px;
+  }
+
+  .field-value {
+    font-size: 15px;
   }
 }
 
@@ -675,7 +691,7 @@ body {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 15px;
+    font-size: 16px;
 }
 
 .table thead {
@@ -697,7 +713,7 @@ body {
     padding: 12px 18px;
     border-bottom: 1px solid #edf0f3;
     color: #111827;
-    font-size: 15px;
+    font-size: 16px;
 }
 
 /* zebra + hover */
@@ -944,7 +960,7 @@ body {
     border-radius: 999px;
     padding: 10px 18px;
     border: none;
-    font-size: 15px;
+    font-size: 16px;
 }
 
 .btn-secondary {
@@ -953,7 +969,7 @@ body {
     border-radius: 999px;
     padding: 10px 18px;
     border: none;
-    font-size: 15px;
+    font-size: 16px;
 }
 
 .btn-ghost {
@@ -962,7 +978,7 @@ body {
     border-radius: 999px;
     padding: 8px 14px;
     border: 1px solid #e5e7eb;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .btn-danger {
@@ -971,7 +987,7 @@ body {
     border-radius: 999px;
     padding: 8px 14px;
     border: 1px solid #fecaca;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 /* MODAL CONTENT (di dalam <Modal>) */
@@ -995,7 +1011,7 @@ body {
 
 .modal-header h3 {
     margin: 0;
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 600;
     color: #111827;
 }
@@ -1011,7 +1027,7 @@ body {
 
 .modal-text {
     margin: 8px 0 14px;
-    font-size: 15px;
+    font-size: 16px;
     color: #4b5563;
 }
 
@@ -1035,4 +1051,346 @@ body {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+}
+
+
+/* PROFIL */
+
+.detail-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.detail-card {
+    padding: 18px 18px 16px;
+}
+
+/* wrapper konten tiap tab */
+.tab-section {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.tab-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* chip kecil di data karyawan */
+.tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag {
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+}
+.tag-status {
+    background: #ecfdf3;
+    border-color: #bbf7d0;
+    color: #15803d;
+}
+.tag-tenure {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+/* grid field */
+.detail-grid {
+    display: grid;
+    gap: 10px 16px;
+}
+
+.detail-grid.two-col {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.detail-grid.secondary {
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px dashed #e5e7eb;
+}
+
+/* field */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.field-label {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.field-value {
+    font-size: 16px;
+    color: #111827;
+}
+
+/* pendidikan */
+.education-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.edu-item {
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #eff6ff 0%, #ffffff 60%);
+    border: 1px solid #dbeafe;
+}
+
+.edu-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.edu-degree {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.edu-school {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.edu-year {
+    font-size: 14px;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.edu-extra {
+    margin-top: 4px;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.education-note {
+    font-size: 12px;
+    color: #6b7280;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: #f9fafb;
+    border: 1px dashed #e5e7eb;
+}
+
+/* timeline riwayat kerja */
+.timeline {
+    position: relative;
+    margin-top: 4px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e5e7eb;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 30px;
+    padding-bottom: 12px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: #3b82f6;
+    border: 2px solid #eff6ff;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+.timeline-body {
+    border-radius: 12px;
+    padding: 8px 10px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+}
+
+.timeline-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.job-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.job-company {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.job-period {
+    font-size: 13px;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.job-desc {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.job-desc li + li {
+    margin-top: 2px;
+}
+
+/* keluarga */
+.family-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.family-item {
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+}
+
+.family-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.family-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.family-relation {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.family-meta {
+    font-size: 12px;
+    color: #2563eb;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #dbeafe;
+}
+
+.family-detail {
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.family-note {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #6b7280;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: #fefce8;
+    border: 1px dashed #facc15;
+}
+
+/* responsif */
+@media (max-width: 800px) {
+    .detail-grid.two-col {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .edu-header,
+    .timeline-header,
+    .family-main {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+.loading-item {
+    flex: 1;
+    min-height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-item-card {
+    background: #ffffff;
+    padding: 28px 32px;
+    border-radius: 18px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    max-width: 320px;
+    width: 100%;
+}
+
+.spinner-item {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #0ea5e9;
+    animation: spin 0.9s linear infinite;
+}
+
+.loading-item-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+    text-align: center;
+}
+
+.loading-item-subtext {
+    font-size: 14px;
+    color: #6b7280;
+    text-align: center;
+}
+
+/* animasi */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
