@@ -34,7 +34,29 @@ return new class extends Migration
 
             $table->string('no_ktp', 25)->unique();
             $table->string('no_kk', 25)->nullable();
-            $table->string('npwp', 30)->nullable();
+            $table->string('no_wa', 100)->nullable();
+            $table->string('bpjs_tk', 100)->nullable();
+            $table->string('x', 100)->nullable();
+            $table->string('bpjs_kes', 100)->nullable();
+            $table->string('x_ks', 100)->nullable();
+            $table->string('nama_faskes', 100)->nullable();
+            $table->string('email', 100)->nullable();
+            $table->string('no_skck', 100)->nullable();
+            $table->date('masa_berlaku_skck')->nullable();
+            $table->string('jenis_lisensi', 100)->nullable();
+            $table->string('no_lisensi', 100)->nullable();
+            $table->string('masa_berlaku_lisensi', 100)->nullable();
+            $table->string('no_rekening', 100)->nullable();
+            $table->string('no_cif', 100)->nullable();
+            $table->string('bank', 100)->nullable();
+            $table->string('npwp', 100)->nullable();
+            $table->string('ptkp', 100)->nullable();
+            $table->string('shoe_size')->nullable();
+            $table->string('uniform_size')->nullable();
+            $table->string('gp')->nullable();
+            $table->string('via')->nullable();
+            $table->string('reg_digantikan')->nullable();
+            $table->string('nama_digantikan')->nullable();
 
             $table->string('agama', 50)->nullable();
             $table->string('status_perkawinan', 50)->nullable();
@@ -74,6 +96,17 @@ return new class extends Migration
             $table->date('tanggal_drug_test')->nullable();
 
             $table->text('riwayat_penyakit')->nullable();
+            $table->string('darah')->nullable();
+            $table->string('urine')->nullable();
+            $table->string('f_hati')->nullable();
+            $table->string('gula_darah')->nullable();
+            $table->string('ginjal')->nullable();
+            $table->string('thorax')->nullable();
+            $table->string('tensi')->nullable();
+            $table->string('nadi')->nullable();
+            $table->string('od')->nullable();
+            $table->string('os')->nullable();
+
 
             $table->timestamps();
         });
@@ -86,6 +119,9 @@ return new class extends Migration
             $table->string('hubungan'); // Ayah, Ibu, Istri, Anak
             $table->string('tempat_lahir')->nullable();
             $table->date('tanggal_lahir')->nullable();
+            $table->string('pendidikan')->nullable();
+            $table->string('pekerjaan')->nullable();
+            $table->string('tgl_perkawinan')->nullable();
 
             $table->timestamps();
         });
@@ -98,6 +134,7 @@ return new class extends Migration
             $table->string('jurusan')->nullable();
             $table->string('institusi')->nullable();
             $table->year('tahun_lulus')->nullable();
+            $table->string('sekolah_asal')->nullable();
 
             $table->timestamps();
         });
@@ -144,6 +181,15 @@ return new class extends Migration
 
     public function down(): void
     {
+        Schema::dropIfExists('import_logs');
+        Schema::dropIfExists('employee_employment_histories');
+        Schema::dropIfExists('employee_educations');
+        Schema::dropIfExists('employee_family_members');
+        Schema::dropIfExists('employee_health_records');
+        Schema::dropIfExists('employee_addresses');
+        Schema::dropIfExists('employee_personals');
+        Schema::dropIfExists('roles');
         Schema::dropIfExists('employees');
     }
+
 };

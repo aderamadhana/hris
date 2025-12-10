@@ -37,13 +37,13 @@ return new class extends Migration
             $table->integer('last_activity')->index();
         });
 
-        Schema::create('employee_import_errors', function (Blueprint $table) {
-            $table->id();
-            $table->integer('row_number');
-            $table->string('nrp')->nullable();
-            $table->text('error');
-            $table->timestamps();
-        });
+        // Schema::create('employee_import_errors', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->integer('row_number');
+        //     $table->string('nrp')->nullable();
+        //     $table->text('error');
+        //     $table->timestamps();
+        // });
     }
 
     /**

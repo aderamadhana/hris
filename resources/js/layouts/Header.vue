@@ -10,7 +10,7 @@
 
             <!-- SWITCH CABANG -->
             <div class="branch-wrapper" v-if="user.role_id == 1">
-                <button
+                <!-- <button
                     type="button"
                     class="branch-pill"
                     @click.stop="toggleBranchMenu"
@@ -28,7 +28,7 @@
                     >
                         ▾
                     </span>
-                </button>
+                </button> -->
 
                 <!-- MENU CABANG -->
                 <div v-if="branchMenuOpen" class="branch-menu">

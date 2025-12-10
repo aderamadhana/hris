@@ -123,6 +123,87 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="detail-grid two-col secondary">
+                                <div class="field">
+                                    <div class="field-label">No. WhatsApp</div>
+                                    <div class="field-value">
+                                        {{ employee.no_wa || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">Email</div>
+                                    <div class="field-value">
+                                        {{ employee.email || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        BPJS Ketenagakerjaan
+                                    </div>
+                                    <div class="field-value">
+                                        {{ employee.bpjs_tk || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        BPJS Kesehatan
+                                    </div>
+                                    <div class="field-value">
+                                        {{ employee.bpjs_kes || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">Faskes</div>
+                                    <div class="field-value">
+                                        {{ employee.nama_faskes || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">No SKCK</div>
+                                    <div class="field-value">
+                                        {{ employee.no_skck || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        Masa Berlaku SKCK
+                                    </div>
+                                    <div class="field-value">
+                                        {{ employee.masa_berlaku_skck || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">Jenis Lisensi</div>
+                                    <div class="field-value">
+                                        {{ employee.jenis_lisensi || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">No Lisensi</div>
+                                    <div class="field-value">
+                                        {{ employee.no_lisensi || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        Masa Berlaku Lisensi
+                                    </div>
+                                    <div class="field-value">
+                                        {{
+                                            employee.masa_berlaku_lisensi || '-'
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </template>
 
@@ -281,7 +362,20 @@
                         <div class="tab-section">
                             <h3 class="tab-title">Informasi Kesehatan</h3>
 
-                            <div class="detail-grid two-col">
+                            <div class="detail-grid two-col secondary">
+                                <!-- ANTR0P0METRI -->
+                                <div
+                                    class="field"
+                                    style="
+                                        grid-column: 1 / -1;
+                                        font-weight: 600;
+                                        border-bottom: 1px solid #e5e7eb;
+                                        padding-bottom: 6px;
+                                    "
+                                >
+                                    Data Fisik
+                                </div>
+
                                 <div class="field">
                                     <div class="field-label">Tinggi Badan</div>
                                     <div class="field-value">
@@ -316,12 +410,146 @@
                                     </div>
                                 </div>
 
+                                <!-- RIWAYAT & DRUG TEST -->
+                                <div
+                                    class="field"
+                                    style="
+                                        grid-column: 1 / -1;
+                                        margin-top: 8px;
+                                        font-weight: 600;
+                                        border-bottom: 1px solid #e5e7eb;
+                                        padding-bottom: 6px;
+                                    "
+                                >
+                                    Riwayat & Screening
+                                </div>
+
                                 <div class="field">
                                     <div class="field-label">
                                         Riwayat Penyakit
                                     </div>
                                     <div class="field-value">
                                         {{ kesehatan.riwayat_penyakit || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        Hasil Drug Test
+                                    </div>
+                                    <div class="field-value">
+                                        {{ kesehatan.hasil_drug_test || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        Tanggal Drug Test
+                                    </div>
+                                    <div class="field-value">
+                                        {{ kesehatan.tanggal_drug_test || '-' }}
+                                    </div>
+                                </div>
+
+                                <!-- LAB & MCU -->
+                                <div
+                                    class="field"
+                                    style="
+                                        grid-column: 1 / -1;
+                                        margin-top: 8px;
+                                        font-weight: 600;
+                                        border-bottom: 1px solid #e5e7eb;
+                                        padding-bottom: 6px;
+                                    "
+                                >
+                                    Hasil Laboratorium & MCU
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        Pemeriksaan Darah
+                                    </div>
+                                    <div class="field-value">
+                                        {{ kesehatan.darah || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        Pemeriksaan Urine
+                                    </div>
+                                    <div class="field-value">
+                                        {{ kesehatan.urine || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">Fungsi Hati</div>
+                                    <div class="field-value">
+                                        {{ kesehatan.f_hati || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">Gula Darah</div>
+                                    <div class="field-value">
+                                        {{ kesehatan.gula_darah || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">Ginjal</div>
+                                    <div class="field-value">
+                                        {{ kesehatan.ginjal || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">Thorax</div>
+                                    <div class="field-value">
+                                        {{ kesehatan.thorax || '-' }}
+                                    </div>
+                                </div>
+
+                                <!-- VITAL & MATA -->
+                                <div
+                                    class="field"
+                                    style="
+                                        grid-column: 1 / -1;
+                                        margin-top: 8px;
+                                        font-weight: 600;
+                                        border-bottom: 1px solid #e5e7eb;
+                                        padding-bottom: 6px;
+                                    "
+                                >
+                                    Tanda Vital & Pemeriksaan Mata
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">Tensi</div>
+                                    <div class="field-value">
+                                        {{ kesehatan.tensi || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">Nadi</div>
+                                    <div class="field-value">
+                                        {{ kesehatan.nadi || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">Mata OD</div>
+                                    <div class="field-value">
+                                        {{ kesehatan.od || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">Mata OS</div>
+                                    <div class="field-value">
+                                        {{ kesehatan.os || '-' }}
                                     </div>
                                 </div>
                             </div>

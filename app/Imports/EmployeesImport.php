@@ -70,6 +70,7 @@ class EmployeesImport implements
             $bpjsTk         = trim($row['bpjs_tk'] ?? '');
             $bpjsKes        = trim($row['bpjs_kes'] ?? '');
             $bpjsKs         = trim($row['ks'] ?? '');
+            $namaFaskes     = trim($row['nama_faskes'] ?? '');
 
             $npwp           = trim($row['npwp'] ?? '');
             $ptkp           = trim($row['ptkp'] ?? '');
@@ -104,6 +105,7 @@ class EmployeesImport implements
             $hasilDrugTest  = trim($row['drug_test'] ?? '');
 
             $noKk           = trim($row['no_kartu_keluarga'] ?? '');
+            $noSkck           = trim($row['catatan_kepolisian_skck'] ?? '');
 
             $namaAyah       = trim($row['nama_ayah_kandung'] ?? '');
             $namaIbu        = trim($row['nama_ibu_kandung'] ?? '');
@@ -134,6 +136,10 @@ class EmployeesImport implements
             $costCenter     = trim($row['cost_center'] ?? '');
 
             $tglDaftar      = $this->parseDate($row['tgl_daftar'] ?? null);
+            $masaBerlakuSkck      = $this->parseDate($row['masa_berlaku'] ?? null);
+            $jenisLisensi     = trim($row['jenis_lisensi'] ?? '');
+            $noLisensi = trim($row['no_lisensi_sio_sim_lainnya'] ?? '');
+            $masaBerlakuLisensi = $this->parseDate($row['berlaku'] ?? null);
 
             $tglAwalKerja = $this->parseDate($row['tgl_awal_kerja'] ?? null);
 
@@ -149,7 +155,8 @@ class EmployeesImport implements
             $jenisKerja     = trim($row['jenis_kerja'] ?? '');
             $hariKerja      = trim($row['hari_kerja'] ?? '');
 
-            $shoeSize       = trim($row['shoes_size'] ?? '');
+            $shoeSizeRaw = trim($row['shoes_size'] ?? '');
+            $shoeSize    = $shoeSizeRaw === '' ? null : (int) $shoeSizeRaw;
             $uniformSize    = trim($row['uniform_size'] ?? '');
             $gp             = trim($row['gp'] ?? '');
             $via            = trim($row['via'] ?? '');
@@ -160,6 +167,27 @@ class EmployeesImport implements
             $isActiveRaw    = trim($row['1_0'] ?? '');
             $keterangan     = trim($row['keterangan'] ?? '');
             $keterangan_status     = trim($row['keterangan_status'] ?? '');
+
+            
+            $bank      = trim($row['bank'] ?? '');
+            $npwp  = trim($row['npwp'] ?? '');
+            $ptkp = trim($row['ptkp'] ?? '');
+            $shoeSize = trim($row['shoes_size'] ?? null);
+            $uniformSize = trim($row['uniform_size'] ?? null);
+
+            $darah             = trim($row['darah'] ?? '');
+            $urine             = trim($row['urine'] ?? '');
+            $f_hati            = trim($row['f_hati'] ?? '');
+            $gula_darah        = trim($row['gula_darah'] ?? '');
+            $ginjal            = trim($row['ginjal'] ?? '');
+            $thorax            = trim($row['thorax'] ?? '');
+            $tensi             = trim($row['tensi'] ?? '');
+            $nadi              = trim($row['nadi'] ?? '');
+            $od                = trim($row['od'] ?? '');
+            $os                = trim($row['os'] ?? '');
+            $noRekening                = trim($row['no_rekening'] ?? '');
+
+            // $keterangan_status = trim($row['keterangan_status'] ?? '');
 
             if ($nrp === '' || $nama === '') {
                  Log::warning('Row dilewati: NRP/Nama kosong', $row->toArray());
@@ -216,10 +244,34 @@ class EmployeesImport implements
                     ['employee_id' => $employee->id],
                     [
                         'no_ktp' => $noKtp,
-                        'no_kk'  => $noKk,
-                        'npwp'   => $npwp,
+                        'no_kk' => $noKk,
+                        'npwp' => $npwp,
+                        'no_wa' => $waAktif,
+                        'bpjs_tk' => $bpjsTk,
+                        'bpjs_kes' => $bpjsKes,
+                        'nama_faskes' => $namaFaskes,
+                        'email' => $email,
+                        'no_skck' => $noSkck,
+                        'masa_berlaku_skck' => $masaBerlakuSkck, // WAJIB karena tidak nullable
+                        'jenis_lisensi' => $jenisLisensi,
+                        'no_lisensi' => $noLisensi,
+                        'masa_berlaku_lisensi' => $masaBerlakuLisensi,
+                        'no_rekening' => $noRekening,
+                        // 'no_cif' => $noCif,
+                        'bank' => $bank,
+                        'ptkp' => $ptkp,
+                        'shoe_size' => $shoeSize,
+                        'uniform_size' => $uniformSize,
+                        // 'gp' => $gp,
+                        // 'via' => $via,
+                        // 'reg_digantikan' => $regDigantikan,
+                        // 'nama_digantikan' => $namaDigantikan,
+                        // 'agama' => $agama,
+                        // 'status_perkawinan' => $statusPerkawinan,
+                        // 'kewarganegaraan' => $kewarganegaraan,
                     ]
                 );
+
 
                 /** ADDRESS (DOMISILI) */
                 EmployeeAddress::updateOrCreate(
@@ -248,19 +300,36 @@ class EmployeesImport implements
                         'riwayat_penyakit'   => $riwayatSakit,
                         'tanggal_drug_test'  => $tglDrugTest,
                         'hasil_drug_test'    => $hasilDrugTest,
+                        
+                        'darah'             => $darah,
+                        'urine'             => $urine,
+                        'f_hati'            => $f_hati,
+                        'gula_darah'        => $gula_darah,
+                        'ginjal'            => $ginjal,
+                        'thorax'            => $thorax,
+                        'tensi'             => $tensi,
+                        'nadi'              => $nadi,
+                        'od'                => $od,
+                        'os'                => $os,
+                        // 'keterangan_status' => $keterangan_status,
                     ]
                 );
 
                 /** EDUCATION */
-                if (!empty($pendidikan)) {
-                    EmployeeEducation::where('employee_id', $employee->id)
-                        ->where('jenjang', $pendidikan)
-                        ->update([
-                            'jurusan'     => $jurusan,
-                            'institusi'   => $sekolahAsal,
-                            'tahun_lulus' => $tahunLulus,
-                        ]);
-                }
+                // if (!empty($pendidikan)) {
+                    EmployeeEducation::updateOrCreate(
+                        [
+                            'employee_id' => $employee->id,
+                            'jenjang'     => $pendidikan,
+                        ],
+                        [
+                            'jurusan'      => $jurusan,
+                            'institusi'    => $sekolahAsal,
+                            'tahun_lulus'  => $tahunLulus,
+                            'sekolah_asal' => $sekolahAsal,
+                        ]
+                    );
+                // }
 
                 /** EMPLOYMENT HISTORY */
                 EmployeeEmployment::updateOrCreate(

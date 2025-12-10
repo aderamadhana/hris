@@ -82,6 +82,50 @@ class EmployeeController extends Controller
                 'usia' => optional($employee->tanggal_lahir)
                             ? now()->diffInYears($employee->tanggal_lahir)
                             : null,
+
+                // Kontak
+                'no_wa' => optional($employee->personal)->no_wa,
+                'email' => optional($employee->personal)->email,
+
+                // BPJS
+                'bpjs_tk' => optional($employee->personal)->bpjs_tk,
+                'x' => optional($employee->personal)->x,
+                'bpjs_kes' => optional($employee->personal)->bpjs_kes,
+                'x_ks' => optional($employee->personal)->x_ks,
+                'nama_faskes' => optional($employee->personal)->nama_faskes,
+
+                // SKCK
+                'no_skck' => optional($employee->personal)->no_skck,
+                'masa_berlaku_skck' => optional($employee->personal?->masa_berlaku_skck)
+                    ? Carbon::parse($employee->personal->masa_berlaku_skck)->format('d M Y')
+                    : null,
+
+                // Lisensi
+                'jenis_lisensi' => optional($employee->personal)->jenis_lisensi,
+                'no_lisensi' => optional($employee->personal)->no_lisensi,
+                'masa_berlaku_lisensi' => optional($employee->personal?->masa_berlaku_lisensi)
+                    ? Carbon::parse($employee->personal->masa_berlaku_lisensi)->format('d M Y')
+                    : null,
+
+                // Bank
+                'no_rekening' => optional($employee->personal)->no_rekening,
+                'no_cif' => optional($employee->personal)->no_cif,
+                'bank' => optional($employee->personal)->bank,
+
+                // Pajak & atribut fisik
+                'npwp' => optional($employee->personal)->npwp,
+                'ptkp' => optional($employee->personal)->ptkp,
+                'shoe_size' => optional($employee->personal)->shoe_size,
+                'uniform_size' => optional($employee->personal)->uniform_size,
+
+                // Payroll (tetap di employee)
+                'gp' => $employee->gp,
+                'via' => $employee->via,
+
+                // Riwayat penggantian
+                'reg_digantikan' => optional($employee->personal)->reg_digantikan,
+                'nama_digantikan' => optional($employee->personal)->nama_digantikan,
+
             ],
 
             /* ===============================
@@ -140,13 +184,37 @@ class EmployeeController extends Controller
              | DATA KESEHATAN (opsional tab)
              ===============================*/
             'kesehatan' => $employee->health ? [
-                'tinggi_badan'      => $employee->health->tinggi_badan,
-                'berat_badan'       => $employee->health->berat_badan,
-                'gol_darah'         => $employee->health->gol_darah,
-                'buta_warna'        => $employee->health->buta_warna,
-                'riwayat_penyakit'  => $employee->health->riwayat_penyakit,
-                'tanggal_mcu'       => $employee->health->tanggal_mcu,
+                'employee_id'        => $employee->health->employee_id,
+
+                'tanggal_mcu'        => optional($employee->health->tanggal_mcu)
+                                            ? Carbon::parse($employee->health->tanggal_mcu)->format('d M Y')
+                                            : null,
+
+                'tinggi_badan'       => $employee->health->tinggi_badan,
+                'berat_badan'        => $employee->health->berat_badan,
+                'gol_darah'          => $employee->health->gol_darah,
+                'buta_warna'         => $employee->health->buta_warna,
+
+                'hasil_drug_test'    => $employee->health->hasil_drug_test,
+                'tanggal_drug_test'  => optional($employee->health->tanggal_drug_test)
+                                            ? Carbon::parse($employee->health->tanggal_drug_test)->format('d M Y')
+                                            : null,
+
+                'riwayat_penyakit'   => $employee->health->riwayat_penyakit,
+
+                // Detail MCU tambahan
+                'darah'              => $employee->health->darah,
+                'urine'              => $employee->health->urine,
+                'f_hati'             => $employee->health->f_hati,
+                'gula_darah'         => $employee->health->gula_darah,
+                'ginjal'             => $employee->health->ginjal,
+                'thorax'             => $employee->health->thorax,
+                'tensi'              => $employee->health->tensi,
+                'nadi'               => $employee->health->nadi,
+                'od'                 => $employee->health->od,
+                'os'                 => $employee->health->os,
             ] : null,
+
         ]);
     }
 
