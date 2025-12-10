@@ -1403,3 +1403,13 @@ body {
         transform: rotate(360deg);
     }
 }
+
+.logo-image img {
+    height: 50px;   /* sesuaikan */
+    width: auto;
+}
+
+.logo-image-sidebar img {
+    height: 50px;   /* sesuaikan */
+    width: auto;
+}

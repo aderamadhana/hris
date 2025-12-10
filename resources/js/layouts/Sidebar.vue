@@ -8,6 +8,14 @@ const page = usePage();
         <div class="brand">
             <div class="brand-logo">H</div>
             <span class="brand-text">HRIS</span>
+
+            <!-- <div class="logo-image-sidebar">
+                <img
+                    src="assets/images/logo_kecil.png"
+                    alt="HRIS Logo"
+                    loading="lazy"
+                />
+            </div> -->
         </div>
 
         <nav class="sidebar-nav" v-if="user.role_id == 1">
