@@ -23,8 +23,9 @@
                         >
                         <span v-else>Informasi</span>
                     </div>
+
                     <div class="alert-message">
-                        {{ a.message }}
+                        <div v-html="a.message"></div>
                     </div>
                 </div>
 

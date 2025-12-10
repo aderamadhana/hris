@@ -13,47 +13,66 @@ use App\Models\Allowance;
 use App\Models\AdditionalEarning;
 use App\Models\Deduction;
 use App\Models\PayrollSummary;
+// use App\Models\PayrollImportLog; // Model baru untuk tracking
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
 
-class PayslipImport implements ToCollection, WithHeadingRow, WithChunkReading, WithBatchInserts,
+class PayslipImport implements 
+    ToCollection, 
+    WithHeadingRow, 
+    WithChunkReading, 
+    WithBatchInserts,
     WithCalculatedFormulas,
     ShouldQueue
 {
     protected $payrollPeriodId;
-    protected $errors = [];
-    protected $successCount = 0;
-    protected $failedCount = 0;
+    protected $importId; // Unique ID untuk tracking import ini
 
-    public function __construct($payrollPeriodId)
+    public function __construct($payrollPeriodId, $importId = null)
     {
         $this->payrollPeriodId = $payrollPeriodId;
+        $this->importId = $importId ?? uniqid('import_', true);
+        
+        // Initialize counters di cache
+        Cache::put("import_{$this->importId}_success", 0, now()->addHours(24));
+        Cache::put("import_{$this->importId}_failed", 0, now()->addHours(24));
+        Cache::put("import_{$this->importId}_errors", [], now()->addHours(24));
     }
 
     public function collection(Collection $rows)
     {
-        Log::info($rows);
+        Log::info("Processing chunk with " . $rows->count() . " rows for import ID: {$this->importId}");
+        
         foreach ($rows as $index => $row) {
+            $nik = null;
+            
             try {
                 DB::beginTransaction();
 
                 // 1. Cek NIK di employee_personals dan get employee_id
                 $nik = (string) ((int) $row['nik']);
+                
+                Log::info("Processing NIK: {$nik}");
+                
                 $employeePersonal = EmployeePersonal::where('no_ktp', $nik)->first();
                 
                 if (!$employeePersonal) {
                     DB::rollBack();
-                    Log::info("NIK {$nik} tidak ditemukan di employee_personals");
+                    
+                    $error = "NIK {$nik} tidak ditemukan di employee_personals";
+                    Log::warning($error);
+                    
+                    $this->incrementFailed($error);
                     continue;
-                    // throw new \Exception("NIK {$nik} tidak ditemukan di employee_personals");
                 }
 
                 $employeeId = $employeePersonal->employee_id;
@@ -62,34 +81,38 @@ class PayslipImport implements ToCollection, WithHeadingRow, WithChunkReading, W
                 $employee = Employee::find($employeeId);
                 if (!$employee) {
                     DB::rollBack();
-                    Log::info("Employee ID {$employeeId} tidak ditemukan");
+                    
+                    $error = "Employee ID {$employeeId} tidak ditemukan";
+                    Log::warning($error);
+                    
+                    $this->incrementFailed($error);
                     continue;
                 }
 
                 // 3. Update atau create employee data (jika ada perubahan)
                 $employee->update([
-                    'nik_kary' => $row['nik_kary'],
-                    'no_rek' => $row['no_rek'],
-                    'nama' => $row['nama'],
-                    'status_kary' => $row['status_kary'],
-                    'bagian' => $row['bagian'],
-                    'area_kerja' => $row['area_kerja'],
+                    'nik_kary' => $row['nik_kary'] ?? null,
+                    'no_rek' => $row['no_rek'] ?? null,
+                    'nama' => $row['nama'] ?? null,
+                    'status_kary' => $row['status_kary'] ?? null,
+                    'bagian' => $row['bagian'] ?? null,
+                    'area_kerja' => $row['area_kerja'] ?? null,
                 ]);
 
                 // 4. Salary Configuration (optional, jika ada data)
-                if ($row['gaji_pokok'] || $row['gaji_per_hari']) {
+                if (isset($row['gaji_pokok']) || isset($row['gaji_per_hari'])) {
                     SalaryConfiguration::updateOrCreate(
                         [
                             'employee_id' => $employeeId,
                             'effective_date' => now()->startOfMonth(),
                         ],
                         [
-                            'gaji_pokok' => $row['gaji_pokok'],
-                            'gaji_per_hari' => $row['gaji_per_hari'],
-                            'gaji_train_hk' => $row['gaji_train_hk'],
-                            'gaji_train_upah_per_jam' => $row['gaji_train_upah_per_jam'],
-                            'lembur_per_hari' => $row['lembur_per_hari'],
-                            'lembur_per_jam' => $row['lembur_per_jam'],
+                            'gaji_pokok' => $row['gaji_pokok'] ?? null,
+                            'gaji_per_hari' => $row['gaji_per_hari'] ?? null,
+                            'gaji_train_hk' => $row['gaji_train_hk'] ?? null,
+                            'gaji_train_upah_per_jam' => $row['gaji_train_upah_per_jam'] ?? null,
+                            'lembur_per_hari' => $row['lembur_per_hari'] ?? null,
+                            'lembur_per_jam' => $row['lembur_per_jam'] ?? null,
                         ]
                     );
                 }
@@ -101,20 +124,20 @@ class PayslipImport implements ToCollection, WithHeadingRow, WithChunkReading, W
                         'payroll_period_id' => $this->payrollPeriodId,
                     ],
                     [
-                        'jam_kerja' => $row['jam_kerja'],
-                        'jam_hk' => $row['jam_hk'],
-                        'jam_hl' => $row['jam_hl'],
-                        'jam_hr' => $row['jam_hr'],
-                        'jml_hl' => $row['jml_hl'],
-                        'jml_hr' => $row['jml_hr'],
-                        'hadir' => $row['hadir'],
-                        'mangkir_hari' => $row['mangkir_hari'],
-                        'pot_tdk_masuk_hari' => $row['pot_tdk_masuk_hari'],
-                        'terlambat_hari' => $row['terlambat_hari'],
-                        'terlambat_menit' => $row['terlambat_menit'],
-                        'terlambat_jam' => $row['terlambat_jam'],
-                        'ijin_pulang' => $row['ijin_pulang'],
-                        'cuti_dibayar' => $row['cuti_dibayar'],
+                        'jam_kerja' => $row['jam_kerja'] ?? null,
+                        'jam_hk' => $row['jam_hk'] ?? null,
+                        'jam_hl' => $row['jam_hl'] ?? null,
+                        'jam_hr' => $row['jam_hr'] ?? null,
+                        'jml_hl' => $row['jml_hl'] ?? null,
+                        'jml_hr' => $row['jml_hr'] ?? null,
+                        'hadir' => $row['hadir'] ?? null,
+                        'mangkir_hari' => $row['mangkir_hari'] ?? null,
+                        'pot_tdk_masuk_hari' => $row['pot_tdk_masuk_hari'] ?? null,
+                        'terlambat_hari' => $row['terlambat_hari'] ?? null,
+                        'terlambat_menit' => $row['terlambat_menit'] ?? null,
+                        'terlambat_jam' => $row['terlambat_jam'] ?? null,
+                        'ijin_pulang' => $row['ijin_pulang'] ?? null,
+                        'cuti_dibayar' => $row['cuti_dibayar'] ?? null,
                     ]
                 );
 
@@ -125,19 +148,19 @@ class PayslipImport implements ToCollection, WithHeadingRow, WithChunkReading, W
                         'payroll_period_id' => $this->payrollPeriodId,
                     ],
                     [
-                        'overtime_jam' => $row['overtime_jam'],
-                        'lembur_hari' => $row['lembur_hari'],
-                        'lembur_jam' => $row['lembur_jam'],
-                        'lembur_jam_biasa' => $row['lembur_jam_biasa'],
-                        'lembur_jam_khusus' => $row['lembur_jam_khusus'],
-                        'lembur_minggu_2' => $row['lembur_minggu_2'],
-                        'lembur_minggu_3' => $row['lembur_minggu_3'],
-                        'lembur_minggu_4' => $row['lembur_minggu_4'],
-                        'lembur_minggu_5' => $row['lembur_minggu_5'],
-                        'lembur_minggu_6' => $row['lembur_minggu_6'],
-                        'lembur_minggu_7' => $row['lembur_minggu_7'],
-                        'lembur_libur' => $row['lembur_libur'],
-                        'lembur_2' => $row['lembur_2'],
+                        'overtime_jam' => $row['overtime_jam'] ?? null,
+                        'lembur_hari' => $row['lembur_hari'] ?? null,
+                        'lembur_jam' => $row['lembur_jam'] ?? null,
+                        'lembur_jam_biasa' => $row['lembur_jam_biasa'] ?? null,
+                        'lembur_jam_khusus' => $row['lembur_jam_khusus'] ?? null,
+                        'lembur_minggu_2' => $row['lembur_minggu_2'] ?? null,
+                        'lembur_minggu_3' => $row['lembur_minggu_3'] ?? null,
+                        'lembur_minggu_4' => $row['lembur_minggu_4'] ?? null,
+                        'lembur_minggu_5' => $row['lembur_minggu_5'] ?? null,
+                        'lembur_minggu_6' => $row['lembur_minggu_6'] ?? null,
+                        'lembur_minggu_7' => $row['lembur_minggu_7'] ?? null,
+                        'lembur_libur' => $row['lembur_libur'] ?? null,
+                        'lembur_2' => $row['lembur_2'] ?? null,
                     ]
                 );
 
@@ -148,22 +171,22 @@ class PayslipImport implements ToCollection, WithHeadingRow, WithChunkReading, W
                         'payroll_period_id' => $this->payrollPeriodId,
                     ],
                     [
-                        'gaji_hk' => $row['gaji_hk'],
-                        'gaji_hl' => $row['gaji_hl'],
-                        'gaji_hr' => $row['gaji_hr'],
-                        'gaji_jml' => $row['gaji_jml'],
-                        'gaji_train_jml' => $row['gaji_train_jml'],
-                        'gaji_rev' => $row['gaji_rev'],
-                        'gaji_lbh_tgl23_bulan_lalu' => $row['gaji_lbh_tgl23_bulan_lalu'],
-                        'lembur_jml' => $row['lembur_jml'],
-                        'lembur_jml_hk' => $row['lembur_jml_hk'],
-                        'lembur_jml_hl' => $row['lembur_jml_hl'],
-                        'lembur_jml_hr' => $row['lembur_jml_hr'],
-                        'lembur_biasa_jml' => $row['lembur_biasa_jml'],
-                        'lembur_khusus_jml' => $row['lembur_khusus_jml'],
-                        'lembur_kurang_bulan_lalu' => $row['lembur_kurang_bulan_lalu'],
-                        'overtime' => $row['overtime'],
-                        'fee_lembur' => $row['fee_lembur'],
+                        'gaji_hk' => $row['gaji_hk'] ?? null,
+                        'gaji_hl' => $row['gaji_hl'] ?? null,
+                        'gaji_hr' => $row['gaji_hr'] ?? null,
+                        'gaji_jml' => $row['gaji_jml'] ?? null,
+                        'gaji_train_jml' => $row['gaji_train_jml'] ?? null,
+                        'gaji_rev' => $row['gaji_rev'] ?? null,
+                        'gaji_lbh_tgl23_bulan_lalu' => $row['gaji_lbh_tgl23_bulan_lalu'] ?? null,
+                        'lembur_jml' => $row['lembur_jml'] ?? null,
+                        'lembur_jml_hk' => $row['lembur_jml_hk'] ?? null,
+                        'lembur_jml_hl' => $row['lembur_jml_hl'] ?? null,
+                        'lembur_jml_hr' => $row['lembur_jml_hr'] ?? null,
+                        'lembur_biasa_jml' => $row['lembur_biasa_jml'] ?? null,
+                        'lembur_khusus_jml' => $row['lembur_khusus_jml'] ?? null,
+                        'lembur_kurang_bulan_lalu' => $row['lembur_kurang_bulan_lalu'] ?? null,
+                        'overtime' => $row['overtime'] ?? null,
+                        'fee_lembur' => $row['fee_lembur'] ?? null,
                     ]
                 );
 
@@ -174,22 +197,22 @@ class PayslipImport implements ToCollection, WithHeadingRow, WithChunkReading, W
                         'payroll_period_id' => $this->payrollPeriodId,
                     ],
                     [
-                        'tunj' => $row['tunj'],
-                        'tunj_sewa_motor' => $row['tunj_sewa_motor'],
-                        'tunj_bbm' => $row['tunj_bbm'],
-                        'tunj_pulsa' => $row['tunj_pulsa'],
-                        'tunj_penampilan' => $row['tunj_penampilan'],
-                        'tunj_shift' => $row['tunj_shift'],
-                        'tunj_makan' => $row['tunj_makan'],
-                        'tunj_transport' => $row['tunj_transport'],
-                        'tunj_kost' => $row['tunj_kost'],
-                        'tunj_maintenance' => $row['tunj_maintenance'],
-                        'tunj_posisi' => $row['tunj_posisi'],
-                        'tunj_fisik' => $row['tunj_fisik'],
-                        'tunj_loyalitas' => $row['tunj_loyalitas'],
-                        'tunj_operator' => $row['tunj_operator'],
-                        'tunj_jabatan' => $row['tunj_jabatan'],
-                        'tunj_bag' => $row['tunj_bag'],
+                        'tunj' => $row['tunj'] ?? null,
+                        'tunj_sewa_motor' => $row['tunj_sewa_motor'] ?? null,
+                        'tunj_bbm' => $row['tunj_bbm'] ?? null,
+                        'tunj_pulsa' => $row['tunj_pulsa'] ?? null,
+                        'tunj_penampilan' => $row['tunj_penampilan'] ?? null,
+                        'tunj_shift' => $row['tunj_shift'] ?? null,
+                        'tunj_makan' => $row['tunj_makan'] ?? null,
+                        'tunj_transport' => $row['tunj_transport'] ?? null,
+                        'tunj_kost' => $row['tunj_kost'] ?? null,
+                        'tunj_maintenance' => $row['tunj_maintenance'] ?? null,
+                        'tunj_posisi' => $row['tunj_posisi'] ?? null,
+                        'tunj_fisik' => $row['tunj_fisik'] ?? null,
+                        'tunj_loyalitas' => $row['tunj_loyalitas'] ?? null,
+                        'tunj_operator' => $row['tunj_operator'] ?? null,
+                        'tunj_jabatan' => $row['tunj_jabatan'] ?? null,
+                        'tunj_bag' => $row['tunj_bag'] ?? null,
                     ]
                 );
 
@@ -200,38 +223,38 @@ class PayslipImport implements ToCollection, WithHeadingRow, WithChunkReading, W
                         'payroll_period_id' => $this->payrollPeriodId,
                     ],
                     [
-                        'anjem_jam' => $row['anjem_jam'],
-                        'anjem_hari' => $row['anjem_hari'],
-                        'anjem_jml' => $row['anjem_jml'],
-                        'borongan_kg' => $row['borongan_kg'],
-                        'borongan_jml' => $row['borongan_jml'],
-                        'retase' => $row['retase'],
-                        'retase_bongkar' => $row['retase_bongkar'],
-                        'piket_l_biasa' => $row['piket_l_biasa'],
-                        'piket_l_besar' => $row['piket_l_besar'],
-                        'piket_l_lain' => $row['piket_l_lain'],
-                        'piket_bbm' => $row['piket_bbm'],
-                        'piket_reguler' => $row['piket_reguler'],
-                        'piket_hari_raya' => $row['piket_hari_raya'],
-                        'upah_hr_nasional' => $row['upah_hr_nasional'],
-                        'upah_hr_raya' => $row['upah_hr_raya'],
-                        'lmbr_hr_nasional' => $row['lmbr_hr_nasional'],
-                        'bonus' => $row['bonus'],
-                        'premi' => $row['premi'],
-                        'insentif' => $row['insentif'],
-                        'insentif_malam' => $row['insentif_malam'],
-                        'perdin' => $row['perdin'],
-                        'pengiriman' => $row['pengiriman'],
-                        'uang_extra' => $row['uang_extra'],
-                        'accident' => $row['accident'],
-                        'pelatihan_gaji' => $row['pelatihan_gaji'],
-                        'rapelan' => $row['rapelan'],
-                        'kurang_bulan_lalu' => $row['kurang_bulan_lalu'],
-                        'koreksi_gaji_plus' => $row['koreksi_gaji_plus'],
-                        'koreksi_pph21' => $row['koreksi_pph21'],
-                        'pengembalian_pph21' => $row['pengembalian_pph21'],
-                        'pembulatan' => $row['pembulatan'],
-                        'lain_lain' => $row['lain_lain'],
+                        'anjem_jam' => $row['anjem_jam'] ?? null,
+                        'anjem_hari' => $row['anjem_hari'] ?? null,
+                        'anjem_jml' => $row['anjem_jml'] ?? null,
+                        'borongan_kg' => $row['borongan_kg'] ?? null,
+                        'borongan_jml' => $row['borongan_jml'] ?? null,
+                        'retase' => $row['retase'] ?? null,
+                        'retase_bongkar' => $row['retase_bongkar'] ?? null,
+                        'piket_l_biasa' => $row['piket_l_biasa'] ?? null,
+                        'piket_l_besar' => $row['piket_l_besar'] ?? null,
+                        'piket_l_lain' => $row['piket_l_lain'] ?? null,
+                        'piket_bbm' => $row['piket_bbm'] ?? null,
+                        'piket_reguler' => $row['piket_reguler'] ?? null,
+                        'piket_hari_raya' => $row['piket_hari_raya'] ?? null,
+                        'upah_hr_nasional' => $row['upah_hr_nasional'] ?? null,
+                        'upah_hr_raya' => $row['upah_hr_raya'] ?? null,
+                        'lmbr_hr_nasional' => $row['lmbr_hr_nasional'] ?? null,
+                        'bonus' => $row['bonus'] ?? null,
+                        'premi' => $row['premi'] ?? null,
+                        'insentif' => $row['insentif'] ?? null,
+                        'insentif_malam' => $row['insentif_malam'] ?? null,
+                        'perdin' => $row['perdin'] ?? null,
+                        'pengiriman' => $row['pengiriman'] ?? null,
+                        'uang_extra' => $row['uang_extra'] ?? null,
+                        'accident' => $row['accident'] ?? null,
+                        'pelatihan_gaji' => $row['pelatihan_gaji'] ?? null,
+                        'rapelan' => $row['rapelan'] ?? null,
+                        'kurang_bulan_lalu' => $row['kurang_bulan_lalu'] ?? null,
+                        'koreksi_gaji_plus' => $row['koreksi_gaji_plus'] ?? null,
+                        'koreksi_pph21' => $row['koreksi_pph21'] ?? null,
+                        'pengembalian_pph21' => $row['pengembalian_pph21'] ?? null,
+                        'pembulatan' => $row['pembulatan'] ?? null,
+                        'lain_lain' => $row['lain_lain'] ?? null,
                     ]
                 );
 
@@ -242,35 +265,35 @@ class PayslipImport implements ToCollection, WithHeadingRow, WithChunkReading, W
                         'payroll_period_id' => $this->payrollPeriodId,
                     ],
                     [
-                        'pot_makan' => $row['pot_makan'],
-                        'pot_bpjs_tk' => $row['pot_bpjs_tk'],
-                        'pot_bpjs_kes' => $row['pot_bpjs_kes'],
-                        'pot_bpjs' => $row['pot_bpjs'],
-                        'pot_koperasi' => $row['pot_koperasi'],
-                        'pot_bonus_gantung' => $row['pot_bonus_gantung'],
-                        'pot_jam_kerja' => $row['pot_jam_kerja'],
-                        'pot_materai' => $row['pot_materai'],
-                        'pot_kerusakan' => $row['pot_kerusakan'],
-                        'pot_admin' => $row['pot_admin'],
-                        'pot_apd' => $row['pot_apd'],
-                        'pot_alfa' => $row['pot_alfa'],
-                        'pot_jamsos' => $row['pot_jamsos'],
-                        'pot_sptp' => $row['pot_sptp'],
-                        'pot_payroll' => $row['pot_payroll'],
-                        'pot_seragam' => $row['pot_seragam'],
-                        'pot_tdk_masuk_jml' => $row['pot_tdk_masuk_jml'],
-                        'pot_tdk_finger' => $row['pot_tdk_finger'],
-                        'pot_pph21' => $row['pot_pph21'],
-                        'pot_hari_mingu' => $row['pot_hari_mingu'],
-                        'pot_lain' => $row['pot_lain'],
-                        'klaim' => $row['klaim'],
-                        'denda' => $row['denda'],
-                        'denda_telat_briefing' => $row['denda_telat_briefing'],
-                        'kas' => $row['kas'],
-                        'kasbon' => $row['kasbon'],
-                        'mangkir_jml' => $row['mangkir_jml'],
-                        'terlambat_jml' => $row['terlambat_jml'],
-                        'koreksi_gaji_minus' => $row['koreksi_gaji_minus'],
+                        'pot_makan' => $row['pot_makan'] ?? null,
+                        'pot_bpjs_tk' => $row['pot_bpjs_tk'] ?? null,
+                        'pot_bpjs_kes' => $row['pot_bpjs_kes'] ?? null,
+                        'pot_bpjs' => $row['pot_bpjs'] ?? null,
+                        'pot_koperasi' => $row['pot_koperasi'] ?? null,
+                        'pot_bonus_gantung' => $row['pot_bonus_gantung'] ?? null,
+                        'pot_jam_kerja' => $row['pot_jam_kerja'] ?? null,
+                        'pot_materai' => $row['pot_materai'] ?? null,
+                        'pot_kerusakan' => $row['pot_kerusakan'] ?? null,
+                        'pot_admin' => $row['pot_admin'] ?? null,
+                        'pot_apd' => $row['pot_apd'] ?? null,
+                        'pot_alfa' => $row['pot_alfa'] ?? null,
+                        'pot_jamsos' => $row['pot_jamsos'] ?? null,
+                        'pot_sptp' => $row['pot_sptp'] ?? null,
+                        'pot_payroll' => $row['pot_payroll'] ?? null,
+                        'pot_seragam' => $row['pot_seragam'] ?? null,
+                        'pot_tdk_masuk_jml' => $row['pot_tdk_masuk_jml'] ?? null,
+                        'pot_tdk_finger' => $row['pot_tdk_finger'] ?? null,
+                        'pot_pph21' => $row['pot_pph21'] ?? null,
+                        'pot_hari_mingu' => $row['pot_hari_mingu'] ?? null,
+                        'pot_lain' => $row['pot_lain'] ?? null,
+                        'klaim' => $row['klaim'] ?? null,
+                        'denda' => $row['denda'] ?? null,
+                        'denda_telat_briefing' => $row['denda_telat_briefing'] ?? null,
+                        'kas' => $row['kas'] ?? null,
+                        'kasbon' => $row['kasbon'] ?? null,
+                        'mangkir_jml' => $row['mangkir_jml'] ?? null,
+                        'terlambat_jml' => $row['terlambat_jml'] ?? null,
+                        'koreksi_gaji_minus' => $row['koreksi_gaji_minus'] ?? null,
                     ]
                 );
 
@@ -281,21 +304,23 @@ class PayslipImport implements ToCollection, WithHeadingRow, WithChunkReading, W
                         'payroll_period_id' => $this->payrollPeriodId,
                     ],
                     [
-                        'no' => $row['no'],
-                        'grand_total' => $row['grand_total'],
+                        'no' => $row['no'] ?? null,
+                        'grand_total' => $row['grand_total'] ?? null,
                         'exactsumef2ef10485761rincian_46ab761trainingn24' => $row['exactsumef2ef10485761rincian_46ab761trainingn24'] ?? null,
                     ]
                 );
 
                 DB::commit();
-                $this->successCount++;
+                
+                $this->incrementSuccess();
+                Log::info("Successfully imported NIK: {$nik}");
 
             } catch (\Exception $e) {
                 DB::rollBack();
-                $this->failedCount++;
                 
                 $errorMessage = "Row " . ($index + 2) . " - NIK: " . ($nik ?? 'N/A') . " - Error: " . $e->getMessage();
-                $this->errors[] = $errorMessage;
+                
+                $this->incrementFailed($errorMessage);
                 
                 Log::error('Payroll Import Error', [
                     'row' => $index + 2,
@@ -304,32 +329,62 @@ class PayslipImport implements ToCollection, WithHeadingRow, WithChunkReading, W
                     'trace' => $e->getTraceAsString()
                 ]);
                 
-                // Continue to next row instead of stopping
                 continue;
             }
         }
     }
 
-    // Chunk size untuk memproses data dalam batch (performance optimization)
+    protected function incrementSuccess()
+    {
+        $key = "import_{$this->importId}_success";
+        $current = Cache::get($key, 0);
+        Cache::put($key, $current + 1, now()->addHours(24));
+    }
+
+    protected function incrementFailed($error)
+    {
+        // Increment failed count
+        $keyFailed = "import_{$this->importId}_failed";
+        $currentFailed = Cache::get($keyFailed, 0);
+        Cache::put($keyFailed, $currentFailed + 1, now()->addHours(24));
+        
+        // Add error to list
+        $keyErrors = "import_{$this->importId}_errors";
+        $errors = Cache::get($keyErrors, []);
+        $errors[] = $error;
+        Cache::put($keyErrors, $errors, now()->addHours(24));
+    }
+
     public function chunkSize(): int
     {
         return 100;
     }
 
-    // Batch insert untuk performance
     public function batchSize(): int
     {
         return 100;
     }
 
-    // Get import results
     public function getResults(): array
     {
         return [
-            'success' => $this->successCount,
-            'failed' => $this->failedCount,
-            'errors' => $this->errors,
-            'total' => $this->successCount + $this->failedCount,
+            'import_id' => $this->importId,
+            'success' => Cache::get("import_{$this->importId}_success", 0),
+            'failed' => Cache::get("import_{$this->importId}_failed", 0),
+            'errors' => Cache::get("import_{$this->importId}_errors", []),
+            'total' => Cache::get("import_{$this->importId}_success", 0) + Cache::get("import_{$this->importId}_failed", 0),
+        ];
+    }
+
+    // Method untuk check progress dari luar
+    public static function getImportProgress($importId): array
+    {
+        return [
+            'import_id' => $importId,
+            'success' => Cache::get("import_{$importId}_success", 0),
+            'failed' => Cache::get("import_{$importId}_failed", 0),
+            'errors' => Cache::get("import_{$importId}_errors", []),
+            'total' => Cache::get("import_{$importId}_success", 0) + Cache::get("import_{$importId}_failed", 0),
         ];
     }
 }

@@ -11,13 +11,77 @@
                 </div>
 
                 <div class="page-actions">
-                    <Button variant="primary" size="md" @click="downloadSlip">
+                    <Button
+                        variant="primary"
+                        size="md"
+                        @click="downloadSlip"
+                        :disabled="!slip || !selectedPayrollPeriodId"
+                    >
                         ⬇️ Download PDF
                     </Button>
                 </div>
             </div>
 
-            <div class="card slip-card" v-if="slip">
+            <!-- PILIH PERIODE -->
+            <div class="form-group mb-3">
+                <label class="form-label">
+                    Periode Payroll <span class="text-danger">*</span>
+                </label>
+                <select
+                    v-model="selectedPayrollPeriodId"
+                    v-on:change="loadSlip"
+                    class="form-control"
+                    :disabled="loadingImportPayslip"
+                >
+                    <option value="" disabled>
+                        -- Pilih Periode Payroll --
+                    </option>
+                    <option
+                        v-for="period in payrollPeriod"
+                        :key="period.id"
+                        :value="period.id"
+                    >
+                        {{ period.period_year }} /
+                        {{ period.period_month.toString().padStart(2, '0') }}
+                        ({{ period.start_date }} – {{ period.end_date }})
+                    </option>
+                </select>
+            </div>
+
+            <!-- STATE: BELUM PILIH PERIODE -->
+            <div v-if="!selectedPayrollPeriodId" class="empty-state">
+                <h3 class="empty-title">
+                    Pilih periode payroll terlebih dahulu
+                </h3>
+                <p class="empty-text">
+                    Setelah memilih periode, detail slip gaji akan ditampilkan
+                    di sini.
+                </p>
+            </div>
+
+            <!-- STATE: SUDAH PILIH, MASIH LOADING -->
+            <div v-else-if="loadingImportPayslip" class="empty-state">
+                <h3 class="empty-title">Mengambil data slip gaji…</h3>
+                <p class="empty-text">
+                    Mohon tunggu sebentar, kami sedang memuat data slip untuk
+                    periode yang dipilih.
+                </p>
+                <!-- kalau punya spinner, taruh di sini -->
+                <!-- <Spinner /> -->
+            </div>
+
+            <!-- STATE: SUDAH PILIH, TAPI SLIP KOSONG -->
+            <div v-else-if="!slip" class="empty-state">
+                <h3 class="empty-title">Slip gaji belum tersedia</h3>
+                <p class="empty-text">
+                    Tidak ditemukan slip gaji untuk periode ini. Periksa kembali
+                    periode payroll atau hubungi admin payroll bila seharusnya
+                    sudah ada.
+                </p>
+            </div>
+
+            <!-- STATE: SLIP ADA -> TAMPILKAN DETAIL -->
+            <div v-else class="card slip-card">
                 <!-- HEADER SLIP -->
                 <div class="slip-header">
                     <div class="slip-company">
@@ -25,7 +89,7 @@
                             {{ slip.company_name }}
                         </div>
                         <div class="slip-company-sub">
-                            Slip gaji karyawan · Periode
+                            Slip gaji karyawan
                             <strong>{{ slip.period_name }}</strong>
                         </div>
                     </div>
@@ -106,7 +170,7 @@
                     <div class="slip-table-block">
                         <div class="slip-info-title">Pendapatan</div>
                         <table class="slip-table">
-                            <tbody v-if="slip.earnings.length">
+                            <tbody v-if="slip.earnings?.length">
                                 <tr v-for="(item, i) in slip.earnings" :key="i">
                                     <td>{{ item.label }}</td>
                                     <td class="amount">
@@ -140,7 +204,7 @@
                     <div class="slip-table-block">
                         <div class="slip-info-title">Potongan</div>
                         <table class="slip-table">
-                            <tbody v-if="slip.deductions.length">
+                            <tbody v-if="slip.deductions?.length">
                                 <tr
                                     v-for="(item, i) in slip.deductions"
                                     :key="i"
@@ -209,14 +273,29 @@ export default {
         return {
             slip: null,
             loading: true,
+
+            payrollPeriod: [],
+            selectedPayrollPeriodId: null,
         };
     },
 
     mounted() {
-        this.loadSlip();
+        this.getPaymentPeriods();
+        // this.loadSlip();
     },
 
     methods: {
+        async getPaymentPeriods() {
+            try {
+                const res = await axios.get('/referensi/get-payroll_periods');
+                this.payrollPeriod = res.data.payroll_periods;
+            } catch (err) {
+                console.error(err);
+                triggerAlert('error', 'Gagal memuat data payments.');
+            } finally {
+                this.loadingUsers = false;
+            }
+        },
         downloadSlip() {
             alert('Download PDF belum tersedia');
         },
@@ -230,7 +309,9 @@ export default {
         },
         async loadSlip() {
             try {
-                const res = await axios.get(`/payslip/show/1`);
+                const res = await axios.get(
+                    `/payslip/show/` + this.selectedPayrollPeriodId,
+                );
                 console.log(res.data);
                 this.slip = res.data.slip;
             } finally {

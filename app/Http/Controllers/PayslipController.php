@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\{
     Employee,
+    EmployeeEmployment,
     PayrollPeriod,
     Earning,
     Deduction,
@@ -18,6 +19,7 @@ class PayslipController extends Controller
         $employee = $request->user()->employee;
 
         $period = PayrollPeriod::findOrFail($payrollPeriodId);
+        $employement = EmployeeEmployment::where('employee_id', $employee->id)->first();
 
         $earnings = Earning::where('employee_id', $employee->id)
             ->where('payroll_period_id', $period->id)
@@ -80,7 +82,7 @@ class PayslipController extends Controller
 
         return response()->json([
             'slip' => [
-                'company_name' => 'PT Contoh Sejahtera Abadi',
+                'company_name' => $employement->perusahaan,
 
                 'period_name' => $period->name,
                 'period_range' => $period->start_date->format('d M Y')

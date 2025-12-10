@@ -418,13 +418,12 @@
 import Button from '@/components/Button.vue';
 import Modal from '@/components/Modal.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { triggerAlert } from '@/Utils/alert';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { triggerAlert } from '../../Utils/alert';
 
 export default {
     components: { Button, Modal, AppLayout },
-
     data() {
         return {
             users: [], // ← DATA DARI /employee
@@ -523,6 +522,9 @@ export default {
         this.fetchEmployees();
     },
     methods: {
+        showSuccess() {
+            this.triggerAlertHtml('success', '<b>Berhasil</b>', 3000);
+        },
         fiturBelumTersedia() {
             triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
         },
@@ -669,27 +671,84 @@ export default {
                     'info',
                     'Import sedang diproses. Mohon tunggu sampai selesai.',
                 );
-                const res = await axios.post(
-                    '/employee/import-payslip',
-                    formData,
-                    {
-                        headers: { 'Content-Type': 'multipart/form-data' },
-                    },
-                );
+                const res = await axios.post('/payroll/import', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
 
                 // ✅ ambil import_id dari backend
-                const result = res.data.data;
-
-                triggerAlert(
-                    'success',
-                    `Import selesai. Total: ${result.total}, Sukses: ${result.success}, Gagal: ${result.failed}`,
-                );
+                const result = res.data;
+                this.pollImportPayslipProgress(result.check_progress_url);
             } catch (err) {
                 console.error(err);
                 triggerAlert('error', 'Gagal memulai proses import.');
                 this.loadingImportKaryawan = false;
                 this.fetchEmployees();
             }
+        },
+
+        async pollImportPayslipProgress(url) {
+            let done = false;
+
+            while (!done) {
+                await new Promise((resolve) => setTimeout(resolve, 1500)); // polling setiap 1.5 detik
+
+                const progress = await axios.get(url);
+
+                const status = progress.data.status;
+
+                if (status === 'processing') {
+                    // masih proses → lanjut polling
+                    continue;
+                }
+
+                if (status === 'completed') {
+                    const d = progress.data.data;
+                    triggerAlert(
+                        'success',
+                        `Import selesai. Total: ${d.total}, Sukses: ${d.success}, Gagal: ${d.failed}`,
+                    );
+                    done = true;
+                    break;
+                }
+
+                if (status === 'completed_with_errors') {
+                    const d = progress.data.data;
+                    const html = `
+                        <div>
+                        <strong>Import selesai dengan error</strong>
+
+                        <div style="margin-top:6px">
+                            Total: <b>${d.total}</b><br>
+                            Sukses: <b style="color:green">${d.success}</b><br>
+                            Gagal: <b style="color:red">${d.failed}</b>
+                        </div>
+
+                        <hr>
+
+                        <strong>Detail Error:</strong>
+                        <ul>
+                            ${d.errors.map((e) => `<li>${e}</li>`).join('')}
+                        </ul>
+                        </div>
+                        `;
+
+                    triggerAlert('warning', html, 15000, true);
+
+                    done = true;
+                    break;
+                }
+
+                if (status === 'failed') {
+                    triggerAlert('danger', 'Import gagal diproses.');
+                    done = true;
+                    break;
+                }
+            }
+
+            this.loadingImportPayslip = false;
+            this.importProcessingPayslip = false;
+            this.closeImportPayslipModal();
+            this.fetchEmployees();
         },
 
         openDetail(u) {
@@ -925,5 +984,27 @@ export default {
     .actions-cell {
         justify-content: flex-start;
     }
+}
+.toast-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+}
+.toast {
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    background: #333;
+    color: white;
+    border-radius: 4px;
+}
+.toast--success {
+    background: #16a34a;
+}
+.toast--error {
+    background: #dc2626;
+}
+.toast--info {
+    background: #2563eb;
 }
 </style>

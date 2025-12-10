@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\ReferensiController;
+use App\Http\Controllers\PayrollController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
@@ -26,6 +27,20 @@ Route::middleware('auth')->group(function () {
         Route::post('/import-karyawan', [EmployeeController::class, 'importKaryawan']);
         Route::post('/import-payslip', [EmployeeController::class, 'importPayslip']);
         Route::get('/import-log/{id}', [EmployeeController::class, 'showImportLog']);
+    });
+
+    Route::prefix('payroll')->group(function () {
+        Route::post('/import', [PayrollController::class, 'import'])
+            ->name('payroll.import');
+        
+        Route::post('/import/sync', [PayrollController::class, 'importSync'])
+            ->name('payroll.import.sync');
+        
+        Route::get('/import/progress/{importId}', [PayrollController::class, 'checkProgress'])
+            ->name('payroll.import.progress');
+        
+        Route::delete('/import/cache/{importId}', [PayrollController::class, 'clearImportCache'])
+            ->name('payroll.import.clear-cache');
     });
 
     Route::prefix('payslip')->group(function () {
