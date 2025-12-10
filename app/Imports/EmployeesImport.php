@@ -40,7 +40,7 @@ class EmployeesImport implements
 
     public function collection(Collection $rows)
     {
-        Log::info($rows);
+        // Log::info($rows);
         ImportLog::where('id', $this->logId)->increment('total');
         foreach ($rows as $row) {
             $nrp            = trim($row['nrp'] ?? '');
@@ -116,7 +116,7 @@ class EmployeesImport implements
 
             $tempatLahirPasangan = trim($row['tempat_lahir_suamiistri'] ?? '');
             $tglLahirPasangan    = $this->parseDate($row['tanggal_lahir_suamiistri'] ?? null);
-            Log::info(optional($tglLahirPasangan)->format('Y-m-d'));
+            // Log::info(optional($tglLahirPasangan)->format('Y-m-d'));
 
             $tglNikah       = $this->parseDate($row['tgl_perkawinan'] ?? null);
 
@@ -466,7 +466,7 @@ class EmployeesImport implements
 
     public function chunkSize(): int
     {
-        return 200;
+        return 500;
     }
 
     private function parseDate($value)
