@@ -116,7 +116,6 @@ class EmployeesImport implements
 
             $tempatLahirPasangan = trim($row['tempat_lahir_suamiistri'] ?? '');
             $tglLahirPasangan    = $this->parseDate($row['tanggal_lahir_suamiistri'] ?? null);
-            // Log::info(optional($tglLahirPasangan)->format('Y-m-d'));
 
             $tglNikah       = $this->parseDate($row['tgl_perkawinan'] ?? null);
 
@@ -232,7 +231,7 @@ class EmployeesImport implements
                         'nama'    => $nama,
                         'status_active'    => $status_active,
                         'tempat_lahir' => $tempatLahir,
-                        'tanggal_lahir' => optional($tanggalLahir)->format('Y-m-d'),
+                        'tanggal_lahir' => $tanggalLahir,
                         'agama' => $agama,
                         'status_perkawinan' => $statusNikah,
                         'kewarganegaraan' => $kewarganegaraan
@@ -364,7 +363,7 @@ class EmployeesImport implements
                         ],
                         [
                             'nama'          => $namaAyah,
-                            'tanggal_lahir' => optional($tglLahirPasangan)->format('Y-m-d'),
+                            'tanggal_lahir' => $tglLahirPasangan,
                             'tempat_lahir' => $tempatLahirPasangan
                         ]
                     );
@@ -379,7 +378,7 @@ class EmployeesImport implements
                         ],
                         [
                             'nama'          => $namaIbu,
-                            'tanggal_lahir' => optional($tglLahirPasangan)->format('Y-m-d'),
+                            'tanggal_lahir' => $tglLahirPasangan,
                         ]
                     );
                 }

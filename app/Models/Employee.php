@@ -56,4 +56,56 @@ class Employee extends Model
     {
         return $this->hasOne(EmployeeHealth::class);
     }
+
+    // PAYROLL
+    public function salaryConfigurations(): HasMany
+    {
+        return $this->hasMany(SalaryConfiguration::class);
+    }
+
+    public function attendanceSummaries(): HasMany
+    {
+        return $this->hasMany(AttendanceSummary::class);
+    }
+
+    public function overtimeSummaries(): HasMany
+    {
+        return $this->hasMany(OvertimeSummary::class);
+    }
+
+    public function earnings(): HasMany
+    {
+        return $this->hasMany(Earning::class);
+    }
+
+    public function allowances(): HasMany
+    {
+        return $this->hasMany(Allowance::class);
+    }
+
+    public function additionalEarnings(): HasMany
+    {
+        return $this->hasMany(AdditionalEarning::class);
+    }
+
+    public function deductions(): HasMany
+    {
+        return $this->hasMany(Deduction::class);
+    }
+
+    public function payrollSummaries(): HasMany
+    {
+        return $this->hasMany(PayrollSummary::class);
+    }
+
+    // Scopes
+    public function scopeByBagian($query, $bagian)
+    {
+        return $query->where('bagian', $bagian);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->whereNotNull('status_kary');
+    }
 }

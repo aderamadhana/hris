@@ -1,13 +1,12 @@
 <template>
     <AppLayout>
         <section class="page slip-page">
-            <!-- HEADER HALAMAN + DOWNLOAD DI ATAS -->
+            <!-- HEADER -->
             <div class="page-header">
                 <div>
                     <h2 class="page-title">Slip Gaji</h2>
                     <p class="page-subtitle">
-                        Lihat ringkasan komponen gaji karyawan dan unduh slip
-                        dalam format PDF untuk arsip atau distribusi.
+                        Ringkasan komponen gaji dan slip PDF periode terpilih.
                     </p>
                 </div>
 
@@ -18,46 +17,45 @@
                 </div>
             </div>
 
-            <!-- KARTU DETAIL SLIP GAJI (CONTOH HRIS) -->
-            <div class="card slip-card">
-                <!-- bar atas: nama perusahaan + periode -->
+            <div class="card slip-card" v-if="slip">
+                <!-- HEADER SLIP -->
                 <div class="slip-header">
                     <div class="slip-company">
                         <div class="slip-company-name">
-                            PT Contoh Sejahtera Abadi
+                            {{ slip.company_name }}
                         </div>
                         <div class="slip-company-sub">
                             Slip gaji karyawan · Periode
-                            <strong>Januari 2025</strong>
+                            <strong>{{ slip.period_name }}</strong>
                         </div>
                     </div>
 
                     <div class="slip-period-badge">
                         <span>Periode</span>
-                        <strong>01–31 Jan 2025</strong>
+                        <strong>{{ slip.period_range }}</strong>
                     </div>
                 </div>
 
-                <!-- dua kolom: data karyawan & info pembayaran -->
+                <!-- INFO -->
                 <div class="slip-info-grid">
                     <div class="slip-info-block">
                         <div class="slip-info-title">Data Karyawan</div>
                         <dl>
                             <div class="row">
                                 <dt>Nama</dt>
-                                <dd>Budi Santoso</dd>
+                                <dd>{{ slip.employee.nama }}</dd>
                             </div>
                             <div class="row">
                                 <dt>NIK</dt>
-                                <dd>HR-2023-0012</dd>
+                                <dd>{{ slip.employee.nik }}</dd>
                             </div>
                             <div class="row">
                                 <dt>Jabatan</dt>
-                                <dd>Staff Finance</dd>
+                                <dd>{{ slip.employee.jabatan }}</dd>
                             </div>
                             <div class="row">
                                 <dt>Divisi</dt>
-                                <dd>Keuangan</dd>
+                                <dd>{{ slip.employee.divisi }}</dd>
                             </div>
                         </dl>
                     </div>
@@ -67,22 +65,35 @@
                         <dl>
                             <div class="row">
                                 <dt>Tanggal Bayar</dt>
-                                <dd>31 Jan 2025</dd>
+                                <dd>
+                                    {{ slip.payment.tanggal_bayar || '-' }}
+                                </dd>
                             </div>
                             <div class="row">
                                 <dt>Metode</dt>
-                                <dd>Transfer Bank</dd>
+                                <dd>{{ slip.payment.metode }}</dd>
                             </div>
                             <div class="row">
                                 <dt>Bank</dt>
-                                <dd>BCA · 1234567890</dd>
+                                <dd>{{ slip.payment.bank }}</dd>
                             </div>
                             <div class="row">
                                 <dt>Status</dt>
                                 <dd>
-                                    <span class="pill pill-success"
-                                        >Dibayarkan</span
+                                    <span
+                                        class="pill"
+                                        :class="
+                                            slip.payment.status === 'paid'
+                                                ? 'pill-success'
+                                                : 'pill-warning'
+                                        "
                                     >
+                                        {{
+                                            slip.payment.status === 'paid'
+                                                ? 'Paid'
+                                                : 'Unpaid'
+                                        }}
+                                    </span>
                                 </dd>
                             </div>
                         </dl>
@@ -91,61 +102,72 @@
 
                 <!-- PENDAPATAN & POTONGAN -->
                 <div class="slip-amounts">
+                    <!-- Pendapatan -->
                     <div class="slip-table-block">
                         <div class="slip-info-title">Pendapatan</div>
                         <table class="slip-table">
-                            <tbody>
-                                <tr>
-                                    <td>Gaji Pokok</td>
-                                    <td class="amount">Rp6.000.000</td>
+                            <tbody v-if="slip.earnings.length">
+                                <tr v-for="(item, i) in slip.earnings" :key="i">
+                                    <td>{{ item.label }}</td>
+                                    <td class="amount">
+                                        {{ formatCurrency(item.amount) }}
+                                    </td>
                                 </tr>
+                            </tbody>
+                            <tbody v-else>
                                 <tr>
-                                    <td>Tunjangan Jabatan</td>
-                                    <td class="amount">Rp1.000.000</td>
-                                </tr>
-                                <tr>
-                                    <td>Tunjangan Transport</td>
-                                    <td class="amount">Rp500.000</td>
-                                </tr>
-                                <tr>
-                                    <td>Lembur</td>
-                                    <td class="amount">Rp350.000</td>
+                                    <td colspan="2" class="empty">
+                                        Tidak ada pendapatan
+                                    </td>
                                 </tr>
                             </tbody>
                             <tfoot>
                                 <tr>
                                     <th>Total Pendapatan</th>
-                                    <th class="amount">Rp7.850.000</th>
+                                    <th class="amount">
+                                        {{
+                                            formatCurrency(
+                                                slip.total_earnings || 0,
+                                            )
+                                        }}
+                                    </th>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
 
+                    <!-- Potongan -->
                     <div class="slip-table-block">
                         <div class="slip-info-title">Potongan</div>
                         <table class="slip-table">
-                            <tbody>
-                                <tr>
-                                    <td>BPJS Ketenagakerjaan</td>
-                                    <td class="amount">Rp150.000</td>
+                            <tbody v-if="slip.deductions.length">
+                                <tr
+                                    v-for="(item, i) in slip.deductions"
+                                    :key="i"
+                                >
+                                    <td>{{ item.label }}</td>
+                                    <td class="amount">
+                                        {{ formatCurrency(item.amount) }}
+                                    </td>
                                 </tr>
+                            </tbody>
+                            <tbody v-else>
                                 <tr>
-                                    <td>BPJS Kesehatan</td>
-                                    <td class="amount">Rp100.000</td>
-                                </tr>
-                                <tr>
-                                    <td>PPh 21</td>
-                                    <td class="amount">Rp250.000</td>
-                                </tr>
-                                <tr>
-                                    <td>Potongan Keterlambatan</td>
-                                    <td class="amount">Rp50.000</td>
+                                    <td colspan="2" class="empty">
+                                        Tidak ada potongan
+                                    </td>
                                 </tr>
                             </tbody>
                             <tfoot>
                                 <tr>
                                     <th>Total Potongan</th>
-                                    <th class="amount">Rp550.000</th>
+                                    <th class="amount">
+                                        {{
+                                            formatCurrency(
+                                                slip.total_deductions || 0,
+                                            )
+                                        }}
+                                    </th>
                                 </tr>
                             </tfoot>
                         </table>
@@ -157,13 +179,11 @@
                     <div>
                         <div class="slip-info-title">Take Home Pay</div>
                         <p class="slip-netpay-caption">
-                            Jumlah gaji bersih yang diterima karyawan untuk
-                            periode ini.
+                            Gaji bersih diterima karyawan.
                         </p>
                     </div>
                     <div class="slip-netpay-amount">
-                        <span>Rp</span>
-                        <strong>7.300.000</strong>
+                        {{ formatCurrency(slip.take_home_pay || 0) }}
                     </div>
                 </div>
             </div>
@@ -171,13 +191,54 @@
     </AppLayout>
 </template>
 
-<script setup>
+<script>
 import Button from '@/components/Button.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { triggerAlert } from '../../Utils/alert';
+import axios from 'axios';
 
-const downloadSlip = () =>
-    triggerAlert('warning', 'Fitur download PDF slip gaji belum tersedia');
+export default {
+    props: {
+        payrollPeriodId: Number,
+    },
+
+    components: {
+        AppLayout,
+        Button,
+    },
+    data() {
+        return {
+            slip: null,
+            loading: true,
+        };
+    },
+
+    mounted() {
+        this.loadSlip();
+    },
+
+    methods: {
+        downloadSlip() {
+            alert('Download PDF belum tersedia');
+        },
+
+        formatCurrency(value) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+            }).format(value ?? 0);
+        },
+        async loadSlip() {
+            try {
+                const res = await axios.get(`/payslip/show/1`);
+                console.log(res.data);
+                this.slip = res.data.slip;
+            } finally {
+                this.loading = false;
+            }
+        },
+    },
+};
 </script>
 
 <style scoped>

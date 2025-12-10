@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Employee;
 use App\Models\EmployeePersonal;
+use App\Models\PayrollPeriod;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -166,5 +167,43 @@ class DatabaseSeeder extends Seeder
             'created_at'    => $now,
             'updated_at'    => $now,
         ]);
+
+        $periods = [
+            [
+                'period_year'  => 2026,
+                'period_month' => 1,
+                'start_date'   => Carbon::create(2026, 1, 1),
+                'end_date'     => Carbon::create(2026, 1, 31),
+                'status'       => 'closed',
+            ],
+            [
+                'period_year'  => 2026,
+                'period_month' => 2,
+                'start_date'   => Carbon::create(2026, 2, 1),
+                'end_date'     => Carbon::create(2026, 2, 29),
+                'status'       => 'closed',
+            ],
+            [
+                'period_year'  => 2026,
+                'period_month' => 3,
+                'start_date'   => Carbon::create(2026, 3, 1),
+                'end_date'     => Carbon::create(2026, 3, 31),
+                'status'       => 'open',
+            ],
+        ];
+
+        foreach ($periods as $period) {
+            PayrollPeriod::updateOrCreate(
+                [
+                    'period_year'  => $period['period_year'],
+                    'period_month' => $period['period_month'],
+                ],
+                [
+                    'start_date' => $period['start_date'],
+                    'end_date'   => $period['end_date'],
+                    'status'     => $period['status'],
+                ]
+            );
+        }
     }
 }

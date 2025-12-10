@@ -1413,3 +1413,49 @@ body {
     height: 50px;   /* sesuaikan */
     width: auto;
 }
+
+.form-control {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #1f2937; /* gray-800 */
+    background-color: #ffffff;
+    border: 1px solid #d1d5db; /* gray-300 */
+    border-radius: 8px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    appearance: none;
+}
+
+/* caret custom */
+.form-control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='4 6 8 10 12 6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+    padding-right: 40px;
+}
+
+/* hover */
+.form-control:hover {
+    border-color: #9ca3af;
+}
+
+/* focus */
+.form-control:focus {
+    outline: none;
+    border-color: #2563eb; /* blue-600 */
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* disabled */
+.form-control:disabled {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+    color: #9ca3af;
+}
+
+/* option */
+.form-control option {
+    padding: 8px;
+}

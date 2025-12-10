@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
 use App\Models\ImportLog;
+use App\Models\ImportLogPayslip;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Excel as ExcelExcel;
-use App\Jobs\ImportEmployeesJob;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Imports\EmployeesImport;
+use App\Imports\PayslipImport;
 
 class EmployeeController extends Controller
 {
@@ -218,7 +219,7 @@ class EmployeeController extends Controller
         ]);
     }
 
-    public function import(Request $request)
+    public function importKaryawan(Request $request)
     {
         $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
@@ -248,6 +249,42 @@ class EmployeeController extends Controller
         return response()->json([
             'import_id' => $log->id,
         ]);
+    }
+
+    public function importPayslip(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv',
+            'payroll_period_id' => 'required|exists:payroll_periods,id'
+        ]);
+
+        try {
+            $import = new PayslipImport($request->payroll_period_id);
+            
+            Excel::import($import, $request->file('file'));
+            
+            $results = $import->getResults();
+            
+            if ($results['failed'] > 0) {
+                return response()->json([
+                    'status' => 'warning',
+                    'message' => "Import completed with errors",
+                    'data' => $results
+                ], 207);
+            }
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => "Successfully imported {$results['success']} records",
+                'data' => $results
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Import failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function showImportLog($id)

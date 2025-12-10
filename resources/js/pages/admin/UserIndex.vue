@@ -19,11 +19,14 @@
                         ➕ Tambah Karyawan
                     </Button>
 
-                    <Button variant="secondary" @click="openImportModal">
+                    <Button
+                        variant="secondary"
+                        @click="openImportKaryawanModal"
+                    >
                         ⬆️ Import Karyawan
                     </Button>
 
-                    <Button variant="success" @click="fiturBelumTersedia">
+                    <Button variant="success" @click="openImportPayslipModal">
                         🧾 Import Payslip
                     </Button>
                 </div>
@@ -266,12 +269,12 @@
             </div>
 
             <!-- MODAL IMPORT -->
-            <Modal v-if="showImportModal">
+            <Modal v-if="showImportKaryawanModal">
                 <div class="modal-header">
                     <h3>Import Data Karyawan</h3>
                     <button
                         class="modal-close"
-                        :disabled="loadingImport"
+                        :disabled="loadingImportKaryawan"
                         @click="closeImportModal"
                     >
                         ✕
@@ -284,7 +287,11 @@
                 </p>
 
                 <div class="modal-body">
-                    <input type="file" @change="handleFileChange" />
+                    <input
+                        type="file"
+                        accept=".xlsx, .xls, .csv"
+                        @change="handleFileChange"
+                    />
                     <p class="hint">
                         Format disarankan: .xlsx atau .csv — pastikan kolom
                         sesuai template.
@@ -297,11 +304,100 @@
                     </Button>
                     <Button
                         variant="primary"
-                        :disabled="importProcessing"
+                        :disabled="importProcessingKaryawan"
                         @click="submitImport"
                         class="d-flex align-items-center justify-content-center gap-2"
                     >
-                        <template v-if="importProcessing">
+                        <template v-if="importProcessingKaryawan">
+                            <span
+                                class="spinner-border spinner-border-sm spinner"
+                                role="status"
+                                aria-hidden="true"
+                            ></span>
+                            <span>Memproses...</span>
+                        </template>
+
+                        <template v-else> Upload &amp; Proses </template>
+                    </Button>
+                </div>
+            </Modal>
+
+            <!-- MODAL IMPORT -->
+            <Modal v-if="showImportPayslipModal">
+                <div class="modal-header">
+                    <h3>Import Data Payslip Karyawan</h3>
+                    <button
+                        class="modal-close"
+                        :disabled="loadingImportPayslip"
+                        @click="closeImportPayslipModal"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <p class="modal-text">
+                    Pilih file Excel/CSV yang berisi data payslip karyawan dan
+                    tentukan periode payroll.
+                </p>
+
+                <div class="modal-body">
+                    <!-- PILIH PERIODE PAYROLL -->
+                    <div class="form-group mb-3">
+                        <label class="form-label">
+                            Periode Payroll <span class="text-danger">*</span>
+                        </label>
+                        <select
+                            v-model="selectedPayrollPeriodId"
+                            class="form-control"
+                            :disabled="loadingImportPayslip"
+                        >
+                            <option value="" disabled>
+                                -- Pilih Periode Payroll --
+                            </option>
+                            <option
+                                v-for="period in payrollPeriod"
+                                :key="period.id"
+                                :value="period.id"
+                            >
+                                {{ period.period_year }} /
+                                {{
+                                    period.period_month
+                                        .toString()
+                                        .padStart(2, '0')
+                                }}
+                                ({{ period.start_date }} –
+                                {{ period.end_date }})
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- FILE -->
+                    <input
+                        type="file"
+                        accept=".xlsx, .xls, .csv"
+                        @change="handleFilePayslipChange"
+                    />
+                    <p class="hint">
+                        Format disarankan: .xlsx atau .csv — pastikan kolom
+                        sesuai template.
+                    </p>
+                </div>
+
+                <div class="modal-footer">
+                    <Button
+                        variant="secondary"
+                        @click="closeImportPayslipModal"
+                        :disabled="importProcessingPayslip"
+                    >
+                        Batal
+                    </Button>
+                    <Button
+                        variant="primary"
+                        :disabled="importProcessingPayslip"
+                        @click="submitImportPayslip"
+                        class="d-flex align-items-center justify-content-center gap-2"
+                    >
+                        <template v-if="importProcessingPayslip">
                             <span
                                 class="spinner-border spinner-border-sm spinner"
                                 role="status"
@@ -340,14 +436,25 @@ export default {
             sortKey: 'name',
             sortDir: 'asc',
 
-            showImportModal: false,
-            selectedFile: null,
+            showImportKaryawanModal: false,
+            selectedFileKaryawan: null,
 
-            importId: null,
-            importResult: null,
+            importIdKaryawan: null,
+            importKaryawanResult: null,
             pollingTimer: null,
-            loadingImport: false,
-            importProcessing: false,
+            loadingImportKaryawan: false,
+            importProcessingKaryawan: false,
+
+            showImportPayslipModal: false,
+            selectedFilePayslip: null,
+
+            importIdPayslip: null,
+            importPayslipResult: null,
+            loadingImportPayslip: false,
+            importProcessingPayslip: false,
+
+            payrollPeriod: [],
+            selectedPayrollPeriodId: null,
         };
     },
 
@@ -412,11 +519,23 @@ export default {
         },
     },
     mounted() {
+        this.getPaymentPeriods();
         this.fetchEmployees();
     },
     methods: {
         fiturBelumTersedia() {
             triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
+        },
+        async getPaymentPeriods() {
+            try {
+                const res = await axios.get('/referensi/get-payroll_periods');
+                this.payrollPeriod = res.data.payroll_periods;
+            } catch (err) {
+                console.error(err);
+                triggerAlert('error', 'Gagal memuat data payments.');
+            } finally {
+                this.loadingUsers = false;
+            }
         },
         async fetchEmployees() {
             this.loadingUsers = true;
@@ -437,56 +556,73 @@ export default {
             this.currentPage = page;
         },
 
-        openImportModal() {
-            this.showImportModal = true;
+        openImportKaryawanModal() {
+            this.showImportKaryawanModal = true;
         },
+
+        openImportPayslipModal() {
+            this.showImportPayslipModal = true;
+        },
+
         closeImportModal() {
-            this.showImportModal = false;
-            this.selectedFile = null;
+            this.showImportKaryawanModal = false;
+            this.selectedFileKaryawan = null;
+        },
+
+        closeImportPayslipModal() {
+            this.showImportPayslipModal = false;
+            this.selectedFilePayslip = null;
         },
         handleFileChange(e) {
-            this.selectedFile = e.target.files?.[0] || null;
+            this.selectedFileKaryawan = e.target.files?.[0] || null;
+        },
+        handleFilePayslipChange(e) {
+            this.selectedFilePayslip = e.target.files?.[0] || null;
         },
         async submitImport() {
-            if (!this.selectedFile) {
+            if (!this.selectedFileKaryawan) {
                 triggerAlert('warning', 'Silakan pilih file terlebih dahulu.');
                 return;
             }
 
-            this.loadingImport = true;
-            this.importProcessing = true;
+            this.loadingImportKaryawan = true;
+            this.importProcessingKaryawan = true;
             const formData = new FormData();
-            formData.append('file', this.selectedFile);
+            formData.append('file', this.selectedFileKaryawan);
 
             try {
-                const res = await axios.post('/employee/import', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' },
-                });
+                const res = await axios.post(
+                    '/employee/import-karyawan',
+                    formData,
+                    {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    },
+                );
 
                 // ✅ ambil import_id dari backend
-                this.importId = res.data.import_id;
+                this.importIdKaryawan = res.data.import_id;
                 triggerAlert(
                     'info',
                     'Import sedang diproses. Mohon tunggu sampai selesai.',
                 );
                 // ✅ mulai polling hasil
-                this.startPollingImportResult();
+                this.startPollingImportKaryawanResult();
             } catch (err) {
                 console.error(err);
                 triggerAlert('error', 'Gagal memulai proses import.');
-                this.loadingImport = false;
+                this.loadingImportKaryawan = false;
                 this.fetchEmployees();
             }
         },
 
-        startPollingImportResult() {
+        startPollingImportKaryawanResult() {
             this.pollingTimer = setInterval(async () => {
                 const res = await axios.get(
-                    `/employee/import-log/${this.importId}`,
+                    `/employee/import-log/${this.importIdKaryawan}`,
                 );
                 const log = res.data;
 
-                this.importResult = log;
+                this.importKaryawanResult = log;
 
                 // ⛔ JANGAN triggerAlert di sini selama processing
 
@@ -494,8 +630,8 @@ export default {
                     clearInterval(this.pollingTimer);
                     this.pollingTimer = null;
 
-                    this.importProcessing = false;
-                    this.loadingImport = false;
+                    this.importProcessingKaryawan = false;
+                    this.loadingImportKaryawan = false;
 
                     triggerAlert(
                         'success',
@@ -506,6 +642,54 @@ export default {
                     this.fetchEmployees();
                 }
             }, 2000);
+        },
+
+        async submitImportPayslip() {
+            console.log(this.selectedPayrollPeriodId);
+            if (!this.selectedPayrollPeriodId) {
+                triggerAlert(
+                    'warning',
+                    'Silakan pilih payroll periods terlebih dahulu.',
+                );
+                return;
+            }
+            if (!this.selectedFilePayslip) {
+                triggerAlert('warning', 'Silakan pilih file terlebih dahulu.');
+                return;
+            }
+
+            this.loadingImportPayslip = true;
+            this.importProcessingPayslip = true;
+            const formData = new FormData();
+            formData.append('file', this.selectedFilePayslip);
+            formData.append('payroll_period_id', this.selectedPayrollPeriodId);
+
+            try {
+                triggerAlert(
+                    'info',
+                    'Import sedang diproses. Mohon tunggu sampai selesai.',
+                );
+                const res = await axios.post(
+                    '/employee/import-payslip',
+                    formData,
+                    {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    },
+                );
+
+                // ✅ ambil import_id dari backend
+                const result = res.data.data;
+
+                triggerAlert(
+                    'success',
+                    `Import selesai. Total: ${result.total}, Sukses: ${result.success}, Gagal: ${result.failed}`,
+                );
+            } catch (err) {
+                console.error(err);
+                triggerAlert('error', 'Gagal memulai proses import.');
+                this.loadingImportKaryawan = false;
+                this.fetchEmployees();
+            }
         },
 
         openDetail(u) {
