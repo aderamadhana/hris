@@ -1,0 +1,61 @@
+name: Deploy PROD HRIS APPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: haris_apps
+
+    env:
+      WORKING_DIR_PROD: ${{ vars.WORKING_DIR_PROD }}
+
+    steps:
+      # === Before Script ===
+      - name: Before script section
+        run: |
+          echo "Before script section"
+          git checkout "$GITHUB_REF_NAME" || true
+          git pull origin "$GITHUB_REF_NAME" || true
+
+      # === Checkout Repository ===
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # === Deploy Script ===
+      - name: Deploy application
+        run: |
+          if [ -d "$WORKING_DIR_PROD" ]; then
+            echo "Processing sync source code..."
+
+            rsync -avz --update app/ "$WORKING_DIR_PROD/app/"
+            rsync -avz --update routes/ "$WORKING_DIR_PROD/routes/"
+            rsync -avz --update config/ "$WORKING_DIR_PROD/config/"
+            rsync -avz --update resources/ "$WORKING_DIR_PROD/resources/"
+            rsync -avz --update bootstrap/ "$WORKING_DIR_PROD/bootstrap/"
+            rsync -avz --update public/assets/ "$WORKING_DIR_PROD/public/assets/"
+
+            echo "Processing build & deploy..."
+
+            cd "$WORKING_DIR_PROD" &&
+              composer update &&
+              composer install --no-dev --optimize-autoloader &&
+              npm install && npm run build
+              sudo chown -R www-data storage &&
+              php artisan config:clear &&
+              php artisan config:cache &&
+              php artisan cache:clear &&
+              php artisan route:clear &&
+              php artisan route:cache &&
+              php artisan view:clear &&
+              php artisan view:cache &&
+              sudo supervisorctl restart laravel-queue:*
+
+          else
+            echo "Repo tidak ada"
+            exit 1
+          fi
