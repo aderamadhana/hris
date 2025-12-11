@@ -4,7 +4,7 @@
         <div class="header-left">
             <div class="logo-image-sidebar">
                 <img
-                    src="http://103.150.190.194/assets/images/logo.png"
+                    src="/assets/images/logo.png"
                     alt="HRIS Logo"
                     loading="lazy"
                 />
