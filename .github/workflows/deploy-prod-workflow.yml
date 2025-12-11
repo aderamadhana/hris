@@ -10,7 +10,7 @@ jobs:
     runs-on: haris_apps
 
     env:
-      WORKING_DIR_PROD: ${{ vars.WORKING_DIR_PROD }}
+      WORKING_DIR: ${{ vars.WORKING_DIR_PROD }}
 
     steps:
       # === Before Script ===
@@ -30,19 +30,19 @@ jobs:
       # === Deploy Script ===
       - name: Deploy application
         run: |
-          if [ -d "$WORKING_DIR_PROD" ]; then
+          if [ -d "$WORKING_DIR" ]; then
             echo "Processing sync source code..."
 
-            rsync -avz --update app/ "$WORKING_DIR_PROD/app/"
-            rsync -avz --update routes/ "$WORKING_DIR_PROD/routes/"
-            rsync -avz --update config/ "$WORKING_DIR_PROD/config/"
-            rsync -avz --update resources/ "$WORKING_DIR_PROD/resources/"
-            rsync -avz --update bootstrap/ "$WORKING_DIR_PROD/bootstrap/"
-            rsync -avz --update public/assets/ "$WORKING_DIR_PROD/public/assets/"
+            rsync -avz --update app/ "$WORKING_DIR/app/"
+            rsync -avz --update routes/ "$WORKING_DIR/routes/"
+            rsync -avz --update config/ "$WORKING_DIR/config/"
+            rsync -avz --update resources/ "$WORKING_DIR/resources/"
+            rsync -avz --update bootstrap/ "$WORKING_DIR/bootstrap/"
+            rsync -avz --update public/assets/ "$WORKING_DIR/public/assets/"
 
             echo "Processing build & deploy..."
 
-            cd "$WORKING_DIR_PROD" &&
+            cd "$WORKING_DIR" &&
               composer update &&
               composer install --no-dev --optimize-autoloader &&
               npm install && npm run build
