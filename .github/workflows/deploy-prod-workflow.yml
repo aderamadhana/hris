@@ -19,7 +19,6 @@ jobs:
           echo "Before script section"
           git checkout "$GITHUB_REF_NAME" || true
           git pull origin "$GITHUB_REF_NAME" || true
-          cat $WORKING_DIR
 
       # === Checkout Repository ===
       - name: Checkout source code
