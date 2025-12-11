@@ -9,7 +9,9 @@
                 </p>
             </div>
 
-            <button class="btn">⬇️ Unduh Slip Kehadiran</button>
+            <button class="btn" @click="fiturBelumTersedia">
+                ⬇️ Unduh Slip Kehadiran
+            </button>
         </div>
 
         <!-- GRID -->
@@ -100,6 +102,7 @@
     </section>
 </template>
 <script>
+import { triggerAlert } from '@/Utils/alert';
 export default {
     data() {
         return {
@@ -123,6 +126,11 @@ export default {
             contractType: 'Kontrak',
             contractEnd: '31 Maret 2026',
         };
+    },
+    methods: {
+        fiturBelumTersedia() {
+            triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
+        },
     },
 };
 </script>

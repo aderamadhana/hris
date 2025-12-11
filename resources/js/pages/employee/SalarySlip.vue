@@ -292,7 +292,7 @@ export default {
             }
         },
         downloadSlip() {
-            triggerAlert('info', 'Fitur belum tersedia.');
+            triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
         },
 
         formatCurrency(value) {

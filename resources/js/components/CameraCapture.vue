@@ -53,15 +53,16 @@ onBeforeUnmount(() => {
 });
 
 const capture = () => {
-    triggerAlert('success', 'Attendance berhasil direkam.');
+    triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
 };
 
 const refreshCamera = () => {
-    if (stream.value) {
-        stream.value.getTracks().forEach((t) => t.stop());
-        stream.value = null;
-    }
-    initCamera();
+    triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
+    // if (stream.value) {
+    //     stream.value.getTracks().forEach((t) => t.stop());
+    //     stream.value = null;
+    // }
+    // initCamera();
 };
 </script>
 

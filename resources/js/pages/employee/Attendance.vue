@@ -150,152 +150,192 @@
     </AppLayout>
 </template>
 
-<script setup>
+<script>
 import CameraCapture from '@/components/CameraCapture.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/Utils/alert';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
-/** JAM BERJALAN **/
-const now = ref(new Date());
-let timer = null;
-
-onMounted(() => {
-    timer = setInterval(() => {
-        now.value = new Date();
-    }, 1000);
-
-    initGeolocation();
-});
-
-onBeforeUnmount(() => {
-    if (timer) clearInterval(timer);
-});
-
-const timeText = computed(() =>
-    now.value.toLocaleTimeString('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-    }),
-);
-
-const todayLabel = computed(() =>
-    now.value.toLocaleDateString('id-ID', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    }),
-);
-
-/** LOKASI SAAT INI + REVERSE GEOCODE **/
-const branchName = 'Kantor Malang';
-const branchAddress = ref('Mendeteksi lokasi Anda...');
-const locationLoading = ref(true);
-const locationError = ref('');
-const currentCoords = ref(null);
-
-const reverseGeocode = async (lat, lon) => {
-    try {
-        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=id`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('HTTP error');
-        const data = await res.json();
-
-        if (data.display_name) return data.display_name;
-
-        if (data.address) {
-            const a = data.address;
-            return [
-                a.road,
-                a.suburb || a.village,
-                a.city || a.town || a.county,
-                a.state,
-                a.postcode,
-                a.country,
-            ]
-                .filter(Boolean)
-                .join(', ');
-        }
-
-        return `Lat: ${lat.toFixed(5)}, Lng: ${lon.toFixed(5)}`;
-    } catch (e) {
-        console.error('Reverse geocode error', e);
-        return `Lat: ${lat.toFixed(5)}, Lng: ${lon.toFixed(5)}`;
-    }
-};
-
-const initGeolocation = () => {
-    if (!('geolocation' in navigator)) {
-        locationError.value = 'Browser tidak mendukung geolokasi.';
-        branchAddress.value = 'Lokasi tidak tersedia';
-        locationLoading.value = false;
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-            const { latitude, longitude } = pos.coords;
-            currentCoords.value = { latitude, longitude };
-
-            const addr = await reverseGeocode(latitude, longitude);
-            branchAddress.value = addr;
-            locationLoading.value = false;
-        },
-        (err) => {
-            locationError.value =
-                err.code === 1
-                    ? 'Izin lokasi ditolak.'
-                    : 'Lokasi tidak dapat diambil.';
-            branchAddress.value = 'Lokasi tidak tersedia';
-            locationLoading.value = false;
-        },
-        {
-            enableHighAccuracy: true,
-            timeout: 10000,
-        },
-    );
-};
-
-/** JARAK / STATUS JANGKAUAN – MASIH DUMMY */
-const distanceText = '1042 meter';
-const inRange = false;
-
-/** RIWAYAT ABSEN DUMMY */
-const todayAttendance = ref([
-    {
-        time: '07.43.54',
-        type: 'Masuk',
-        note: 'Shift pagi',
-        location: 'RW 12, Kel. Bunulrejo, Kota Malang, Jawa Timur, 65123',
+export default {
+    name: 'AttendancePage',
+    components: {
+        CameraCapture,
+        AppLayout,
     },
-    // contoh clock out:
-    // {
-    //   time: '17.02.10',
-    //   type: 'Pulang',
-    //   note: 'Selesai shift',
-    //   location: 'Kantor Malang',
-    // },
-]);
+    setup() {
+        /** JAM BERJALAN **/
+        const now = ref(new Date());
+        let timer = null;
 
-const firstIn = computed(
-    () => todayAttendance.value.find((x) => x.type === 'Masuk') || null,
-);
-const lastOut = computed(() => {
-    const outs = todayAttendance.value.filter((x) => x.type === 'Pulang');
-    if (!outs.length) return null;
-    return outs[outs.length - 1];
-});
+        const timeText = computed(() =>
+            now.value.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+            }),
+        );
 
-/** CLOCK (DUMMY) */
-const isCheckedIn = ref(true);
+        const todayLabel = computed(() =>
+            now.value.toLocaleDateString('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+            }),
+        );
 
-const handleClock = () => {
-    const label = isCheckedIn.value ? 'Clock Out' : 'Clock In';
-    triggerAlert('warning', `${label} belum dihubungkan ke backend`);
-    isCheckedIn.value = !isCheckedIn.value;
+        /** LOKASI SAAT INI + REVERSE GEOCODE **/
+        const branchName = 'Kantor Malang';
+        const branchAddress = ref('Mendeteksi lokasi Anda...');
+        const locationLoading = ref(true);
+        const locationError = ref('');
+        const currentCoords = ref(null);
+
+        const reverseGeocode = async (lat, lon) => {
+            try {
+                const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=id`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('HTTP error');
+                const data = await res.json();
+
+                if (data.display_name) return data.display_name;
+
+                if (data.address) {
+                    const a = data.address;
+                    return [
+                        a.road,
+                        a.suburb || a.village,
+                        a.city || a.town || a.county,
+                        a.state,
+                        a.postcode,
+                        a.country,
+                    ]
+                        .filter(Boolean)
+                        .join(', ');
+                }
+
+                return `Lat: ${lat.toFixed(5)}, Lng: ${lon.toFixed(5)}`;
+            } catch (e) {
+                console.error('Reverse geocode error', e);
+                return `Lat: ${lat.toFixed(5)}, Lng: ${lon.toFixed(5)}`;
+            }
+        };
+
+        const initGeolocation = () => {
+            if (!('geolocation' in navigator)) {
+                locationError.value = 'Browser tidak mendukung geolokasi.';
+                branchAddress.value = 'Lokasi tidak tersedia';
+                locationLoading.value = false;
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    currentCoords.value = { latitude, longitude };
+
+                    const addr = await reverseGeocode(latitude, longitude);
+                    branchAddress.value = addr;
+                    locationLoading.value = false;
+                },
+                (err) => {
+                    locationError.value =
+                        err.code === 1
+                            ? 'Izin lokasi ditolak.'
+                            : 'Lokasi tidak dapat diambil.';
+                    branchAddress.value = 'Lokasi tidak tersedia';
+                    locationLoading.value = false;
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                },
+            );
+        };
+
+        onMounted(() => {
+            timer = setInterval(() => {
+                now.value = new Date();
+            }, 1000);
+
+            initGeolocation();
+        });
+
+        onBeforeUnmount(() => {
+            if (timer) clearInterval(timer);
+        });
+
+        /** JARAK / STATUS JANGKAUAN – MASIH DUMMY */
+        const distanceText = '1042 meter';
+        const inRange = false;
+
+        /** RIWAYAT ABSEN DUMMY */
+        const todayAttendance = ref([
+            {
+                time: '07.43.54',
+                type: 'Masuk',
+                note: 'Shift pagi',
+                location:
+                    'RW 12, Kel. Bunulrejo, Kota Malang, Jawa Timur, 65123',
+            },
+            // contoh clock out:
+            // {
+            //   time: '17.02.10',
+            //   type: 'Pulang',
+            //   note: 'Selesai shift',
+            //   location: 'Kantor Malang',
+            // },
+        ]);
+
+        const firstIn = computed(
+            () => todayAttendance.value.find((x) => x.type === 'Masuk') || null,
+        );
+
+        const lastOut = computed(() => {
+            const outs = todayAttendance.value.filter(
+                (x) => x.type === 'Pulang',
+            );
+            if (!outs.length) return null;
+            return outs[outs.length - 1];
+        });
+
+        /** CLOCK (DUMMY) */
+        const isCheckedIn = ref(true);
+
+        const handleClock = () => {
+            const label = isCheckedIn.value ? 'Clock Out' : 'Clock In';
+            triggerAlert('warning', `${label} belum dihubungkan ke backend`);
+            isCheckedIn.value = !isCheckedIn.value;
+        };
+
+        return {
+            // time
+            now,
+            timeText,
+            todayLabel,
+
+            // lokasi
+            branchName,
+            branchAddress,
+            locationLoading,
+            locationError,
+            currentCoords,
+
+            // jarak / status
+            distanceText,
+            inRange,
+
+            // riwayat absen
+            todayAttendance,
+            firstIn,
+            lastOut,
+
+            // clock
+            isCheckedIn,
+            handleClock,
+        };
+    },
 };
 </script>
 

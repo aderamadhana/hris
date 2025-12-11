@@ -9,7 +9,9 @@
                 </p>
             </div>
 
-            <button class="btn">⬇️ Download laporan</button>
+            <button class="btn" @click="fiturBelumTersedia">
+                ⬇️ Download laporan
+            </button>
         </div>
 
         <!-- GRID UTAMA -->
@@ -107,11 +109,17 @@
     </section>
 </template>
 <script>
+import { triggerAlert } from '@/Utils/alert';
 export default {
     props: {
         user: {
             type: Object,
             required: true,
+        },
+    },
+    methods: {
+        fiturBelumTersedia() {
+            triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
         },
     },
 };
