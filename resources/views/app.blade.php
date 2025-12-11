@@ -7,7 +7,7 @@
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
     {{-- Hanya load JS, CSS auto-included --}}
-    @vite(['resources/js/app.js'])
+    @vite(['resources/js/app.ts'])
     @inertiaHead
 </head>
 <body>
