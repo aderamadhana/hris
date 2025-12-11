@@ -17,27 +17,80 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     { 
         $now = Carbon::now();
-        User::factory()->create([
-            'name' => 'Admin HRIS',
-            'email' => 'admin@admin.com',
-            'role_id' => 1,
-            'password' => Hash::make('123456'),
-        ]);
+        // Proteksi: Harus konfirmasi dulu
+        // if (!$this->command->confirm('Create initial roles and users for production?', false)) {
+        //     $this->command->warn('Cancelled.');
+        //     return;
+        // }
 
-        User::factory()->create([
-            'name' => 'Employee HRIS',
-            'email' => 'employee@admin.com',
-            'role_id' => 2,
-            'password' => Hash::make('123456'),
-        ]); 
+        // // Cek apakah sudah ada
+        // if (Role::count() > 0 || User::count() > 0) {
+        //     if (!$this->command->confirm('Data already exists. Continue anyway?', false)) {
+        //         $this->command->warn('Cancelled.');
+        //         return;
+        //     }
+        // }
+
+        // $this->command->info('Creating roles...');
+
+        // Create roles
+        $roles = [
+            ['id' => 1, 'role_name' => 'admin'],
+            ['id' => 2, 'role_name' => 'employee'],
+        ];
+
+        foreach ($roles as $roleData) {
+            Role::firstOrCreate(
+                ['id' => $roleData['id']], 
+                $roleData
+            );
+        }
+
+        // $this->command->info('✓ Roles created');
+        // $this->command->info('Creating users...');
+
+        // Create users
+        $users = [
+            [
+                'name' => 'Admin HRIS',
+                'email' => 'admin@admin.com',
+                'role_id' => 1,
+                'password' => Hash::make(env('ADMIN_PASSWORD', '123456')),
+            ],
+            [
+                'name' => 'Employee HRIS',
+                'email' => 'employee@admin.com',
+                'role_id' => 2,
+                'password' => Hash::make(env('EMPLOYEE_PASSWORD', '123456')),
+            ],
+        ];
+
+        foreach ($users as $userData) {
+            User::firstOrCreate(
+                ['email' => $userData['email']],
+                array_merge($userData, [
+                    'email_verified_at' => now(),
+                    'remember_token' => null,
+                    'two_factor_secret' => null,
+                    'two_factor_recovery_codes' => null,
+                    'two_factor_confirmed_at' => null,
+                ])
+            );
+        }
+
+        // $this->command->info('✓ Users created');
+        // $this->command->newLine();
         
-        Role::factory()->create([
-            'role_name' => 'admin',
-        ]);
-        
-        Role::factory()->create([
-            'role_name' => 'employee',
-        ]);
+        // Display created data
+        $this->command->table(
+            ['Role ID', 'Role Name'],
+            Role::all(['id', 'role_name'])->toArray()
+        );
+
+        $this->command->table(
+            ['ID', 'Name', 'Email', 'Role ID'],
+            User::all(['id', 'name', 'email', 'role_id'])->toArray()
+        );
 
         Employee::insert([
             [

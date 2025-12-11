@@ -78,6 +78,7 @@ if (app()->environment('local')) {
     })->name('util.migrate');
 
     Route::post('/run-migrate-fresh-seed', function () {
+        Artisan::call('cache:table', []);
         Artisan::call('migrate:fresh', [
             '--seed'  => true,
             '--force' => true,
