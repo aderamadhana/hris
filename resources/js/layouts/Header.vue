@@ -2,10 +2,12 @@
     <header class="header" ref="headerRef">
         <!-- LEFT: LOGO / BRAND + CABANG -->
         <div class="header-left">
-            <div class="logo-mark">H</div>
-            <div class="logo-text">
-                <div class="logo-title">HRIS</div>
-                <div class="logo-subtitle">Human Resources</div>
+            <div class="logo-image-sidebar">
+                <img
+                    src="http://localhost:8000/assets/images/logo.png"
+                    alt="HRIS Logo"
+                    loading="lazy"
+                />
             </div>
 
             <!-- SWITCH CABANG -->

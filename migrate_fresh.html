@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trigger migrate:fresh --seed</title>
+</head>
+<body>
+    <button onclick="runMigrate()">Run migrate:fresh --seed</button>
+
+    <pre id="result"></pre>
+
+    <script>
+        async function runMigrate() {
+            const resultEl = document.getElementById('result');
+            resultEl.textContent = 'Running...';
+
+            try {
+                const res = await fetch('http://localhost:8000/run-migrate-fresh-seed', {
+                    method: 'POST'
+                });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    resultEl.textContent = 'Error: ' + res.status + ' - ' + text;
+                    return;
+                }
+
+                const data = await res.json();
+                resultEl.textContent = 'OK\n\n' + (data.output || '');
+            } catch (e) {
+                resultEl.textContent = 'Request failed: ' + e;
+            }
+        }
+    </script>
+</body>
+</html>

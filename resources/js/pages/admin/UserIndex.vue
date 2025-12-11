@@ -453,7 +453,7 @@ export default {
             importProcessingPayslip: false,
 
             payrollPeriod: [],
-            selectedPayrollPeriodId: null,
+            selectedPayrollPeriodId: '',
         };
     },
 

@@ -6,8 +6,8 @@ const page = usePage();
 <template>
     <aside class="sidebar">
         <div class="brand">
-            <div class="brand-logo">H</div>
-            <span class="brand-text">HRIS</span>
+            <div class="brand-logo">W</div>
+            <span class="brand-text">WMS</span>
 
             <!-- <div class="logo-image-sidebar">
                 <img

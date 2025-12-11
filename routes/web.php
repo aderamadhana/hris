@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\LoginController;
@@ -69,6 +70,41 @@ Route::middleware('auth')->group(function () {
 Route::prefix('referensi')->group(function () {
     Route::get('/get-payroll_periods', [ReferensiController::class, 'getPayrollPeriod']);
 });
+
+if (app()->environment('local')) {
+
+    Route::get('/util/migrate', function () {
+        return view('util.migrate');
+    })->name('util.migrate');
+
+    Route::post('/run-migrate-fresh-seed', function () {
+        Artisan::call('migrate:fresh', [
+            '--seed'  => true,
+            '--force' => true,
+        ]);
+
+        return back()
+            ->with('status', 'migrate:fresh --seed berhasil dijalankan.')
+            ->with('output', Artisan::output());
+    })->name('util.run-migrate-fresh-seed');
+
+    Route::get('/util/logs', function () {
+        // ambil tanggal dari query ?date=YYYY-MM-DD, default: hari ini
+        $date = request('date') ?: now()->format('Y-m-d');
+
+        // sesuaikan kalau nama file kamu beda
+        $path = storage_path("logs/laravel-{$date}.log");
+
+        $exists = file_exists($path);
+        $content = $exists ? file_get_contents($path) : null;
+
+        return view('util.logs', [
+            'date'    => $date,
+            'exists'  => $exists,
+            'content' => $content,
+        ]);
+    })->name('util.logs');
+}
 
 // Redirect root ke login atau dashboard
 Route::get('/', function () {

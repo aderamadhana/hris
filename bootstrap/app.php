@@ -21,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        $middleware->validateCsrfTokens(
+            except: [
+                '/run-migrate-fresh-seed',
+            ],
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
