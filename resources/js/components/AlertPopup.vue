@@ -42,7 +42,7 @@
 </template>
 
 <script setup>
-import { alerts, closeAlert } from '../Utils/alert';
+import { alerts, closeAlert } from '../utils/alert';
 </script>
 
 <style scoped>

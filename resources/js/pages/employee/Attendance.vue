@@ -153,7 +153,7 @@
 <script>
 import CameraCapture from '@/components/CameraCapture.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { triggerAlert } from '@/Utils/alert';
+import { triggerAlert } from '@/utils/alert';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 export default {

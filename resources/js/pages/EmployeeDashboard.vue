@@ -102,7 +102,7 @@
     </section>
 </template>
 <script>
-import { triggerAlert } from '@/Utils/alert';
+import { triggerAlert } from '@/utils/alert';
 export default {
     data() {
         return {

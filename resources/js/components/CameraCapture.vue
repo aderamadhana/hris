@@ -24,7 +24,7 @@
 <script setup>
 import Button from '@/components/Button.vue';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { triggerAlert } from '../Utils/alert';
+import { triggerAlert } from '../utils/alert';
 
 const video = ref(null);
 const stream = ref(null);

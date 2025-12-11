@@ -418,7 +418,7 @@
 import Button from '@/components/Button.vue';
 import Modal from '@/components/Modal.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { triggerAlert } from '@/Utils/alert';
+import { triggerAlert } from '@/utils/alert';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 

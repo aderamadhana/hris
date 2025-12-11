@@ -251,7 +251,7 @@
 <script>
 import Button from '@/components/Button.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { triggerAlert } from '@/Utils/alert';
+import { triggerAlert } from '@/utils/alert';
 import axios from 'axios';
 
 export default {
