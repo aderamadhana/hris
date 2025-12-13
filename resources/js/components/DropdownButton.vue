@@ -6,7 +6,7 @@
             :aria-expanded="isOpen.toString()"
         >
             {{ label }}
-            <span class="caret">▼</span>
+            <span class="caret" :class="{ 'caret-open': isOpen }">▼</span>
         </button>
 
         <div class="dropdown-menu" v-show="isOpen">
@@ -50,9 +50,9 @@ export default {
         },
 
         handleClickOutside(event) {
-            if (!this.$refs.dropdown.contains(event.target)) {
-                this.close();
-            }
+            // if (!this.$refs.dropdown.contains(event.target)) {
+            this.close();
+            // }
         },
     },
 };
@@ -64,45 +64,48 @@ export default {
     display: inline-block;
 }
 
-/* BUTTON */
+/* BUTTON - Matching the image style */
 .dropdown-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: #2563eb;
     color: #ffffff;
 
-    padding: 9px 16px;
+    padding: 10px 20px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
 
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
 
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
     transition: all 0.2s ease;
 }
 
 .dropdown-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+    background: #1d4ed8;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
 }
 
 .dropdown-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25);
+    transform: scale(0.98);
 }
 
 .dropdown-btn:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+    outline: 2px solid rgba(37, 99, 235, 0.5);
+    outline-offset: 2px;
 }
 
 .caret {
     font-size: 10px;
-    opacity: 0.8;
+    transition: transform 0.2s ease;
+}
+
+.caret-open {
+    transform: rotate(180deg);
 }
 
 /* DROPDOWN MENU */
@@ -111,29 +114,30 @@ export default {
     top: calc(100% + 8px);
     left: 0;
 
-    min-width: 190px;
-    padding: 6px;
+    min-width: 200px;
+    padding: 8px;
 
     background: #ffffff;
-    border-radius: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
 
     box-shadow:
-        0 10px 25px rgba(0, 0, 0, 0.12),
-        0 4px 10px rgba(0, 0, 0, 0.08);
+        0 10px 30px rgba(0, 0, 0, 0.1),
+        0 4px 12px rgba(0, 0, 0, 0.05);
 
     z-index: 1000;
-    animation: dropdownFade 0.15s ease-out;
+    animation: dropdownSlide 0.2s ease-out;
 }
 
-/* ITEM */
+/* DROPDOWN ITEMS */
 .dropdown-menu ::v-deep a,
-.dropdown-menu ::v-deep button {
+.dropdown-menu ::v-deep button,
+.dropdown-menu ::v-deep .dropdown-item {
     display: flex;
     align-items: center;
 
     width: 100%;
-    padding: 10px 12px;
+    padding: 10px 14px;
 
     background: transparent;
     border: none;
@@ -141,19 +145,26 @@ export default {
 
     font-size: 14px;
     font-weight: 500;
-    color: #1f2937;
+    color: #374151;
     text-decoration: none;
+    text-align: left;
 
     cursor: pointer;
-    transition:
-        background 0.15s ease,
-        color 0.15s ease;
+    transition: all 0.15s ease;
 }
 
 .dropdown-menu ::v-deep a:hover,
-.dropdown-menu ::v-deep button:hover {
-    background: #f1f5f9;
-    color: #1d4ed8;
+.dropdown-menu ::v-deep button:hover,
+.dropdown-menu ::v-deep .dropdown-item:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+/* DIVIDER */
+.dropdown-menu ::v-deep .dropdown-divider {
+    height: 1px;
+    margin: 6px 0;
+    background: #e5e7eb;
 }
 
 /* DESTRUCTIVE ACTION */
@@ -162,15 +173,15 @@ export default {
 }
 
 .dropdown-menu ::v-deep .danger:hover {
-    background: #fee2e2;
+    background: #fef2f2;
     color: #b91c1c;
 }
 
 /* ANIMATION */
-@keyframes dropdownFade {
+@keyframes dropdownSlide {
     from {
         opacity: 0;
-        transform: translateY(-6px);
+        transform: translateY(-8px);
     }
     to {
         opacity: 1;

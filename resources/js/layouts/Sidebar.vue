@@ -29,21 +29,40 @@ const page = usePage();
             </Link>
 
             <Link
-                href="/admin/users"
+                href="/admin/karyawan"
                 class="sidebar-item"
-                :class="{ active: page.url.startsWith('/admin') }"
+                :class="{ active: page.url.startsWith('/admin/karyawan') }"
             >
-                <span class="icon">👥</span>
-                <span class="label">Karyawan</span>
+                <span class="icon">🧑‍💼</span>
+                <span class="label">Data Karyawan</span>
             </Link>
 
             <Link
-                href="/admin/users"
+                @click="fiturBelumTersedia()"
                 class="sidebar-item"
-                :class="{ active: page.url.startsWith('/admin') }"
+                :class="{ active: page.url.startsWith('/admin/pelamar') }"
             >
-                <span class="icon">👥</span>
-                <span class="label">Pelamar</span>
+                <span class="icon">📝</span>
+                <span class="label">Data Pelamar</span>
+            </Link>
+            <Link
+                @click="fiturBelumTersedia()"
+                class="sidebar-item"
+                :class="{ active: page.url.startsWith('/admin/master-client') }"
+            >
+                <span class="icon">🏢</span>
+                <span class="label">Master Client</span>
+            </Link>
+
+            <Link
+                @click="fiturBelumTersedia()"
+                class="sidebar-item"
+                :class="{
+                    active: page.url.startsWith('/admin/master-periode-gaji'),
+                }"
+            >
+                <span class="icon">📅</span>
+                <span class="label">Master Periode Gaji</span>
             </Link>
         </nav>
         <nav class="sidebar-nav" v-if="user.role_id == 2">
@@ -59,48 +78,55 @@ const page = usePage();
             <Link
                 href="/attendance"
                 class="sidebar-item"
-                :class="{ active: page.url === '/attendance' }"
+                :class="{ active: page.url.startsWith('/attendance') }"
             >
-                <span class="icon">📷</span>
+                <span class="icon">🕒</span>
                 <span class="label">Absensi</span>
             </Link>
 
             <Link
                 href="/salary"
                 class="sidebar-item"
-                :class="{ active: page.url === '/salary' }"
+                :class="{ active: page.url.startsWith('/salary') }"
             >
-                <span class="icon">💰</span>
+                <span class="icon">🧾</span>
                 <span class="label">Slip Gaji</span>
             </Link>
 
             <Link
-                href="/salary"
+                @click="fiturBelumTersedia()"
                 class="sidebar-item"
-                :class="{ active: page.url === '/salary' }"
+                :class="{ active: page.url.startsWith('/contracts') }"
             >
-                <span class="icon">💰</span>
+                <span class="icon">📄</span>
                 <span class="label">Riwayat Kontrak</span>
             </Link>
 
             <Link
-                href="/salary"
+                @click="fiturBelumTersedia()"
                 class="sidebar-item"
-                :class="{ active: page.url === '/salary' }"
+                :class="{ active: page.url.startsWith('/warnings') }"
             >
-                <span class="icon">💰</span>
-                <span class="label">SP</span>
+                <span class="icon">⚠️</span>
+                <span class="label">Surat Peringatan</span>
             </Link>
         </nav>
     </aside>
 </template>
 <script>
+import { triggerAlert } from '@/utils/alert';
+
 export default {
     data() {
         const page = usePage();
         return {
             user: page.props.auth.user,
         };
+    },
+    methods: {
+        fiturBelumTersedia() {
+            triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
+        },
     },
 };
 </script>

@@ -49,9 +49,16 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('admin')->group(function () {
-        Route::get('/users', function () {
-            return Inertia::render('admin/UserIndex');
+        Route::get('/karyawan', function () {
+            return Inertia::render('admin/DataKaryawan');
         });
+        Route::get('/karyawan/tambah', function () {
+            return Inertia::render('admin/TambahKaryawan');
+        });
+        Route::get('/pelamar', function () {
+            return Inertia::render('admin/DataPelamar');
+        });
+
 
         Route::get('/users/{id}', function () {
             return Inertia::render('admin/UserDetail');

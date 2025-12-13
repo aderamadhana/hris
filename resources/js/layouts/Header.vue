@@ -95,7 +95,7 @@
                     class="user-menu-item"
                     @click.prevent="goProfile"
                 >
-                    <span>👤</span>
+                    <span>🔑</span>
                     <span>Ganti Password</span>
                 </Link>
 
