@@ -15,19 +15,16 @@
                 </div>
 
                 <div class="page-actions">
+                    <DropdownButton label="Upload Data">
+                        <a @click="openImportKaryawanModal">
+                            ⬆️ Upload Excel Karyawan
+                        </a>
+                        <a @click="openImportPayslipModal">
+                            🧾 Upload Slip Gaji Karyawan
+                        </a>
+                    </DropdownButton>
                     <Button variant="primary" @click="fiturBelumTersedia">
                         ➕ Tambah Karyawan
-                    </Button>
-
-                    <Button
-                        variant="secondary"
-                        @click="openImportKaryawanModal"
-                    >
-                        ⬆️ Import Karyawan
-                    </Button>
-
-                    <Button variant="success" @click="openImportPayslipModal">
-                        🧾 Import Payslip
                     </Button>
                 </div>
             </div>
@@ -37,25 +34,10 @@
                 <div class="overview-card primary">
                     <div class="overview-label">Total Karyawan</div>
                     <div class="overview-value">{{ totalItems }}</div>
-                    <div class="overview-meta">
-                        Termasuk karyawan aktif dan nonaktif.
-                    </div>
                 </div>
-
-                <div class="overview-card success">
-                    <div class="overview-label">Aktif</div>
-                    <div class="overview-value">{{ activeEmployees }}</div>
-                    <div class="overview-meta">
-                        Sedang bekerja di perusahaan.
-                    </div>
-                </div>
-
                 <div class="overview-card neutral">
-                    <div class="overview-label">Nonaktif</div>
+                    <div class="overview-label">Kontrak Hampir Habis</div>
                     <div class="overview-value">{{ inactiveEmployees }}</div>
-                    <div class="overview-meta">
-                        Resign, cuti panjang, atau kontrak selesai.
-                    </div>
                 </div>
             </div>
 
@@ -97,7 +79,7 @@
                             <th class="col-perusahaan">Perusahaan</th>
                             <th class="col-position">Jabatan</th>
                             <th class="col-status">Status</th>
-                            <th class="col-action">Aksi</th>
+                            <th class="col-action">Detail</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -120,7 +102,7 @@
                                             {{ u.name }}
                                         </div>
                                         <div class="cell-dept">
-                                            {{ u.department }}
+                                            NRP: {{ u.nrp }}
                                         </div>
                                     </div>
                                 </div>
@@ -182,43 +164,35 @@
                                                 stroke-width="1.6"
                                             />
                                         </svg>
-                                    </button>
-
-                                    <!-- <button
-                                        type="button"
-                                        class="action-icon edit"
-                                        title="Edit karyawan"
-                                        @click="fiturBelumTersedia(u)"
-                                    >
-                                        <svg viewBox="0 0 24 24">
-                                            <path
-                                                d="M4 20h4l9.5-9.5a1.5 1.5 0 0 0 0-2.1L15.6 6.5a1.5 1.5 0 0 0-2.1 0L4 16v4Z"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-width="1.6"
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                            />
-                                        </svg>
+                                        Lihat Detail Karyawan
                                     </button>
 
                                     <button
                                         type="button"
-                                        class="action-icon delete"
-                                        title="Hapus karyawan"
-                                        @click="fiturBelumTersedia(u)"
+                                        class="action-icon view"
+                                        title="Detail karyawan"
+                                        @click="openDetail(u.id)"
                                     >
                                         <svg viewBox="0 0 24 24">
                                             <path
-                                                d="M5 7h14M10 10v7M14 10v7M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 11a1.5 1.5 0 0 0 1.5 1.4h7a1.5 1.5 0 0 0 1.5-1.4L18 7"
+                                                d="M12 5C7 5 3.1 8 1.5 12c1.6 4 5.5 7 10.5 7s8.9-3 10.5-7C20.9 8 17 5 12 5Z"
                                                 fill="none"
                                                 stroke="currentColor"
                                                 stroke-width="1.6"
                                                 stroke-linecap="round"
                                                 stroke-linejoin="round"
                                             />
+                                            <circle
+                                                cx="12"
+                                                cy="12"
+                                                r="3"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="1.6"
+                                            />
                                         </svg>
-                                    </button> -->
+                                        Lihat Slip Gaji Karyawan
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -325,7 +299,7 @@
             <!-- MODAL IMPORT -->
             <Modal v-if="showImportPayslipModal">
                 <div class="modal-header">
-                    <h3>Import Data Payslip Karyawan</h3>
+                    <h3>Import Data Slip Gaji Karyawan</h3>
                     <button
                         class="modal-close"
                         :disabled="loadingImportPayslip"
@@ -336,8 +310,8 @@
                 </div>
 
                 <p class="modal-text">
-                    Pilih file Excel/CSV yang berisi data payslip karyawan dan
-                    tentukan periode payroll.
+                    Pilih file Excel/CSV yang berisi data slip gaji karyawan dan
+                    tentukan periode slip.
                 </p>
 
                 <div class="modal-body">
@@ -416,6 +390,7 @@
 
 <script>
 import Button from '@/components/Button.vue';
+import DropdownButton from '@/components/DropdownButton.vue';
 import Modal from '@/components/Modal.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
@@ -423,7 +398,7 @@ import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 
 export default {
-    components: { Button, Modal, AppLayout },
+    components: { Button, Modal, AppLayout, DropdownButton },
     data() {
         return {
             users: [], // ← DATA DARI /employee
@@ -806,7 +781,7 @@ export default {
     box-shadow: 0 10px 20px rgba(15, 23, 42, 0.05);
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .overview-card.primary {

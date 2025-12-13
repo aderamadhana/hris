@@ -91,6 +91,15 @@
                 </Link>
 
                 <Link
+                    href="#"
+                    class="user-menu-item"
+                    @click.prevent="goProfile"
+                >
+                    <span>👤</span>
+                    <span>Ganti Password</span>
+                </Link>
+
+                <Link
                     href="/logout"
                     method="post"
                     as="button"

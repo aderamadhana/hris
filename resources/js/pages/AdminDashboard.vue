@@ -1,126 +1,180 @@
 <template>
-    <section class="dashboard">
-        <!-- Header section -->
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Dashboard HRIS {{ user }}</h1>
-                <p class="page-subtitle">
-                    Ringkasan kehadiran dan status karyawan hari ini
-                </p>
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Dashboard Admin</h1>
+        </div>
+    </div>
+    <div class="dashboard-grid">
+        <!-- TOTAL KARYAWAN TIDAK AKTIF -->
+        <div class="dashboard-card danger">
+            <div class="dashboard-card-header">
+                <div class="dashboard-card-title">Karyawan Tidak Aktif</div>
+                <span class="dashboard-card-badge">Total</span>
             </div>
-
-            <button class="btn" @click="fiturBelumTersedia">
-                ⬇️ Download laporan
-            </button>
+            <div class="dashboard-value">{{ stats.karyawanTidakAktif }}</div>
+            <div class="dashboard-meta">
+                PHK · Habis kontrak · Non-aktif sistem
+            </div>
         </div>
 
-        <!-- GRID UTAMA -->
-        <div class="grid">
-            <!-- KEHADIRAN HARI INI -->
-            <div class="card large">
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">Kehadiran Hari Ini</div>
-                        <div class="meta">
-                            Senin, 8 Desember 2025 · Shift Pagi
-                        </div>
-                    </div>
-                    <span class="card-badge">Realtime</span>
-                </div>
-
-                <div class="value">19 / 24</div>
-                <div class="meta">19 hadir · 3 cuti · 2 izin · 0 alpha</div>
-
-                <div class="chart-placeholder">
-                    Grafik check-in (placeholder)
-                </div>
+        <!-- KONTRAK HAMPIR HABIS -->
+        <div class="dashboard-card warning">
+            <div class="dashboard-card-header">
+                <div class="dashboard-card-title">Kontrak Hampir Habis</div>
+                <select
+                    class="dashboard-card-dropdown"
+                    v-model="filters.kontrakHabis"
+                    @change="fetchStats"
+                >
+                    <option value="7">Urgent (&lt; 7 hari)</option>
+                    <option value="30">&lt; 30 hari</option>
+                </select>
             </div>
-
-            <!-- ON-TIME CHECK-IN -->
-            <div class="card success">
-                <div class="card-header">
-                    <div class="card-title">On-Time Check-in</div>
-                    <span class="card-badge">Target ≥ 80%</span>
-                </div>
-
-                <div class="circle">
-                    <div class="circle-inner">82%</div>
-                </div>
-
-                <div class="meta">18 karyawan check-in sebelum jam 09.00</div>
-            </div>
-
-            <!-- TERLAMBAT -->
-            <div class="card danger">
-                <div class="card-header">
-                    <div class="card-title">Terlambat</div>
-                    <span class="card-badge">Hari ini</span>
-                </div>
-
-                <div class="circle">
-                    <div class="circle-inner">5 org</div>
-                </div>
-
-                <div class="meta">Rata-rata keterlambatan 12 menit</div>
-            </div>
-
-            <!-- TOTAL KARYAWAN -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Total Karyawan</div>
-                    <span class="card-badge">Aktif</span>
-                </div>
-                <div class="value">24</div>
-                <div class="meta">Termasuk karyawan tetap & kontrak</div>
-            </div>
-
-            <!-- PENGAJUAN CUTI -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Pengajuan Cuti</div>
-                    <span class="card-badge">Menunggu</span>
-                </div>
-                <div class="value">3</div>
-                <div class="meta">Menunggu approval atasan/HR hari ini</div>
-            </div>
-
-            <!-- LEMBUR BULAN INI -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Lembur Bulan Ini</div>
-                    <span class="card-badge">Disetujui</span>
-                </div>
-                <div class="value">42 jam</div>
-                <div class="meta">Dari 9 karyawan · Perlu review payroll</div>
-            </div>
-
-            <!-- KONTRAK HAMPIR HABIS -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Kontrak Hampir Habis</div>
-                    <span class="card-badge">&lt; 30 hari</span>
-                </div>
-                <div class="value">4</div>
-                <div class="meta">
-                    Perlu follow-up perpanjangan atau offboarding
-                </div>
+            <div class="dashboard-value">{{ stats.kontrakHampirHabis }}</div>
+            <div class="dashboard-meta">
+                Perlu keputusan perpanjangan / offboarding
             </div>
         </div>
-    </section>
+
+        <!-- TOTAL CLIENT AKTIF -->
+        <div class="dashboard-card success">
+            <div class="dashboard-card-header">
+                <div class="dashboard-card-title">Client Aktif</div>
+                <span class="dashboard-card-badge">Berjalan</span>
+            </div>
+            <div class="dashboard-value">{{ stats.clientAktif }}</div>
+            <div class="dashboard-meta">Kontrak aktif & ongoing</div>
+        </div>
+
+        <!-- TOTAL CLIENT TIDAK AKTIF -->
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <div class="dashboard-card-title">Client Tidak Aktif</div>
+                <span class="dashboard-card-badge">Closed</span>
+            </div>
+            <div class="dashboard-value">{{ stats.clientTidakAktif }}</div>
+            <div class="dashboard-meta">
+                Selesai · Putus · Tidak diperpanjang
+            </div>
+        </div>
+
+        <!-- KARYAWAN BARU HARI INI -->
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <div class="dashboard-card-title">Karyawan Baru</div>
+                <select
+                    class="dashboard-card-dropdown"
+                    v-model="filters.karyawanBaru"
+                    @change="fetchStats"
+                >
+                    <option value="1">Hari ini</option>
+                    <option value="7">7 hari terakhir</option>
+                    <option value="30">30 hari terakhir</option>
+                </select>
+            </div>
+            <div class="dashboard-value">{{ stats.karyawanBaru }}</div>
+            <div class="dashboard-meta">
+                Onboarding {{ getMetaText(filters.karyawanBaru) }}
+            </div>
+        </div>
+
+        <!-- PELAMAR HARI INI -->
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <div class="dashboard-card-title">Pelamar Masuk</div>
+                <select
+                    class="dashboard-card-dropdown"
+                    v-model="filters.pelamar"
+                    @change="fetchStats"
+                >
+                    <option value="1">Hari ini</option>
+                    <option value="7">7 hari terakhir</option>
+                    <option value="30">30 hari terakhir</option>
+                </select>
+            </div>
+            <div class="dashboard-value">{{ stats.pelamarMasuk }}</div>
+            <div class="dashboard-meta">Perlu screening HR</div>
+        </div>
+
+        <!-- KARYAWAN RESIGN HARI INI -->
+        <div class="dashboard-card danger">
+            <div class="dashboard-card-header">
+                <div class="dashboard-card-title">Resign</div>
+                <select
+                    class="dashboard-card-dropdown"
+                    v-model="filters.resign"
+                    @change="fetchStats"
+                >
+                    <option value="1">Hari ini</option>
+                    <option value="7">7 hari terakhir</option>
+                    <option value="30">30 hari terakhir</option>
+                </select>
+            </div>
+            <div class="dashboard-value">{{ stats.resign }}</div>
+            <div class="dashboard-meta">Perlu exit clearance</div>
+        </div>
+    </div>
 </template>
+
 <script>
-import { triggerAlert } from '@/utils/alert';
-export default {
+import { router } from '@inertiajs/vue3';
+import { defineComponent, reactive } from 'vue';
+
+export default defineComponent({
     props: {
-        user: {
+        initialStats: {
             type: Object,
             required: true,
         },
     },
-    methods: {
-        fiturBelumTersedia() {
-            triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
-        },
+
+    setup(props) {
+        // State untuk stats
+        const stats = reactive({
+            karyawanTidakAktif: 0,
+            kontrakHampirHabis: 0,
+            clientAktif: 0,
+            clientTidakAktif: 0,
+            karyawanBaru: 0,
+            pelamarMasuk: 0,
+            resign: 0,
+        });
+
+        // State untuk filters
+        const filters = reactive({
+            kontrakHabis: '30',
+            karyawanBaru: '1',
+            pelamar: '1',
+            resign: '1',
+        });
+
+        // Fetch stats dengan filter
+        const fetchStats = () => {
+            router.get(route('dashboard.stats'), filters, {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['stats'],
+                onSuccess: (page) => {
+                    if (page.props.stats) {
+                        Object.assign(stats, page.props.stats);
+                    }
+                },
+            });
+        };
+
+        // Helper untuk meta text
+        const getMetaText = (days) => {
+            if (days === '1') return 'hari ini';
+            if (days === '7') return '7 hari terakhir';
+            return '30 hari terakhir';
+        };
+
+        return {
+            stats,
+            filters,
+            fetchStats,
+            getMetaText,
+        };
     },
-};
+});
 </script>

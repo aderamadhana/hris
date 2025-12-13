@@ -4,31 +4,28 @@
         <div class="page-header">
             <div>
                 <h1 class="page-title">Dashboard Saya</h1>
-                <p class="page-subtitle">
-                    Ringkasan kehadiran dan aktivitas kerja Anda
-                </p>
             </div>
-
-            <button class="btn" @click="fiturBelumTersedia">
-                ⬇️ Unduh Slip Kehadiran
-            </button>
         </div>
 
         <!-- GRID -->
-        <div class="grid">
+        <div class="dashboard-grid">
             <!-- STATUS KEHADIRAN HARI INI -->
-            <div class="card large">
-                <div class="card-header">
+            <div class="dashboard-card large">
+                <div class="dashboard-card-header">
                     <div>
-                        <div class="card-title">Kehadiran Hari Ini</div>
-                        <div class="meta">{{ today }} · {{ shift }}</div>
+                        <div class="dashboard-card-title">
+                            Kehadiran Hari Ini
+                        </div>
+                        <div class="dashboard-meta">
+                            {{ today }} · {{ shift }}
+                        </div>
                     </div>
-                    <span class="card-badge">Realtime</span>
+                    <span class="dashboard-card-badge">Realtime</span>
                 </div>
 
-                <div class="value">{{ attendanceStatus }}</div>
+                <div class="dashboard-value">{{ attendanceStatus }}</div>
 
-                <div class="meta">
+                <div class="dashboard-meta">
                     Clock In: {{ clockIn || '-' }} · Clock Out:
                     {{ clockOut || '-' }}
                 </div>
@@ -37,100 +34,397 @@
             </div>
 
             <!-- ON-TIME -->
-            <div class="card success">
-                <div class="card-header">
-                    <div class="card-title">Ketepatan Waktu</div>
-                    <span class="card-badge">Bulan ini</span>
+            <div class="dashboard-card success">
+                <div class="dashboard-card-header">
+                    <div class="dashboard-card-title">Ketepatan Waktu</div>
+                    <span class="dashboard-card-badge">Bulan ini</span>
                 </div>
 
-                <div class="circle">
-                    <div class="circle-inner">{{ onTimeRate }}%</div>
+                <div class="dashboard-circle">
+                    <div class="dashboard-circle-inner">{{ onTimeRate }}%</div>
                 </div>
 
-                <div class="meta">
+                <div class="dashboard-meta">
                     {{ onTimeCount }} hari datang tepat waktu
                 </div>
             </div>
 
             <!-- TERLAMBAT -->
-            <div class="card danger">
-                <div class="card-header">
-                    <div class="card-title">Keterlambatan</div>
-                    <span class="card-badge">Bulan ini</span>
+            <div class="dashboard-card danger">
+                <div class="dashboard-card-header">
+                    <div class="dashboard-card-title">Keterlambatan</div>
+                    <span class="dashboard-card-badge">Bulan ini</span>
                 </div>
 
-                <div class="circle">
-                    <div class="circle-inner">{{ lateCount }}x</div>
+                <div class="dashboard-circle">
+                    <div class="dashboard-circle-inner">{{ lateCount }}x</div>
                 </div>
 
-                <div class="meta">Rata-rata terlambat {{ avgLate }} menit</div>
-            </div>
-
-            <!-- SISA CUTI -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Sisa Cuti</div>
-                    <span class="card-badge">Tahun ini</span>
+                <div class="dashboard-meta">
+                    Rata-rata terlambat {{ avgLate }} menit
                 </div>
-
-                <div class="value">{{ leaveRemaining }} hari</div>
-                <div class="meta">Digunakan {{ leaveUsed }} hari</div>
-            </div>
-
-            <!-- LEMBUR -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Lembur</div>
-                    <span class="card-badge">Bulan ini</span>
-                </div>
-
-                <div class="value">{{ overtimeHours }} jam</div>
-                <div class="meta">{{ overtimeDays }} hari lembur tercatat</div>
             </div>
 
             <!-- STATUS KONTRAK -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Status Kontrak</div>
-                    <span class="card-badge">{{ contractType }}</span>
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <div class="dashboard-card-title">Status Kontrak</div>
+                    <span class="dashboard-card-badge">{{ contractType }}</span>
                 </div>
 
-                <div class="value">{{ contractEnd }}</div>
-                <div class="meta">Berlaku hingga tanggal tersebut</div>
+                <div class="dashboard-value">{{ contractEnd }}</div>
+                <div class="dashboard-meta">
+                    Berlaku hingga tanggal tersebut
+                </div>
+            </div>
+
+            <!-- HISTORY KONTRAK KERJA (NEW) -->
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <div class="dashboard-card-title">History Kontrak</div>
+                    <span class="dashboard-card-badge">Riwayat</span>
+                </div>
+
+                <div class="dashboard-value">{{ contractHistory.length }}</div>
+                <div class="dashboard-meta">Total kontrak tercatat</div>
+
+                <button class="dashboard-btn-link" @click="showContractHistory">
+                    Lihat Detail History →
+                </button>
             </div>
         </div>
     </section>
 </template>
-<script>
-import { triggerAlert } from '@/utils/alert';
-export default {
-    data() {
-        return {
-            today: 'Senin, 8 Desember 2025',
-            shift: 'Shift Pagi',
-            attendanceStatus: 'Hadir ✅',
-            clockIn: '07:42',
-            clockOut: null,
 
-            onTimeRate: 82,
-            onTimeCount: 18,
-            lateCount: 5,
-            avgLate: 12,
+<script setup>
+import { router } from '@inertiajs/vue3';
 
-            leaveRemaining: 8,
-            leaveUsed: 4,
-
-            overtimeHours: 12,
-            overtimeDays: 3,
-
-            contractType: 'Kontrak',
-            contractEnd: '31 Maret 2026',
-        };
+// Props dari controller
+const props = defineProps({
+    today: {
+        type: String,
+        default: 'Jumat, 13 Desember 2024',
     },
-    methods: {
-        fiturBelumTersedia() {
-            triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
-        },
+    shift: {
+        type: String,
+        default: 'Shift Pagi (08:00 - 17:00)',
     },
+    attendanceStatus: {
+        type: String,
+        default: 'Hadir',
+    },
+    clockIn: {
+        type: String,
+        default: '07:58',
+    },
+    clockOut: {
+        type: String,
+        default: '17:15',
+    },
+    onTimeRate: {
+        type: Number,
+        default: 95,
+    },
+    onTimeCount: {
+        type: Number,
+        default: 19,
+    },
+    lateCount: {
+        type: Number,
+        default: 3,
+    },
+    avgLate: {
+        type: Number,
+        default: 12,
+    },
+    leaveRemaining: {
+        type: Number,
+        default: 8,
+    },
+    leaveUsed: {
+        type: Number,
+        default: 4,
+    },
+    overtimeHours: {
+        type: Number,
+        default: 16,
+    },
+    overtimeDays: {
+        type: Number,
+        default: 4,
+    },
+    contractType: {
+        type: String,
+        default: 'PKWT',
+    },
+    contractEnd: {
+        type: String,
+        default: '31 Maret 2025',
+    },
+    contractHistory: {
+        type: Array,
+        default: () => [
+            {
+                id: 1,
+                type: 'PKWT',
+                startDate: '01 April 2024',
+                endDate: '31 Maret 2025',
+                status: 'Aktif',
+                duration: '12 bulan',
+            },
+            {
+                id: 2,
+                type: 'PKWT',
+                startDate: '01 April 2023',
+                endDate: '31 Maret 2024',
+                status: 'Selesai',
+                duration: '12 bulan',
+            },
+            {
+                id: 3,
+                type: 'Probation',
+                startDate: '01 Januari 2023',
+                endDate: '31 Maret 2023',
+                status: 'Selesai',
+                duration: '3 bulan',
+            },
+        ],
+    },
+});
+
+// Functions
+const fiturBelumTersedia = () => {
+    alert('Fitur ini sedang dalam pengembangan');
+};
+
+const showContractHistory = () => {
+    // Redirect ke halaman history atau buka modal
+    router.visit(route('contract.history'));
+    // Atau bisa pakai modal jika prefer
 };
 </script>
+
+<style>
+/* .dashboard {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+} */
+
+/* PAGE HEADER */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.page-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+}
+
+.page-subtitle {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0.25rem 0 0 0;
+}
+
+.btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+/* DASHBOARD GRID */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.dashboard-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.dashboard-card.large {
+    grid-column: span 2;
+}
+
+/* Card variants */
+.dashboard-card.danger {
+    border-left: 4px solid #ef4444;
+    background: linear-gradient(to right, #fef2f2 0%, white 100%);
+}
+
+.dashboard-card.warning {
+    border-left: 4px solid #f59e0b;
+    background: linear-gradient(to right, #fffbeb 0%, white 100%);
+}
+
+.dashboard-card.success {
+    border-left: 4px solid #10b981;
+    background: linear-gradient(to right, #f0fdf4 0%, white 100%);
+}
+
+/* Card header */
+.dashboard-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 0.75rem;
+}
+
+.dashboard-card-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    letter-spacing: -0.01em;
+}
+
+/* Card badge */
+.dashboard-card-badge {
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    background: #f3f4f6;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.dashboard-card.danger .dashboard-card-badge {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.dashboard-card.success .dashboard-card-badge {
+    background: #d1fae5;
+    color: #059669;
+}
+
+/* Value */
+.dashboard-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-card.danger .dashboard-value {
+    color: #dc2626;
+}
+
+.dashboard-card.warning .dashboard-value {
+    color: #d97706;
+}
+
+.dashboard-card.success .dashboard-value {
+    color: #059669;
+}
+
+/* Meta */
+.dashboard-meta {
+    font-size: 0.813rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+/* Chart Placeholder */
+.chart-placeholder {
+    margin-top: 1rem;
+    padding: 2rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 0.875rem;
+    border: 2px dashed #e5e7eb;
+}
+
+/* Button Link */
+.dashboard-btn-link {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.813rem;
+    font-weight: 600;
+    color: #3b82f6;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    text-align: left;
+}
+
+.dashboard-btn-link:hover {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dashboard {
+        padding: 1rem;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .dashboard-card {
+        padding: 1.25rem;
+    }
+
+    .dashboard-card.large {
+        grid-column: span 1;
+    }
+
+    .dashboard-value {
+        font-size: 2rem;
+    }
+}
+
+@media (min-width: 1400px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .dashboard-card.large {
+        grid-column: span 2;
+    }
+}
+</style>

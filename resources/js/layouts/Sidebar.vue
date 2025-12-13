@@ -6,8 +6,8 @@ const page = usePage();
 <template>
     <aside class="sidebar">
         <div class="brand">
-            <div class="brand-logo">W</div>
-            <span class="brand-text">WMS</span>
+            <div class="brand-logo">M</div>
+            <span class="brand-text">TAB</span>
 
             <!-- <div class="logo-image-sidebar">
                 <img
@@ -34,7 +34,16 @@ const page = usePage();
                 :class="{ active: page.url.startsWith('/admin') }"
             >
                 <span class="icon">👥</span>
-                <span class="label">Users</span>
+                <span class="label">Karyawan</span>
+            </Link>
+
+            <Link
+                href="/admin/users"
+                class="sidebar-item"
+                :class="{ active: page.url.startsWith('/admin') }"
+            >
+                <span class="icon">👥</span>
+                <span class="label">Pelamar</span>
             </Link>
         </nav>
         <nav class="sidebar-nav" v-if="user.role_id == 2">
@@ -62,7 +71,25 @@ const page = usePage();
                 :class="{ active: page.url === '/salary' }"
             >
                 <span class="icon">💰</span>
-                <span class="label">Payroll</span>
+                <span class="label">Slip Gaji</span>
+            </Link>
+
+            <Link
+                href="/salary"
+                class="sidebar-item"
+                :class="{ active: page.url === '/salary' }"
+            >
+                <span class="icon">💰</span>
+                <span class="label">Riwayat Kontrak</span>
+            </Link>
+
+            <Link
+                href="/salary"
+                class="sidebar-item"
+                :class="{ active: page.url === '/salary' }"
+            >
+                <span class="icon">💰</span>
+                <span class="label">SP</span>
             </Link>
         </nav>
     </aside>

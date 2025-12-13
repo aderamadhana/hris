@@ -28,6 +28,7 @@ class EmployeeController extends Controller
                 return [
                     'id' => $e->id,
                     'name' => $e->nama,
+                    'nrp' => $e->nrp,
                     'nik' => $e->personal->no_ktp ?? '-',
                     'tanggal_lahir' => $e->tanggal_lahir
                     ? \Carbon\Carbon::parse($e->tanggal_lahir)->format('d/m/Y')

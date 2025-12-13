@@ -4,45 +4,32 @@
         <div class="background-blur-2"></div>
 
         <div class="auth-container">
-            <!-- LEFT: copy + ilustrasi -->
+            <!-- LEFT: brand identity -->
             <div class="auth-left">
-                <div class="brand-chip">
-                    <span class="dot"></span>
-                    HRIS Platform
-                </div>
-
-                <h1>Kelola SDM dengan lebih ringan.</h1>
-                <p>
-                    Pantau kehadiran, cuti, kinerja, dan administrasi karyawan
-                    dalam satu dashboard yang rapi dan mudah dipahami.
-                </p>
-
-                <div class="left-meta">
-                    <div class="meta-item">
-                        <span class="meta-label">Realtime</span>
-                        <span class="meta-value">Monitoring kehadiran</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="meta-label">Terintegrasi</span>
-                        <span class="meta-value">Payroll & KPI</span>
-                    </div>
+                <div class="brand-center">
+                    <img
+                        src="/assets/images/logo.png"
+                        alt="PT Mitra Wira Mas"
+                        class="brand-logo-login"
+                    />
                 </div>
             </div>
 
-            <!-- RIGHT: card login -->
+            <!-- RIGHT: login -->
             <div class="auth-right">
                 <div class="login-card">
                     <h2>Masuk ke akun Anda</h2>
                     <p class="subtitle">
                         Gunakan NIK dan kata sandi yang sudah didaftarkan.
                     </p>
+
                     <form @submit.prevent="handleLogin">
                         <div class="form-group">
                             <label>NIK</label>
                             <input
                                 v-model="nik"
                                 type="text"
-                                placeholder="Masukkan username"
+                                placeholder="Masukkan NIK"
                                 :class="{ 'has-error': errors.nik }"
                                 required
                             />
@@ -57,7 +44,7 @@
                                 <input
                                     v-model="password"
                                     :type="showPassword ? 'text' : 'password'"
-                                    placeholder="Masukkan password"
+                                    placeholder="Masukkan kata sandi"
                                     minlength="5"
                                     :class="{ 'has-error': errors.password }"
                                     required
@@ -70,9 +57,11 @@
                                     {{ showPassword ? '🙈' : '👁️' }}
                                 </button>
                             </div>
+
                             <small v-if="errors.password" class="error">
                                 {{ errors.password[0] }}
                             </small>
+
                             <div class="helper-row">
                                 <small>* minimal 5 karakter</small>
                                 <a class="forgot" href="#">Lupa Kata Sandi?</a>
@@ -84,7 +73,7 @@
                             type="submit"
                             :disabled="processing"
                         >
-                            <span v-if="!processing">Masuk sekarang</span>
+                            <span v-if="!processing">Masuk</span>
                             <span v-else class="btn-loading">
                                 <span class="spinner"></span>
                                 Memproses...
@@ -230,16 +219,23 @@ export default {
 
 /* ===== LEFT PANEL ===== */
 .auth-left {
-    padding: 32px 28px 32px 32px;
+    padding: 32px;
     border-radius: 24px;
-    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 60%, #eef2ff 100%);
+    background: linear-gradient(135deg, #ffffff, #f8fafc);
     border: 1px solid #e5e7eb;
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-    position: relative;
-    overflow: hidden;
 
     display: flex;
     flex-direction: column;
+}
+
+.brand-center {
+    flex: 1; /* ambil sisa tinggi card */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* horizontal center */
+    justify-content: center; /* vertical center */
+    transform: translateY(-6%); /* optical center */
 }
 
 /* supaya konten tidak “ketiban” efek pseudo-element */
@@ -248,10 +244,23 @@ export default {
     z-index: 1;
 }
 
-/* chip kecil, bukan full width */
+/* LOGO */
+.brand-logo-login {
+    width: 100%;
+    filter: none; /* HAPUS glow */
+}
+
+/* TAGLINE */
+.tagline {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+/* chip */
 .brand-chip {
     display: inline-flex;
-    flex: 0 0 auto;
     align-items: center;
     gap: 8px;
     padding: 6px 14px;
@@ -262,9 +271,9 @@ export default {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: #1e293b;
-    margin-bottom: 18px;
-    width: 150px;
+    width: fit-content;
 }
+
 .brand-chip .dot {
     width: 8px;
     height: 8px;

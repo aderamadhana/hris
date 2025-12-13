@@ -555,6 +555,50 @@
                             </div>
                         </div>
                     </template>
+
+                    <!-- dokumen -->
+                    <template #dokumen>
+                        <div class="tab-section">
+                            <h3 class="tab-title">Dokumen</h3>
+
+                            <div class="detail-grid two-col secondary">
+                                <div
+                                    class="field"
+                                    style="
+                                        grid-column: 1 / -1;
+                                        font-weight: 600;
+                                        border-bottom: 1px solid #e5e7eb;
+                                        padding-bottom: 6px;
+                                    "
+                                >
+                                    Kelengkapan Dokumen
+                                </div>
+
+                                <div
+                                    v-for="doc in dokumenList"
+                                    :key="doc.key"
+                                    class="field"
+                                >
+                                    <div class="field-label">
+                                        {{ doc.label }}
+                                    </div>
+                                    <div class="field-value">
+                                        <span
+                                            :class="
+                                                doc.value
+                                                    ? 'status-ok'
+                                                    : 'status-empty'
+                                            "
+                                        >
+                                            {{
+                                                doc.value ? 'Ada' : 'Tidak Ada'
+                                            }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </Tabs>
             </div>
 
@@ -592,6 +636,7 @@ export default {
             pekerjaan: [],
             keluarga: [],
             kesehatan: {},
+            document: {},
 
             tabs: [
                 { key: 'karyawan', label: 'Data Karyawan' },
@@ -599,8 +644,59 @@ export default {
                 { key: 'pekerjaan', label: 'Pekerjaan' },
                 { key: 'keluarga', label: 'Keluarga' },
                 { key: 'kesehatan', label: 'Kesehatan' },
+                { key: 'dokumen', label: 'Kelengkapan Dokumen' },
             ],
         };
+    },
+
+    computed: {
+        dokumenList() {
+            return [
+                {
+                    key: 'pas_foto',
+                    label: 'Pas Foto',
+                    value: this.dokumen?.pas_foto,
+                },
+                { key: 'ktp', label: 'KTP', value: this.dokumen?.ktp },
+                { key: 'kk', label: 'Kartu Keluarga', value: this.dokumen?.kk },
+                {
+                    key: 'bpjs_tk',
+                    label: 'BPJS Ketenagakerjaan',
+                    value: this.dokumen?.bpjs_tk,
+                },
+                {
+                    key: 'vaksin',
+                    label: 'Sertifikat Vaksin',
+                    value: this.dokumen?.vaksin,
+                },
+                {
+                    key: 'sio_forklift',
+                    label: 'SIO Forklift',
+                    value: this.dokumen?.sio_forklift,
+                },
+                {
+                    key: 'form_bpjs_tk',
+                    label: 'Formulir BPJS TK',
+                    value: this.dokumen?.form_bpjs_tk,
+                },
+                {
+                    key: 'form_bpjs_kes',
+                    label: 'Formulir BPJS Kesehatan',
+                    value: this.dokumen?.form_bpjs_kes,
+                },
+                {
+                    key: 'paklaring',
+                    label: 'Surat Pengalaman Kerja / Paklaring',
+                    value: this.dokumen?.paklaring,
+                },
+                { key: 'sim_b1', label: 'SIM B1', value: this.dokumen?.sim_b1 },
+                {
+                    key: 'kartu_garda',
+                    label: 'Kartu Garda Pratama',
+                    value: this.dokumen?.kartu_garda,
+                },
+            ];
+        },
     },
 
     mounted() {
