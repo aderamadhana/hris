@@ -93,7 +93,7 @@
                 <Link
                     href="#"
                     class="user-menu-item"
-                    @click.prevent="goProfile"
+                    @click.prevent="goChangePassword"
                 >
                     <span>🔑</span>
                     <span>Ganti Password</span>
@@ -197,6 +197,10 @@ export default {
 
         goProfile() {
             router.visit(`/employee/profil/${this.user.id}`);
+        },
+
+        goChangePassword() {
+            router.visit(`/employee/change-password`);
         },
     },
 };

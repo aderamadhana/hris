@@ -14,10 +14,14 @@ use Inertia\Inertia;
 
 class PayslipController extends Controller
 {
-    public function showPayslip(Request $request, int $payrollPeriodId)
+    public function showPayslip(Request $request, int $payrollPeriodId, int $employee_id = null)
     {
         try {
             $employee = $request->user()->employee;
+
+            if($employee_id != 0 || $employee_id != null){
+                $employee->id = $employee_id;
+            }
 
             $period = PayrollPeriod::findOrFail($payrollPeriodId);
             $employement = EmployeeEmployment::where('employee_id', $employee->id)->first();

@@ -38,7 +38,7 @@ const page = usePage();
             </Link>
 
             <Link
-                @click="fiturBelumTersedia()"
+                href="/admin/pelamar"
                 class="sidebar-item"
                 :class="{ active: page.url.startsWith('/admin/pelamar') }"
             >

@@ -24,10 +24,17 @@ Route::middleware('auth')->group(function () {
     Route::prefix('employee')->group(function () {
         Route::get('/', [EmployeeController::class, 'index']);
         Route::get('/profil/{id}', [EmployeeController::class, 'profil']);
+        Route::get('/change-password', [EmployeeController::class, 'changePassword']);
+        Route::post('/proses-change-password', [EmployeeController::class, 'prosesChangePassword']);
         Route::get('/get-data/{id}', [EmployeeController::class, 'getData']);
         Route::post('/import-karyawan', [EmployeeController::class, 'importKaryawan']);
         Route::post('/import-payslip', [EmployeeController::class, 'importPayslip']);
         Route::get('/import-log/{id}', [EmployeeController::class, 'showImportLog']);
+        Route::get('/salary/{id}', function ($id) {
+            return Inertia::render('employee/SalarySlip', [
+                'employeeId' => $id
+            ]);
+        });
     });
 
     Route::prefix('payroll')->group(function () {
@@ -45,7 +52,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('payslip')->group(function () {
-        Route::get('/show/{id}', [PayslipController::class, 'showPayslip']);
+        Route::get('/show/{id}/{employee_id}', [PayslipController::class, 'showPayslip']);
     });
 
     Route::prefix('admin')->group(function () {

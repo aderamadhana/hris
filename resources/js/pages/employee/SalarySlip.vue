@@ -14,7 +14,7 @@
                     variant="primary"
                     size="md"
                     @click="downloadSlip"
-                    :disabled="!slip || !selectedPayrollPeriodId"
+                    :disabled="!slip || !selectedGajiPeriodId"
                     class="download-btn"
                 >
                     Download PDF
@@ -23,17 +23,15 @@
 
             <!-- PILIH PERIODE -->
             <div class="period-selector">
-                <label class="form-label">Periode Payroll</label>
+                <label class="form-label">Periode Gaji</label>
                 <select
-                    v-model="selectedPayrollPeriodId"
+                    v-model="selectedGajiPeriodId"
                     @change="loadSlip"
                     class="form-select"
                     :disabled="loadingImportPayslip"
                 >
                     <!-- Placeholder -->
-                    <option disabled value="">
-                        -- Pilih Periode Payroll --
-                    </option>
+                    <option disabled value="">-- Pilih Periode Gaji --</option>
 
                     <!-- Data -->
                     <option
@@ -49,11 +47,11 @@
             </div>
 
             <!-- STATE: BELUM PILIH PERIODE -->
-            <div v-if="!selectedPayrollPeriodId" class="empty-state">
-                <h3 class="empty-title">Pilih Periode Payroll</h3>
+            <div v-if="!selectedGajiPeriodId" class="empty-state">
+                <h3 class="empty-title">Pilih Periode Gaji</h3>
                 <p class="empty-text">
-                    Silakan pilih periode payroll di atas untuk melihat detail
-                    slip gaji
+                    Silakan pilih periode gaji di atas untuk melihat detail slip
+                    gaji
                 </p>
             </div>
 
@@ -61,7 +59,7 @@
             <div v-else-if="loadingImportPayslip" class="loading-item">
                 <div class="loading-item-card">
                     <div class="spinner-item"></div>
-                    <div class="loading-item-text">Memuat data Payroll</div>
+                    <div class="loading-item-text">Memuat data Gaji</div>
                     <div class="loading-item-subtext">
                         Mohon tunggu sebentar
                     </div>
@@ -257,6 +255,10 @@ import axios from 'axios';
 export default {
     props: {
         payrollPeriodId: Number,
+        employeeId: {
+            type: Number,
+            required: true,
+        },
     },
 
     components: {
@@ -269,7 +271,7 @@ export default {
             loading: true,
 
             payrollPeriod: [],
-            selectedPayrollPeriodId: '',
+            selectedGajiPeriodId: '',
             loadingImportPayslip: false,
         };
     },
@@ -306,9 +308,11 @@ export default {
             this.slip = null;
             this.loadingImportPayslip = true;
             try {
-                const res = await axios.get(
-                    `/payslip/show/` + this.selectedPayrollPeriodId,
-                );
+                const url = this.employeeId
+                    ? `/payslip/show/${this.selectedGajiPeriodId}/${this.employeeId}`
+                    : `/payslip/show/${this.selectedGajiPeriodId}/0`;
+
+                const res = await axios.get(url);
                 console.log(res.data);
                 this.slip = res.data.slip;
                 this.loadingImportPayslip = false;

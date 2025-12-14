@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Imports\EmployeesImport;
 use App\Imports\PayslipImport;
+use Illuminate\Support\Facades\Hash;
 
 class EmployeeController extends Controller
 {
@@ -21,27 +22,56 @@ class EmployeeController extends Controller
      */
     public function index(Request $request)
     {
-        $employees = Employee::with('personal','employments')
+        $perPage = (int) $request->query('per_page', 10);
+        $perPage = min(max($perPage, 1), 100);
+
+        $search = trim($request->query('search'));
+        $status_active = trim($request->query('status_active'));
+
+        $employees = Employee::with(['personal', 'employments'])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nrp', 'like', "%{$search}%")
+                    ->orWhere('nama', 'like', "%{$search}%")
+                    ->orWhereHas('personal', function ($qe) use ($search) {
+                        $qe->where('no_ktp', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('employments', function ($qe) use ($search) {
+                        $qe->where('jabatan', 'like', "%{$search}%");
+                    });
+                });
+            })
+            ->where('status_active', $status_active)
             ->orderBy('nama')
-            ->get()
-            ->map(function ($e) {
-                return [
-                    'id' => $e->id,
-                    'name' => $e->nama,
-                    'nrp' => $e->nrp,
-                    'nik' => $e->personal->no_ktp ?? '-',
-                    'tanggal_lahir' => $e->tanggal_lahir
+            ->paginate($perPage);
+
+        $data = $employees->getCollection()->map(function ($e) {
+            return [
+                'id' => $e->id,
+                'name' => $e->nama,
+                'nrp' => $e->nrp,
+                'nik' => $e->personal->no_ktp ?? '-',
+                'tanggal_lahir' => $e->tanggal_lahir
                     ? \Carbon\Carbon::parse($e->tanggal_lahir)->format('d/m/Y')
                     : '-',
-                    'perusahaan' =>$e->employments->perusahaan ?? '-',
-                    'department' => $e->employments->jabatan ?? '-',
-                    'position' =>$e->employments->penempatan ?? '-',
-                    'status' => $e->status_active ? 'Aktif' : 'Nonaktif',
-                ];
-            });
+                'perusahaan' => $e->employments->perusahaan ?? '-',
+                'department' => $e->employments->jabatan ?? '-',
+                'position' => $e->employments->penempatan ?? '-',
+                'status' => $e->status_active ? 'Aktif' : 'Nonaktif',
+            ];
+        });
 
-        return response()->json($employees);
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'total' => $employees->total(),
+                'per_page' => $employees->perPage(),
+                'current_page' => $employees->currentPage(),
+                'last_page' => $employees->lastPage(),
+            ]
+        ]);
     }
+
 
     public function profil($id)
     {
@@ -51,6 +81,18 @@ class EmployeeController extends Controller
         ]);
         
         return Inertia::render('employee/Profil', [
+            'user' => $user,
+        ]);
+    }
+
+    public function changePassword()
+    {
+        $user = Auth::user()->load([
+            'employee',
+            'role',
+        ]);
+        
+        return Inertia::render('settings/GantiPassword', [
             'user' => $user,
         ]);
     }
@@ -300,6 +342,32 @@ class EmployeeController extends Controller
             'failed' => $log->failed,
             'errors' => json_decode($log->errors, true),
             'updated_at' => $log->updated_at,
+        ]);
+    }
+
+    public function prosesChangePassword(Request $request)
+    {
+        // VALIDASI KERAS
+        $request->validate([
+            'password' => 'required|min:5|confirmed',
+        ]);
+
+        $user = Auth::user();
+
+        // return $user;
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
+        // UPDATE PASSWORD
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password berhasil diubah'
         ]);
     }
 

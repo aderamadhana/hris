@@ -8,13 +8,10 @@
                         <h2 class="page-title">Data Pelamar</h2>
                         <!-- <span class="page-chip">Master Data</span> -->
                     </div>
-                    <p class="page-subtitle">
-                        Kelola informasi pelamar, mulai dari penambahan data,
-                        import massal, hingga penghapusan.
-                    </p>
+                    <p class="page-subtitle">Kelola informasi pelamar</p>
                 </div>
 
-                <div class="page-actions">
+                <!-- <div class="page-actions">
                     <DropdownButton label="Upload Data">
                         <a @click="openImportKaryawanModal">
                             ⬆️ Upload Excel Karyawan
@@ -23,22 +20,22 @@
                             🧾 Upload Slip Gaji Karyawan
                         </a>
                     </DropdownButton>
-                    <Button variant="primary" @click="fiturBelumTersedia">
+                    <Button variant="primary" @click="tambahKaryawan">
                         ➕ Tambah Karyawan
                     </Button>
-                </div>
+                </div> -->
             </div>
 
             <!-- RINGKASAN DI ATAS TABEL -->
             <div class="overview-row">
                 <div class="overview-card primary">
-                    <div class="overview-label">Total Karyawan</div>
+                    <div class="overview-label">Total Pelamar</div>
                     <div class="overview-value">{{ totalItems }}</div>
                 </div>
-                <div class="overview-card neutral">
+                <!-- <div class="overview-card neutral">
                     <div class="overview-label">Kontrak Hampir Habis</div>
-                    <div class="overview-value">{{ totalItems }}</div>
-                </div>
+                    <div class="overview-value">0</div>
+                </div> -->
             </div>
 
             <!-- KONTROL DATATABLE -->
@@ -84,18 +81,28 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-if="paginatedUsers.length === 0">
+                            <!-- LOADING -->
+                            <tr v-if="loadingUsers">
+                                <td colspan="8" class="loading-row">
+                                    <div class="table-spinner">
+                                        <span class="spinner"></span>
+                                        <span class="spinner-text"
+                                            >Memuat data...</span
+                                        >
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- EMPTY -->
+                            <tr v-else-if="users.length === 0">
                                 <td colspan="8" class="empty-row">
                                     Tidak ada data ...
                                 </td>
                             </tr>
 
-                            <tr
-                                v-for="(u, index) in paginatedUsers"
-                                :key="u.id"
-                            >
+                            <!-- DATA -->
+                            <tr v-else v-for="(u, index) in users" :key="u.id">
                                 <td>{{ startIndex + index + 1 }}</td>
-
                                 <td>
                                     <div class="cell-user">
                                         <div class="cell-avatar">
@@ -117,15 +124,15 @@
                                 </td>
 
                                 <td>
-                                    <span class="cell-tanggal-lahir">{{
-                                        u.tanggal_lahir
-                                    }}</span>
+                                    <span class="cell-tanggal-lahir">
+                                        {{ u.tanggal_lahir }}
+                                    </span>
                                 </td>
 
                                 <td>
-                                    <span class="cell-perusahaan">{{
-                                        u.perusahaan
-                                    }}</span>
+                                    <span class="cell-perusahaan">
+                                        {{ u.perusahaan }}
+                                    </span>
                                 </td>
 
                                 <td>{{ u.position }}</td>
@@ -143,24 +150,23 @@
                                         {{ u.status }}
                                     </span>
                                 </td>
+
                                 <td class="actions-cell">
-                                    <Button
-                                        type="button"
-                                        variant="warning"
-                                        title="Detail karyawan"
+                                    <button
+                                        class="action-btn emoji primary"
+                                        title="Lihat Detail Pelamar"
                                         @click="openDetail(u.id)"
                                     >
-                                        Detail Karyawan </Button
-                                    >&nbsp;
+                                        👁️
+                                    </button>
 
-                                    <Button
-                                        type="button"
-                                        variant="success"
-                                        title="Slip gaji karyawan"
+                                    <!-- <button
+                                        class="action-btn emoji success"
+                                        title="Slip Gaji Karyawan"
                                         @click="openPayslip(u.id)"
                                     >
-                                        Slip Gaji
-                                    </Button>
+                                        📄
+                                    </button> -->
                                 </td>
                             </tr>
                         </tbody>
@@ -168,7 +174,7 @@
                 </div>
 
                 <!-- FOOTER DATATABLE: INFO + PAGINATION -->
-                <div class="dt-footer">
+                <div class="dt-footer" v-if="!loadingUsers">
                     <div class="dt-info">
                         Menampilkan
                         <strong v-if="totalItems">{{ startIndex + 1 }}</strong>
@@ -177,7 +183,7 @@
                         <strong>{{ endIndex }}</strong>
                         dari
                         <strong>{{ totalItems }}</strong>
-                        karyawan
+                        pelamar
                     </div>
 
                     <div class="dt-pagination">
@@ -244,14 +250,15 @@ export default {
     },
     data() {
         return {
-            users: [], // ← DATA DARI /employee
-            currentPage: 1,
-            perPage: 10,
+            users: [],
             loadingUsers: false,
 
+            currentPage: 1,
+            perPage: 10,
+            totalItems: 0,
+            totalPages: 0,
+
             search: '',
-            sortKey: 'name',
-            sortDir: 'asc',
 
             showImportGajiModal: false,
             showImportKaryawanModal: false,
@@ -259,72 +266,96 @@ export default {
     },
 
     computed: {
-        filteredUsers() {
-            if (!this.search) {
-                return this.users;
-            }
-
-            const keyword = this.search.toLowerCase();
-
-            return this.users.filter((u) => {
-                return (
-                    u.name.toLowerCase().includes(keyword) ||
-                    u.nik.toLowerCase().includes(keyword) ||
-                    u.position.toLowerCase().includes(keyword)
-                );
-            });
-        },
-
-        totalItems() {
-            return this.filteredUsers.length;
-        },
-
-        totalPages() {
-            return Math.ceil(this.totalItems / this.perPage);
-        },
-
         startIndex() {
+            if (this.totalItems === 0) return 0;
             return (this.currentPage - 1) * this.perPage;
         },
 
         endIndex() {
-            return Math.min(this.startIndex + this.perPage, this.totalItems);
-        },
-
-        paginatedUsers() {
-            return this.filteredUsers.slice(this.startIndex, this.endIndex);
+            if (this.totalItems === 0) return 0;
+            return Math.min(
+                this.startIndex + this.users.length,
+                this.totalItems,
+            );
         },
 
         pages() {
-            return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+            if (this.totalPages <= 1) return [];
+
+            const range = 2;
+            const pages = [];
+
+            let start = Math.max(1, this.currentPage - range);
+            let end = Math.min(this.totalPages, this.currentPage + range);
+
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+
+            return pages;
         },
     },
 
     watch: {
         search() {
             this.currentPage = 1;
+            this.fetchEmployees(1);
         },
-        perPage() {
+        perPage(newVal, oldVal) {
+            if (newVal === oldVal) return;
+
             this.currentPage = 1;
+            this.fetchEmployees(1);
         },
+    },
+    created() {
+        this.debouncedFetch = this.debounce(() => {
+            this.fetchEmployees(1);
+        }, 400);
+
+        this.fetchEmployees(1);
     },
     mounted() {
         this.fetchEmployees();
     },
+    search: {
+        handler() {
+            this.currentPage = 1;
+            this.debouncedFetch();
+        },
+    },
     methods: {
+        debounce(fn, delay) {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => fn.apply(this, args), delay);
+            };
+        },
         showSuccess() {
             this.triggerAlertHtml('success', '<b>Berhasil</b>', 3000);
         },
         fiturBelumTersedia() {
             triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
         },
-        async fetchEmployees() {
+        async fetchEmployees(page = this.currentPage) {
             this.loadingUsers = true;
 
             try {
-                const res = await axios.get('/employee');
-                this.users = res.data;
-                this.currentPage = 1; // reset pagination
+                const res = await axios.get('/employee', {
+                    params: {
+                        page,
+                        per_page: this.perPage,
+                        search: this.search,
+                        status_active: 0,
+                    },
+                });
+
+                this.users = res.data.data;
+                this.currentPage = res.data.meta.current_page;
+                this.perPage = res.data.meta.per_page;
+                this.totalItems = res.data.meta.total;
+                this.totalPages = res.data.meta.last_page;
             } catch (err) {
                 console.error(err);
                 triggerAlert('error', 'Gagal memuat data karyawan.');
@@ -332,9 +363,12 @@ export default {
                 this.loadingUsers = false;
             }
         },
+
         goToPage(page) {
             if (page < 1 || page > this.totalPages) return;
-            this.currentPage = page;
+            if (page === this.currentPage) return;
+
+            this.fetchEmployees(page);
         },
 
         openImportKaryawanModal() {
@@ -366,8 +400,8 @@ export default {
                 alert('Deleted');
             }
         },
-        createUser() {
-            alert('Tambah karyawan');
+        tambahKaryawan() {
+            this.$inertia.visit('/admin/karyawan/tambah');
         },
     },
 };
