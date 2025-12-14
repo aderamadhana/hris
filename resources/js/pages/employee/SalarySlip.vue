@@ -122,59 +122,18 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="slip-card">
-                        <h3 class="card-title">Informasi Pembayaran</h3>
-                        <div class="info-list">
-                            <div class="info-item">
-                                <span class="label">Tanggal Bayar</span>
-                                <span class="value">
-                                    {{ slip.payment.tanggal_bayar || '-' }}
-                                </span>
-                            </div>
-                            <div class="info-item">
-                                <span class="label">Metode</span>
-                                <span class="value">{{
-                                    slip.payment.metode
-                                }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="label">Bank</span>
-                                <span class="value">{{
-                                    slip.payment.bank
-                                }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="label">Status</span>
-                                <span class="value">
-                                    <span
-                                        class="badge"
-                                        :class="
-                                            slip.payment.status === 'paid'
-                                                ? 'badge-paid'
-                                                : 'badge-unpaid'
-                                        "
-                                    >
-                                        {{
-                                            slip.payment.status === 'paid'
-                                                ? 'Paid'
-                                                : 'Unpaid'
-                                        }}
-                                    </span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
-
                 <!-- PENDAPATAN & POTONGAN -->
                 <div class="amounts-grid">
                     <!-- Pendapatan -->
                     <div class="slip-card">
                         <h3 class="card-title earnings">Pendapatan</h3>
                         <table class="amount-table">
-                            <tbody v-if="slip.earnings?.length">
-                                <tr v-for="(item, i) in slip.earnings" :key="i">
+                            <tbody v-if="combinedEarnings.length">
+                                <tr
+                                    v-for="(item, i) in combinedEarnings"
+                                    :key="i"
+                                >
                                     <td>{{ item.label }}</td>
                                     <td class="amount">
                                         {{ formatCurrency(item.amount) }}
@@ -192,7 +151,7 @@
                         <div class="total earnings-total">
                             <span>Total Pendapatan</span>
                             <strong>{{
-                                formatCurrency(slip.total_earnings || 0)
+                                formatCurrency(totalPendapatan)
                             }}</strong>
                         </div>
                     </div>
@@ -276,6 +235,21 @@ export default {
         };
     },
 
+    computed: {
+        combinedEarnings() {
+            const earnings = this.slip.earnings || [];
+            const allowances = this.slip.allowances || [];
+
+            return [...earnings, ...allowances];
+        },
+
+        totalPendapatan() {
+            const earningsTotal = this.slip.total_earnings || 0;
+            const allowancesTotal = this.slip.total_allowances || 0;
+
+            return earningsTotal + allowancesTotal;
+        },
+    },
     mounted() {
         this.getPaymentPeriods();
         // this.loadSlip();

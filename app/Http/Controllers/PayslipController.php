@@ -8,6 +8,7 @@ use App\Models\{
     PayrollPeriod,
     Earning,
     Deduction,
+    Allowance
 };
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,7 +21,7 @@ class PayslipController extends Controller
             $employee = $request->user()->employee;
 
             if($employee_id != 0 || $employee_id != null){
-                $employee->id = $employee_id;
+                $employee = Employee::where('id', $employee_id)->first();
             }
 
             $period = PayrollPeriod::findOrFail($payrollPeriodId);
@@ -32,7 +33,12 @@ class PayslipController extends Controller
 
             $deductions = Deduction::where('employee_id', $employee->id)
                 ->where('payroll_period_id', $period->id)
-                ->firstOrFail();
+                ->firstOrFail()
+                ;
+
+            $allowances = Allowance::where('employee_id', $employee->id)
+            ->where('payroll_period_id', $period->id)
+            ->firstOrFail();
 
             /*
             |--------------------------------------------------------------------------
@@ -77,13 +83,45 @@ class PayslipController extends Controller
 
             /*
             |--------------------------------------------------------------------------
+            | TUNJANGAN
+            |--------------------------------------------------------------------------
+            */
+
+            $allowanceItems = collect([
+                ['label' => 'Tunjangan Sewa Motor', 'amount' => $allowances->tunj_sewa_motor],
+                ['label' => 'Tunjangan BBM', 'amount' => $allowances->tunj_bbm],
+                ['label' => 'Tunjangan Pulsa', 'amount' => $allowances->tunj_pulsa],
+                ['label' => 'Tunjangan Penampilan', 'amount' => $allowances->tunj_penampilan],
+                ['label' => 'Tunjangan Shift', 'amount' => $allowances->tunj_shift],
+                ['label' => 'Tunjangan Makan', 'amount' => $allowances->tunj_makan],
+                ['label' => 'Tunjangan Transport', 'amount' => $allowances->tunj_transport],
+                ['label' => 'Tunjangan Kost', 'amount' => $allowances->tunj_kost],
+                ['label' => 'Tunjangan Maintenance', 'amount' => $allowances->tunj_maintenance],
+                ['label' => 'Tunjangan Posisi', 'amount' => $allowances->tunj_posisi],
+                ['label' => 'Tunjangan Fisik', 'amount' => $allowances->tunj_fisik],
+                ['label' => 'Tunjangan Loyalitas', 'amount' => $allowances->tunj_loyalitas],
+                ['label' => 'Tunjangan Operator', 'amount' => $allowances->tunj_operator],
+                ['label' => 'Tunjangan Jabatan', 'amount' => $allowances->tunj_jabatan],
+                ['label' => 'Tunjangan Bag', 'amount' => $allowances->tunj_bag],
+                ['label' => 'Tunjangan', 'amount' => $allowances->tunj],
+            ])
+            ->map(fn ($i) => [
+                'label' => $i['label'],
+                'amount' => (int) ($i['amount'] ?? 0),
+            ])
+            ->filter(fn ($i) => $i['amount'] !== 0)
+            ->values();
+
+            /*
+            |--------------------------------------------------------------------------
             | TOTAL
             |--------------------------------------------------------------------------
             */
             $totalEarnings = $earningItems->sum('amount');
             $totalDeductions = $deductionItems->sum('amount');
+            $totalAllowances = $allowanceItems->sum('amount');
 
-            $takeHomePay = $totalEarnings - $totalDeductions;
+            $takeHomePay = $totalEarnings + $totalAllowances - $totalDeductions;
 
             return response()->json([
                     'slip' => [
@@ -109,9 +147,11 @@ class PayslipController extends Controller
 
                     'earnings' => $earningItems,
                     'deductions' => $deductionItems,
+                    'allowances' => $allowanceItems,
 
                     'total_earnings' => $totalEarnings,
                     'total_deductions' => $totalDeductions,
+                    'total_allowance' => $totalAllowances,
                     'take_home_pay' => $takeHomePay,
                 ],
             ]);
