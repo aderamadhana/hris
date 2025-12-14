@@ -128,8 +128,8 @@ export default {
             } catch (err) {
                 console.error(err);
                 triggerAlert('error', 'Gagal memulai proses import.');
-                this.$emit('closeModal');
                 this.$emit('refreshData');
+                this.$emit('closeModal');
             }
         },
 
@@ -142,22 +142,99 @@ export default {
 
                 this.importKaryawanResult = log;
 
-                // ⛔ JANGAN triggerAlert di sini selama processing
-
                 if (log.status === 'completed') {
                     clearInterval(this.pollingTimer);
                     this.pollingTimer = null;
 
                     this.importProcessingKaryawan = false;
-                    this.$emit('closeModal');
 
-                    triggerAlert(
-                        'success',
-                        `Import selesai. Sukses: ${log.success}, Gagal: ${log.failed}`,
-                    );
+                    if (log.errors) {
+                        const html = `
+                        <div>
+                            <strong>Import selesai dengan error</strong>
 
-                    this.closeModalImportKaryawan();
+                            <div style="margin-top:6px">
+                                Sukses: <b style="color:green">${log.success}</b><br>
+                                Gagal: <b style="color:red">${log.failed}</b>
+                            </div>
+
+                            <hr>
+
+                            <strong>Detail Error:</strong>
+                            <ul>
+                                ${log.errors
+                                    .map((e) => {
+                                        if (e.nrp) {
+                                            return `<li>
+                                            <b>NRP:</b> ${e.nrp}<br>
+                                            <b>Error:</b> ${e.error}
+                                        </li>`;
+                                        }
+
+                                        if (e.type === 'timeout') {
+                                            return `<li><b>System:</b> ${e.message}</li>`;
+                                        }
+
+                                        return `<li>${JSON.stringify(e)}</li>`;
+                                    })
+                                    .join('')}
+                            </ul>
+                        </div>`;
+
+                        triggerAlert('warning', html, 15000, true);
+                    } else {
+                        triggerAlert(
+                            'success',
+                            `Import selesai. Sukses: ${log.success}, Gagal: ${log.failed}`,
+                        );
+                    }
+
                     this.$emit('refreshData');
+                    this.$emit('closeModal');
+                }
+
+                if (log.status === 'timeout') {
+                    clearInterval(this.pollingTimer);
+                    this.pollingTimer = null;
+
+                    this.importProcessingKaryawan = false;
+
+                    const html = `
+                        <div>
+                            <strong>Import selesai dengan error</strong>
+
+                            <div style="margin-top:6px">
+                                Sukses: <b style="color:green">${log.success}</b><br>
+                                Gagal: <b style="color:red">${log.failed}</b>
+                            </div>
+
+                            <hr>
+
+                            <strong>Detail Error:</strong>
+                            <ul>
+                                ${log.errors
+                                    .map((e) => {
+                                        if (e.nrp) {
+                                            return `<li>
+                                            <b>NRP:</b> ${e.nrp}<br>
+                                            <b>Error:</b> ${e.error}
+                                        </li>`;
+                                        }
+
+                                        if (e.type === 'timeout') {
+                                            return `<li><b>System:</b> ${e.message}</li>`;
+                                        }
+
+                                        return `<li>${JSON.stringify(e)}</li>`;
+                                    })
+                                    .join('')}
+                            </ul>
+                        </div>`;
+
+                    triggerAlert('warning', html, 15000, true);
+
+                    this.$emit('refreshData');
+                    this.$emit('closeModal');
                 }
             }, 2000);
         },

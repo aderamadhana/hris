@@ -262,7 +262,7 @@ class EmployeeController extends Controller
         try {
             $import = new PayslipImport($request->payroll_period_id);
             
-            Excel::import($import, $request->file('file'));
+            Excel::queueImport($import, $request->file('file'));
             
             $results = $import->getResults();
             
