@@ -21,6 +21,7 @@ class ReferensiController extends Controller
                 return [
                     'id'           => $period->id,
                     'period_year'  => $period->period_year,
+                    'judul'  => $period->judul_periode,
                     'period_month' => str_pad($period->period_month, 2, '0', STR_PAD_LEFT),
 
                     'start_date'   => $period->start_date
@@ -77,6 +78,7 @@ class ReferensiController extends Controller
                 $end   = $period->end_date   ? $period->end_date->format('d M Y')   : null;
 
                 return [
+                    'judul'  => $period->judul_periode,
                     'id'           => $period->id,
                     'period_year'  => $period->period_year,
                     'period_month' => $month,

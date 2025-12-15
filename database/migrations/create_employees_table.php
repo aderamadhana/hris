@@ -197,6 +197,7 @@ return new class extends Migration
 
         Schema::create('payroll_periods', function (Blueprint $table) {
             $table->id();
+            $table->string('judul_periode')->nullable();
             $table->integer('period_year');
             $table->integer('period_month');
             $table->date('start_date');

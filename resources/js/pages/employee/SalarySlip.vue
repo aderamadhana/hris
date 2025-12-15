@@ -39,8 +39,7 @@
                         :key="period.id"
                         :value="period.id"
                     >
-                        {{ period.period_year }} /
-                        {{ period.period_month.toString().padStart(2, '0') }}
+                        {{ period.judul }}
                         ({{ period.start_date }} – {{ period.end_date }})
                     </option>
                 </select>

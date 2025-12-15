@@ -228,6 +228,7 @@ class DatabaseSeeder extends Seeder
                 'start_date'   => Carbon::create(2026, 1, 1),
                 'end_date'     => Carbon::create(2026, 1, 31),
                 'status'       => 'closed',
+                'judul_periode'       => 'Periode Januari 2026',
             ],
             [
                 'period_year'  => 2026,
@@ -235,6 +236,7 @@ class DatabaseSeeder extends Seeder
                 'start_date'   => Carbon::create(2026, 2, 1),
                 'end_date'     => Carbon::create(2026, 2, 29),
                 'status'       => 'closed',
+                'judul_periode'       => 'Periode Ferbuari 2026',
             ],
             [
                 'period_year'  => 2026,
@@ -242,6 +244,7 @@ class DatabaseSeeder extends Seeder
                 'start_date'   => Carbon::create(2026, 3, 1),
                 'end_date'     => Carbon::create(2026, 3, 31),
                 'status'       => 'open',
+                'judul_periode'       => 'Periode Maret 2026',
             ],
         ];
 
@@ -252,6 +255,7 @@ class DatabaseSeeder extends Seeder
                     'period_month' => $period['period_month'],
                 ],
                 [
+                    'judul_periode' => $period['judul_periode'],
                     'start_date' => $period['start_date'],
                     'end_date'   => $period['end_date'],
                     'status'     => $period['status'],
