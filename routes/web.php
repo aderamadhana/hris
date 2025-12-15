@@ -10,6 +10,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\ReferensiController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\Masters\PayrollPeriodController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
@@ -78,6 +79,21 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/salary', function () {
         return Inertia::render('employee/SalarySlip');
+    });
+
+    Route::prefix('master')->group(function () {
+        Route::prefix('payroll-period')->group(function () {
+            Route::get('/all-data', function () {
+                return Inertia::render('master/payroll_period/index');
+            });
+            Route::get('/', [PayrollPeriodController::class, 'index']);
+            Route::get('/get-data/{id}', [PayrollPeriodController::class, 'getData']);
+            Route::get('/create', [PayrollPeriodController::class, 'create']);
+            Route::post('/store', [PayrollPeriodController::class, 'store']);
+            Route::get('/{payrollPeriod}/edit', [PayrollPeriodController::class, 'edit']);
+            Route::put('/update/{payrollPeriod}', [PayrollPeriodController::class, 'update']);
+            Route::delete('/delete/{payrollPeriod}', [PayrollPeriodController::class, 'destroy']);
+        });
     });
 
     if (app()->environment('local')) {

@@ -83,4 +83,26 @@ class PayrollPeriod extends Model
     {
         return date('F Y', mktime(0, 0, 0, $this->period_month, 1, $this->period_year));
     }
+
+    public function getMonthNameAttribute()
+    {
+        $months = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret',
+            4 => 'April', 5 => 'Mei', 6 => 'Juni',
+            7 => 'Juli', 8 => 'Agustus', 9 => 'September',
+            10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+        return $months[$this->period_month] ?? '';
+    }
+
+    // Accessor untuk status badge
+    public function getStatusLabelAttribute()
+    {
+        $labels = [
+            'open' => 'Terbuka',
+            'closed' => 'Ditutup',
+            'processed' => 'Diproses'
+        ];
+        return $labels[$this->status] ?? $this->status;
+    }
 }

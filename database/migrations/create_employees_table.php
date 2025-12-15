@@ -205,7 +205,7 @@ return new class extends Migration
             $table->enum('status', ['open', 'closed', 'processed'])->default('open');
             $table->timestamps();
             
-            $table->unique(['period_year', 'period_month']);
+            // $table->unique(['period_year', 'period_month']);
             $table->index(['period_year', 'period_month']);
         });
 

@@ -55,10 +55,10 @@ const page = usePage();
             </Link>
 
             <Link
-                @click="fiturBelumTersedia()"
+                href="/master/payroll-period/all-data"
                 class="sidebar-item"
                 :class="{
-                    active: page.url.startsWith('/admin/master-periode-gaji'),
+                    active: page.url.startsWith('/master/payroll-period'),
                 }"
             >
                 <span class="icon">📅</span>
