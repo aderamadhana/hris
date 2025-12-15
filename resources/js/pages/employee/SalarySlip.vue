@@ -67,7 +67,7 @@
             </div>
 
             <!-- STATE: SUDAH PILIH, TAPI SLIP KOSONG -->
-            <div v-else-if="!slip" class="empty-state">
+            <div v-else-if="slip && isSlipEmpty" class="empty-state">
                 <h3 class="empty-title">Slip Gaji Belum Tersedia</h3>
                 <p class="empty-text">
                     Tidak ditemukan slip gaji untuk periode ini. Hubungi admin
@@ -77,113 +77,133 @@
 
             <!-- STATE: SLIP ADA -> TAMPILKAN DETAIL -->
             <div v-else class="slip-container">
-                <!-- HEADER SLIP -->
-                <div class="slip-card header-card">
-                    <div class="company-info">
-                        <div class="company-name">{{ slip.company_name }}</div>
-                        <div class="company-subtitle">
-                            Slip Gaji Periode {{ slip.period_name }}
-                        </div>
-                    </div>
-                    <div class="period-info">
-                        <div class="period-label">Periode</div>
-                        <div class="period-value">{{ slip.period_range }}</div>
-                    </div>
-                </div>
+                <div v-if="slip" class="payslip-content">
+                    <div class="amounts-grid">
+                        <!-- Pendapatan -->
+                        <div class="slip-card">
+                            <h3 class="card-title earnings">Pendapatan</h3>
+                            <table v-if="!slip" class="amount-table">
+                                <tbody>
+                                    <tr>
+                                        <td colspan="2" class="empty">
+                                            Tidak ada pendapatan
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <!-- Earnings (Gaji & Lembur) -->
+                            <div
+                                v-else-if="slip.earnings?.length"
+                                class="earnings-section"
+                            >
+                                <h4 class="section-subtitle">Gaji & Lembur</h4>
+                                <table class="amount-table">
+                                    <tbody>
+                                        <tr
+                                            v-for="(item, i) in slip.earnings"
+                                            :key="'earning-' + i"
+                                        >
+                                            <td>{{ item.label }}</td>
+                                            <td class="amount">
+                                                {{
+                                                    formatCurrency(item.amount)
+                                                }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
 
-                <!-- INFO GRID -->
-                <div class="info-grid">
-                    <div class="slip-card">
-                        <h3 class="card-title">Data Karyawan</h3>
-                        <div class="info-list">
-                            <div class="info-item">
-                                <span class="label">Nama</span>
-                                <span class="value">{{
-                                    slip.employee.nama
-                                }}</span>
+                            <!-- Allowances (Tunjangan) -->
+                            <div
+                                v-if="slip.allowances?.length"
+                                class="earnings-section"
+                            >
+                                <h4 class="section-subtitle">Tunjangan</h4>
+                                <table class="amount-table">
+                                    <tbody>
+                                        <tr
+                                            v-for="(item, i) in slip.allowances"
+                                            :key="'allowance-' + i"
+                                        >
+                                            <td>{{ item.label }}</td>
+                                            <td class="amount">
+                                                {{
+                                                    formatCurrency(item.amount)
+                                                }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="info-item">
-                                <span class="label">NIK</span>
-                                <span class="value">{{
-                                    slip.employee.nik
-                                }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="label">Jabatan</span>
-                                <span class="value">{{
-                                    slip.employee.jabatan
-                                }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="label">Divisi</span>
-                                <span class="value">{{
-                                    slip.employee.divisi
-                                }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- PENDAPATAN & POTONGAN -->
-                <div class="amounts-grid">
-                    <!-- Pendapatan -->
-                    <div class="slip-card">
-                        <h3 class="card-title earnings">Pendapatan</h3>
-                        <table class="amount-table">
-                            <tbody v-if="combinedEarnings.length">
-                                <tr
-                                    v-for="(item, i) in combinedEarnings"
-                                    :key="i"
-                                >
-                                    <td>{{ item.label }}</td>
-                                    <td class="amount">
-                                        {{ formatCurrency(item.amount) }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tbody v-else>
-                                <tr>
-                                    <td colspan="2" class="empty">
-                                        Tidak ada pendapatan
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="total earnings-total">
-                            <span>Total Pendapatan</span>
-                            <strong>{{
-                                formatCurrency(totalPendapatan)
-                            }}</strong>
-                        </div>
-                    </div>
 
-                    <!-- Potongan -->
-                    <div class="slip-card">
-                        <h3 class="card-title deductions">Potongan</h3>
-                        <table class="amount-table">
-                            <tbody v-if="slip.deductions?.length">
-                                <tr
-                                    v-for="(item, i) in slip.deductions"
-                                    :key="i"
-                                >
-                                    <td>{{ item.label }}</td>
-                                    <td class="amount">
-                                        {{ formatCurrency(item.amount) }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tbody v-else>
-                                <tr>
-                                    <td colspan="2" class="empty">
-                                        Tidak ada potongan
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="total deductions-total">
-                            <span>Total Potongan</span>
-                            <strong>{{
-                                formatCurrency(slip.total_deductions || 0)
-                            }}</strong>
+                            <!-- Additional Earnings (Pendapatan Lainnya) -->
+                            <div
+                                v-if="slip.additional_earnings?.length"
+                                class="earnings-section"
+                            >
+                                <h4 class="section-subtitle">
+                                    Pendapatan Lainnya
+                                </h4>
+                                <table class="amount-table">
+                                    <tbody>
+                                        <tr
+                                            v-for="(
+                                                item, i
+                                            ) in slip.additional_earnings"
+                                            :key="'additional-' + i"
+                                        >
+                                            <td>{{ item.label }}</td>
+                                            <td class="amount">
+                                                {{
+                                                    formatCurrency(item.amount)
+                                                }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="total earnings-total">
+                                <span>Total Pendapatan</span>
+                                <strong>{{
+                                    formatCurrency(slip.total_income || 0)
+                                }}</strong>
+                            </div>
+                        </div>
+
+                        <!-- Potongan -->
+                        <div class="slip-card">
+                            <h3 class="card-title deductions">Potongan</h3>
+                            <table class="amount-table">
+                                <tbody v-if="slip.deductions?.length">
+                                    <tr
+                                        v-for="(item, i) in slip.deductions"
+                                        :key="'deduction-' + i"
+                                    >
+                                        <td>{{ item.label }}</td>
+                                        <td class="amount">
+                                            {{ formatCurrency(item.amount) }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tbody v-else>
+                                    <tr>
+                                        <td colspan="2" class="empty">
+                                            Tidak ada potongan
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div
+                                class="total deductions-total"
+                                v-if="slip.deductions?.length"
+                            >
+                                <span>Total Potongan</span>
+                                <strong>{{
+                                    formatCurrency(slip.total_deductions || 0)
+                                }}</strong>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -200,6 +220,103 @@
                         {{ formatCurrency(slip.take_home_pay || 0) }}
                     </div>
                 </div>
+
+                <!-- Informasi Kehadiran & Lembur (Optional) -->
+                <div v-if="slip.attendance || slip.overtime" class="info-grid">
+                    <!-- Kehadiran -->
+                    <div v-if="slip.attendance" class="slip-card info-card">
+                        <h3 class="card-title">Informasi Kehadiran</h3>
+                        <table class="info-table">
+                            <tbody>
+                                <tr v-if="slip.attendance.hadir">
+                                    <td>Hadir</td>
+                                    <td>{{ slip.attendance.hadir }} hari</td>
+                                </tr>
+                                <tr v-if="slip.attendance.jam_kerja">
+                                    <td>Jam Kerja</td>
+                                    <td>{{ slip.attendance.jam_kerja }} jam</td>
+                                </tr>
+                                <tr v-if="slip.attendance.jumlah_hl">
+                                    <td>Hari Libur</td>
+                                    <td>
+                                        {{ slip.attendance.jumlah_hl }} hari
+                                    </td>
+                                </tr>
+                                <tr v-if="slip.attendance.mangkir_hari">
+                                    <td>Mangkir</td>
+                                    <td class="warning">
+                                        {{ slip.attendance.mangkir_hari }} hari
+                                    </td>
+                                </tr>
+                                <tr v-if="slip.attendance.terlambat_hari">
+                                    <td>Terlambat</td>
+                                    <td class="warning">
+                                        {{ slip.attendance.terlambat_hari }}
+                                        hari ({{
+                                            slip.attendance.terlambat_menit || 0
+                                        }}
+                                        menit)
+                                    </td>
+                                </tr>
+                                <tr v-if="slip.attendance.cuti_dibayar">
+                                    <td>Cuti Dibayar</td>
+                                    <td>
+                                        {{ slip.attendance.cuti_dibayar }} hari
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Lembur -->
+                    <div v-if="slip.overtime" class="slip-card info-card">
+                        <h3 class="card-title">Informasi Lembur</h3>
+                        <table class="info-table">
+                            <tbody>
+                                <tr v-if="slip.overtime.lembur_hari">
+                                    <td>Total Hari Lembur</td>
+                                    <td>
+                                        {{ slip.overtime.lembur_hari }} hari
+                                    </td>
+                                </tr>
+                                <tr v-if="slip.overtime.lembur_jam">
+                                    <td>Total Jam Lembur</td>
+                                    <td>{{ slip.overtime.lembur_jam }} jam</td>
+                                </tr>
+                                <tr v-if="slip.overtime.lembur_jam_biasa">
+                                    <td>Lembur Biasa</td>
+                                    <td>
+                                        {{ slip.overtime.lembur_jam_biasa }} jam
+                                    </td>
+                                </tr>
+                                <tr v-if="slip.overtime.lembur_jam_khusus">
+                                    <td>Lembur Khusus</td>
+                                    <td>
+                                        {{ slip.overtime.lembur_jam_khusus }}
+                                        jam
+                                    </td>
+                                </tr>
+                                <tr v-if="slip.overtime.lembur_libur">
+                                    <td>Lembur Hari Libur</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.overtime.lembur_libur,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div v-else class="empty-state">
+                    <div class="empty-icon">📄</div>
+                    <h3>Slip Gaji Tidak Tersedia</h3>
+                    <p>Data slip gaji tidak ditemukan untuk periode ini.</p>
+                </div>
             </div>
         </section>
     </AppLayout>
@@ -209,6 +326,7 @@
 import Button from '@/components/Button.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
+import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 
 export default {
@@ -218,47 +336,102 @@ export default {
             type: Number,
             required: true,
         },
+        slipProp: {
+            // Rename prop untuk menghindari konflik
+            type: Object,
+            default: () => ({}),
+        },
     },
 
-    components: {
-        AppLayout,
-        Button,
-    },
     data() {
+        const page = usePage();
         return {
+            user: page.props.auth.user,
             slip: null,
             loading: true,
-
             payrollPeriod: [],
-            selectedGajiPeriodId: '',
+            selectedGajiPeriodId: '', // Ini perlu diisi!
             loadingImportPayslip: false,
         };
     },
 
     computed: {
+        // Gabungkan semua computed properties dalam satu blok
+        hasAnyEarnings() {
+            const slip = this.slip;
+            if (!slip) return false;
+
+            return (
+                slip.earnings?.length > 0 ||
+                slip.allowances?.length > 0 ||
+                slip.additional_earnings?.length > 0
+            );
+        },
+
+        isSlipEmpty() {
+            const s = this.slip;
+            if (!s) return true;
+
+            console.log(s);
+
+            const hasAnyRows =
+                (Array.isArray(s.earnings) && s.earnings.length) ||
+                (Array.isArray(s.allowances) && s.allowances.length) ||
+                (Array.isArray(s.additional_earnings) &&
+                    s.additional_earnings.length) ||
+                (Array.isArray(s.deductions) && s.deductions.length);
+
+            const hasAnyTotals =
+                Number(s?.total_income || 0) !== 0 ||
+                Number(s?.take_home_pay || 0) !== 0 ||
+                Number(s?.grand_total || 0) !== 0;
+
+            return !hasAnyRows && !hasAnyTotals;
+        },
+
         combinedEarnings() {
-            const earnings = this.slip.earnings || [];
-            const allowances = this.slip.allowances || [];
+            const earnings = this.slip?.earnings || [];
+            const allowances = this.slip?.allowances || [];
 
             return [...earnings, ...allowances];
         },
 
         totalPendapatan() {
-            const earningsTotal = this.slip.total_earnings || 0;
-            const allowancesTotal = this.slip.total_allowances || 0;
+            const earningsTotal = this.slip?.total_earnings || 0;
+            const allowancesTotal = this.slip?.total_allowances || 0;
 
             return earningsTotal + allowancesTotal;
         },
     },
+
     mounted() {
+        console.log(this.user);
         this.getPaymentPeriods();
-        // this.loadSlip();
+
+        // Jika payrollPeriodId diberikan via prop, gunakan itu
+        if (this.payrollPeriodId) {
+            this.selectedGajiPeriodId = this.payrollPeriodId;
+            this.loadSlip();
+        }
+    },
+
+    watch: {
+        // Watch untuk auto-load ketika period ID berubah
+        selectedGajiPeriodId(newVal) {
+            if (newVal) {
+                this.loadSlip();
+            }
+        },
     },
 
     methods: {
         async getPaymentPeriods() {
             try {
-                const res = await axios.get('/referensi/get-payroll_periods');
+                const url = this.employeeId
+                    ? `/referensi/get-payroll-periods-by-employee-id/${this.employeeId}`
+                    : `/referensi/get-payroll-periods-by-employee-id/0`;
+
+                const res = await axios.get(url);
                 this.payrollPeriod = res.data.payroll_periods;
             } catch (err) {
                 console.error(err);
@@ -267,6 +440,7 @@ export default {
                 this.loadingUsers = false;
             }
         },
+
         downloadSlip() {
             triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
         },
@@ -278,22 +452,37 @@ export default {
                 minimumFractionDigits: 0,
             }).format(value ?? 0);
         },
+
         async loadSlip() {
+            if (!this.selectedGajiPeriodId) {
+                console.warn('selectedGajiPeriodId belum diisi');
+                return;
+            }
+
             this.slip = null;
+            this.loading = true;
             this.loadingImportPayslip = true;
+
             try {
                 const url = this.employeeId
                     ? `/payslip/show/${this.selectedGajiPeriodId}/${this.employeeId}`
                     : `/payslip/show/${this.selectedGajiPeriodId}/0`;
 
                 const res = await axios.get(url);
-                console.log(res.data);
                 this.slip = res.data.slip;
-                this.loadingImportPayslip = false;
+            } catch (err) {
+                console.error('Error loading slip:', err);
+                triggerAlert('error', 'Gagal memuat slip gaji.');
             } finally {
                 this.loading = false;
+                this.loadingImportPayslip = false;
             }
         },
+    },
+
+    components: {
+        AppLayout,
+        Button,
     },
 };
 </script>

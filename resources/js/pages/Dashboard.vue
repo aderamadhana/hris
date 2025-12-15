@@ -1,5 +1,5 @@
 <template>
-    <AppLayout>
+    <AppLayout :employeeId="employeeId">
         <AdminDashboard v-if="user.role_id == 1" />
         <EmployeeDashboard v-if="user.role_id == 2" />
     </AppLayout>
@@ -26,12 +26,20 @@ export default {
         userName() {
             return this.user.name ?? '-';
         },
+
+        employeeId() {
+            return this.user.employee?.id ?? null;
+        },
     },
     data() {
         const page = usePage();
         return {
             user: page.props.auth.user,
         };
+    },
+
+    mounted() {
+        console.log(this.user);
     },
 };
 </script>

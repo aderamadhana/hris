@@ -208,9 +208,25 @@ return new class extends Migration
             $table->index(['period_year', 'period_month']);
         });
 
+        // Schema::create('employees', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->string('nik', 20)->unique();
+        //     $table->string('nik_kary', 20)->nullable();
+        //     $table->string('no_rek', 20)->nullable();
+        //     $table->string('nama', 100);
+        //     $table->string('status_kary', 50)->nullable();
+        //     $table->string('bagian', 50)->nullable();
+        //     $table->string('area_kerja', 50)->nullable();
+        //     $table->timestamps();
+            
+        //     $table->index('nik');
+        //     $table->index('nama');
+        // });
+
         Schema::create('salary_configurations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained()->onDelete('cascade');
+            $table->decimal('gaji_hk', 15, 2)->nullable();
             $table->decimal('gaji_pokok', 15, 2)->nullable();
             $table->decimal('gaji_per_hari', 15, 2)->nullable();
             $table->decimal('gaji_train_hk', 15, 2)->nullable();
@@ -236,6 +252,7 @@ return new class extends Migration
             $table->integer('hadir')->nullable();
             $table->integer('mangkir_hari')->nullable();
             $table->integer('pot_tdk_masuk_hari')->nullable();
+            $table->decimal('pot_tdk_masuk_upah', 15, 2)->nullable();
             $table->integer('terlambat_hari')->nullable();
             $table->integer('terlambat_menit')->nullable();
             $table->decimal('terlambat_jam', 10, 2)->nullable();
@@ -322,7 +339,7 @@ return new class extends Migration
             $table->index('payroll_period_id');
         });
 
-         Schema::create('additional_earnings', function (Blueprint $table) {
+        Schema::create('additional_earnings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained()->onDelete('cascade');
             $table->foreignId('payroll_period_id')->constrained()->onDelete('cascade');
