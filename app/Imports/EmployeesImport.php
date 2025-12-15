@@ -399,6 +399,22 @@ class EmployeesImport implements
     {
         $nrp = trim($row['nrp'] ?? '');
         $email = trim($row['e_mail'] ?? '');
+        $noKtp = trim($row['no_ktp'] ?? '');
+
+        $errorMessage = $e->getMessage();
+
+        if (str_contains($errorMessage, 'Duplicate entry') && str_contains($errorMessage, 'no_ktp_unique')) {
+            $errorMessage = "No KTP {$noKtp} sudah terdaftar di sistem";
+        }
+        // Atau cek error duplicate lainnya
+        elseif (str_contains($errorMessage, 'Duplicate entry')) {
+            // Extract nilai yang duplicate dari pesan error
+            preg_match("/Duplicate entry '(.+?)' for key '(.+?)'/", $errorMessage, $matches);
+            $duplicateValue = $matches[1] ?? 'unknown';
+            $duplicateKey = $matches[2] ?? 'unknown';
+            
+            $errorMessage = "Data duplikat: {$duplicateValue} {$duplicateKey} sudah ada";
+        }
         
         ImportLog::where('id', $this->logId)->increment('failed');
         ImportLog::where('id', $this->logId)->update([
@@ -409,7 +425,7 @@ class EmployeesImport implements
                     JSON_OBJECT(
                         'nrp', '".addslashes($nrp)."',
                         'email', '".addslashes($email)."',
-                        'error', '".addslashes($e->getMessage())."'
+                        'error', '".addslashes($errorMessage)."'
                     )
                 )"
             )
