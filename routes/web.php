@@ -20,29 +20,62 @@ Route::middleware('guest')->group(function () {
 // Authenticated routes (untuk user yang sudah login)
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profil/{id}', [EmployeeController::class, 'profil']);
+    Route::get('/change-password', [EmployeeController::class, 'changePassword']);
+    Route::post('/proses-change-password', [EmployeeController::class, 'prosesChangePassword']);
 
     Route::prefix('dashboard')->group(function () {
         Route::get('/stats', [DashboardController::class, 'getStats']);
     });
 
-    Route::prefix('employee')->group(function () {
-        Route::get('/', [EmployeeController::class, 'index']);
-        Route::get('/profil/{id}', [EmployeeController::class, 'profil']);
-        Route::get('/detail_pelamar/{id}', [EmployeeController::class, 'detailPelamar']);
-        Route::get('/change-password', [EmployeeController::class, 'changePassword']);
-        Route::post('/proses-change-password', [EmployeeController::class, 'prosesChangePassword']);
-        Route::get('/get-data/{id}', [EmployeeController::class, 'getData']);
-        Route::post('/import-karyawan', [EmployeeController::class, 'importKaryawan']);
-        Route::post('/import-payslip', [EmployeeController::class, 'importPayslip']);
-        Route::get('/import-log/{id}', [EmployeeController::class, 'showImportLog']);
-        Route::get('/salary/{id}', function ($id) {
+    Route::prefix('karyawan')->group(function () {
+        Route::get('/all-karyawan', function () {
+            return Inertia::render('admin/DataKaryawan');
+        });
+        Route::get('/tambah-karyawan', function () {
+            return Inertia::render('admin/TambahKaryawan');
+        });
+        Route::get('/edit-karyawan/{id}', [EmployeeController::class, 'edit']);
+        Route::get('/detail-karyawan/{id}', [EmployeeController::class, 'profil']);
+        
+        Route::get('/daftar-gaji/{id}', function ($id) {
             return Inertia::render('employee/SalarySlip', [
                 'employeeId' => $id
             ]);
         });
+    });
 
-        Route::get('/edit/{id}', [EmployeeController::class, 'edit']);
+    Route::prefix('pelamar')->group(function () {
+        Route::get('/all-pelamar', function () {
+            return Inertia::render('admin/DataPelamar');
+        });
+    });
+    
+    Route::prefix('master')->group(function () {
+        Route::prefix('payroll-period')->group(function () {
+            Route::get('/all-data', function () {
+                return Inertia::render('master/payroll_period/index');
+            });
+            Route::get('/', [PayrollPeriodController::class, 'index']);
+            Route::get('/get-data/{id}', [PayrollPeriodController::class, 'getData']);
+            Route::get('/create', [PayrollPeriodController::class, 'create']);
+            Route::post('/store', [PayrollPeriodController::class, 'store']);
+            Route::get('/{payrollPeriod}/edit', [PayrollPeriodController::class, 'edit']);
+            Route::put('/update/{payrollPeriod}', [PayrollPeriodController::class, 'update']);
+            Route::delete('/delete/{payrollPeriod}', [PayrollPeriodController::class, 'destroy']);
+        });
+    });
+
+    Route::prefix('employee')->group(function () {
+        Route::get('/', [EmployeeController::class, 'index']);
+        Route::get('/detail_pelamar/{id}', [EmployeeController::class, 'detailPelamar']);
+        Route::get('/get-data/{id}', [EmployeeController::class, 'getData']);
+        Route::post('/import-karyawan', [EmployeeController::class, 'importKaryawan']);
+        Route::post('/import-payslip', [EmployeeController::class, 'importPayslip']);
+        Route::get('/import-log/{id}', [EmployeeController::class, 'showImportLog']);
+
         Route::post('/store', [EmployeeController::class, 'store']);
         Route::get('/{id}', [EmployeeController::class, 'show']);
         Route::post('/store-edit/{id}', [EmployeeController::class, 'update']);
@@ -73,13 +106,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/karyawan', function () {
             return Inertia::render('admin/DataKaryawan');
         });
-        Route::get('/karyawan/tambah', function () {
-            return Inertia::render('admin/TambahKaryawan');
-        });
-        Route::get('/pelamar', function () {
-            return Inertia::render('admin/DataPelamar');
-        });
-
+        // Route::get('/karyawan/tambah', function () {
+        //     return Inertia::render('admin/TambahKaryawan');
+        // });
 
         Route::get('/users/{id}', function () {
             return Inertia::render('admin/DetailKaryawan');
@@ -92,21 +121,6 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/salary', function () {
         return Inertia::render('employee/SalarySlip');
-    });
-
-    Route::prefix('master')->group(function () {
-        Route::prefix('payroll-period')->group(function () {
-            Route::get('/all-data', function () {
-                return Inertia::render('master/payroll_period/index');
-            });
-            Route::get('/', [PayrollPeriodController::class, 'index']);
-            Route::get('/get-data/{id}', [PayrollPeriodController::class, 'getData']);
-            Route::get('/create', [PayrollPeriodController::class, 'create']);
-            Route::post('/store', [PayrollPeriodController::class, 'store']);
-            Route::get('/{payrollPeriod}/edit', [PayrollPeriodController::class, 'edit']);
-            Route::put('/update/{payrollPeriod}', [PayrollPeriodController::class, 'update']);
-            Route::delete('/delete/{payrollPeriod}', [PayrollPeriodController::class, 'destroy']);
-        });
     });
 
     if (app()->environment('local')) {

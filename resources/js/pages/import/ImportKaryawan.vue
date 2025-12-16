@@ -240,7 +240,7 @@ export default {
         },
         downloadTemplate() {
             const link = document.createElement('a');
-            link.href = '/template/template_import_employee.xlsx'; // harus sama persis
+            link.href = '/template/FORMAT UPLOAD DAKAR.xlsx'; // harus sama persis
             link.download = 'template_import_employee.xlsx';
             document.body.appendChild(link);
             link.click();

@@ -196,11 +196,11 @@ export default {
         },
 
         goProfile() {
-            router.visit(`/employee/profil/${this.user.id}`);
+            router.visit(`/profil/${this.user.id}`);
         },
 
         goChangePassword() {
-            router.visit(`/employee/change-password`);
+            router.visit(`/change-password`);
         },
     },
 };

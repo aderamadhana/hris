@@ -96,7 +96,7 @@ export default {
 
             try {
                 const res = await axios.post(
-                    '/employee/proses-change-password',
+                    '/proses-change-password',
                     this.formPassword,
                 );
 

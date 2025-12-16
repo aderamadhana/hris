@@ -395,7 +395,7 @@ export default {
             }
         },
         tambahKaryawan() {
-            this.$inertia.visit('/admin/karyawan/tambah');
+            this.$inertia.visit('/karyawan/tambah-karyawan');
         },
     },
 };

@@ -389,13 +389,13 @@ export default {
         },
 
         openDetail(u) {
-            router.visit(`/employee/profil/${u}`);
+            router.visit(`/karyawan/detail-karyawan/${u}`);
         },
         openEdit(u) {
-            router.visit(`/employee/edit/${u}`);
+            router.visit(`/karyawan/edit-karyawan/${u}`);
         },
         openPayslip(u) {
-            router.visit(`/employee/salary/${u}`);
+            router.visit(`/karyawan/daftar-gaji/${u}`);
         },
         editUser(u) {
             alert(`Edit: ${u.name}`);
@@ -406,7 +406,7 @@ export default {
             }
         },
         tambahKaryawan() {
-            this.$inertia.visit('/admin/karyawan/tambah');
+            this.$inertia.visit('/karyawan/tambah-karyawan');
         },
     },
 };

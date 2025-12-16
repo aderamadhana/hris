@@ -29,18 +29,22 @@ const page = usePage();
             </Link>
 
             <Link
-                href="/admin/karyawan"
+                href="/karyawan/all-karyawan"
                 class="sidebar-item"
-                :class="{ active: page.url.startsWith('/admin/karyawan') }"
+                :class="{
+                    active: page.url.startsWith('/karyawan/all-karyawan'),
+                }"
             >
                 <span class="icon">🧑‍💼</span>
                 <span class="label">Data Karyawan</span>
             </Link>
 
             <Link
-                href="/admin/pelamar"
+                href="/pelamar/all-pelamar"
                 class="sidebar-item"
-                :class="{ active: page.url.startsWith('/admin/pelamar') }"
+                :class="{
+                    active: page.url.startsWith('/pelamar/all-pelamar'),
+                }"
             >
                 <span class="icon">📝</span>
                 <span class="label">Data Pelamar</span>
