@@ -22,6 +22,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/stats', [DashboardController::class, 'getStats']);
+    });
+
     Route::prefix('employee')->group(function () {
         Route::get('/', [EmployeeController::class, 'index']);
         Route::get('/profil/{id}', [EmployeeController::class, 'profil']);

@@ -8,89 +8,110 @@
         </div>
 
         <!-- GRID -->
-        <div class="dashboard-grid">
-            <!-- STATUS KEHADIRAN HARI INI -->
-            <div class="dashboard-card large">
-                <div class="dashboard-card-header">
-                    <div>
-                        <div class="dashboard-card-title">
-                            Kehadiran Hari Ini
+        <div class="dashboard-container">
+            <!-- KATEGORI: KEHADIRAN -->
+            <div class="category-section">
+                <h2 class="category-title">📅 Kehadiran</h2>
+                <div class="dashboard-grid">
+                    <!-- STATUS KEHADIRAN HARI INI -->
+                    <div class="dashboard-card large">
+                        <div class="dashboard-card-header">
+                            <div>
+                                <div class="dashboard-card-title">
+                                    Kehadiran Hari Ini
+                                </div>
+                                <div class="dashboard-meta">
+                                    16 Desember 2025 · Shift Pagi
+                                </div>
+                            </div>
+                            <span class="dashboard-card-badge">Realtime</span>
                         </div>
+
+                        <div class="dashboard-value">Hadir</div>
+
                         <div class="dashboard-meta">
-                            {{ today }} · {{ shift }}
+                            Clock In: 08:15 · Clock Out: -
+                        </div>
+
+                        <div class="chart-placeholder">
+                            Timeline kehadiran hari ini
                         </div>
                     </div>
-                    <span class="dashboard-card-badge">Realtime</span>
-                </div>
 
-                <div class="dashboard-value">{{ attendanceStatus }}</div>
+                    <!-- ON-TIME -->
+                    <div class="dashboard-card success">
+                        <div class="dashboard-card-header">
+                            <div class="dashboard-card-title">
+                                Ketepatan Waktu
+                            </div>
+                            <span class="dashboard-card-badge">Bulan ini</span>
+                        </div>
 
-                <div class="dashboard-meta">
-                    Clock In: {{ clockIn || '-' }} · Clock Out:
-                    {{ clockOut || '-' }}
-                </div>
+                        <div class="dashboard-circle">
+                            <div class="dashboard-circle-inner">92%</div>
+                        </div>
 
-                <div class="chart-placeholder">Timeline kehadiran hari ini</div>
-            </div>
+                        <div class="dashboard-meta">
+                            18 hari datang tepat waktu
+                        </div>
+                    </div>
 
-            <!-- ON-TIME -->
-            <div class="dashboard-card success">
-                <div class="dashboard-card-header">
-                    <div class="dashboard-card-title">Ketepatan Waktu</div>
-                    <span class="dashboard-card-badge">Bulan ini</span>
-                </div>
+                    <!-- TERLAMBAT -->
+                    <div class="dashboard-card danger">
+                        <div class="dashboard-card-header">
+                            <div class="dashboard-card-title">
+                                Keterlambatan
+                            </div>
+                            <span class="dashboard-card-badge">Bulan ini</span>
+                        </div>
 
-                <div class="dashboard-circle">
-                    <div class="dashboard-circle-inner">{{ onTimeRate }}%</div>
-                </div>
+                        <div class="dashboard-circle">
+                            <div class="dashboard-circle-inner">3x</div>
+                        </div>
 
-                <div class="dashboard-meta">
-                    {{ onTimeCount }} hari datang tepat waktu
-                </div>
-            </div>
-
-            <!-- TERLAMBAT -->
-            <div class="dashboard-card danger">
-                <div class="dashboard-card-header">
-                    <div class="dashboard-card-title">Keterlambatan</div>
-                    <span class="dashboard-card-badge">Bulan ini</span>
-                </div>
-
-                <div class="dashboard-circle">
-                    <div class="dashboard-circle-inner">{{ lateCount }}x</div>
-                </div>
-
-                <div class="dashboard-meta">
-                    Rata-rata terlambat {{ avgLate }} menit
+                        <div class="dashboard-meta">
+                            Rata-rata terlambat 12 menit
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- STATUS KONTRAK -->
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <div class="dashboard-card-title">Status Kontrak</div>
-                    <span class="dashboard-card-badge">{{ contractType }}</span>
+            <!-- KATEGORI: KONTRAK -->
+            <div class="category-section">
+                <h2 class="category-title">📋 Kontrak</h2>
+                <div class="dashboard-grid">
+                    <!-- STATUS KONTRAK -->
+                    <div class="dashboard-card">
+                        <div class="dashboard-card-header">
+                            <div class="dashboard-card-title">
+                                Status Kontrak
+                            </div>
+                            <span class="dashboard-card-badge">PKWT</span>
+                        </div>
+
+                        <div class="dashboard-value">31 Mar 2026</div>
+                        <div class="dashboard-meta">
+                            Berlaku hingga tanggal tersebut
+                        </div>
+                    </div>
+
+                    <!-- HISTORY KONTRAK KERJA -->
+                    <div class="dashboard-card">
+                        <div class="dashboard-card-header">
+                            <div class="dashboard-card-title">
+                                History Kontrak
+                            </div>
+                            <span class="dashboard-card-badge">Riwayat</span>
+                        </div>
+
+                        <div class="dashboard-value">4</div>
+                        <div class="dashboard-meta">Total kontrak tercatat</div>
+
+                        <button class="dashboard-btn-link">
+                            Lihat Detail History →
+                        </button>
+                    </div>
                 </div>
-
-                <div class="dashboard-value">{{ contractEnd }}</div>
-                <div class="dashboard-meta">
-                    Berlaku hingga tanggal tersebut
-                </div>
-            </div>
-
-            <!-- HISTORY KONTRAK KERJA (NEW) -->
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <div class="dashboard-card-title">History Kontrak</div>
-                    <span class="dashboard-card-badge">Riwayat</span>
-                </div>
-
-                <div class="dashboard-value">{{ contractHistory.length }}</div>
-                <div class="dashboard-meta">Total kontrak tercatat</div>
-
-                <button class="dashboard-btn-link" @click="showContractHistory">
-                    Lihat Detail History →
-                </button>
             </div>
         </div>
     </section>
