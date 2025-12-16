@@ -5,15 +5,51 @@
         <div class="modal-backdrop"></div>
 
         <!-- Panel konten di tengah -->
-        <div class="modal-panel" @click.stop>
+        <div class="modal-panel" :class="sizeClass" @click.stop>
             <slot />
         </div>
     </div>
 </template>
 
-<script setup></script>
+<script>
+export default {
+    props: {
+        size: {
+            type: String,
+            default: 'sm', // md | lg | xl
+        },
+    },
+    computed: {
+        sizeClass() {
+            return `modal-${this.size}`;
+        },
+    },
+};
+</script>
 
 <style scoped>
+/* default */
+.modal-sm {
+    width: 20vw;
+    max-width: 480px;
+}
+
+.modal-md {
+    width: 40vw;
+    max-width: 720px;
+}
+
+/* LARGE */
+.modal-lg {
+    width: 80vw;
+    max-width: 1200px;
+}
+
+/* EXTRA LARGE (optional) */
+.modal-xl {
+    width: 95vw;
+    max-width: 1600px;
+}
 .modal-root {
     position: fixed;
     inset: 0;
@@ -31,7 +67,7 @@
 
 .modal-panel {
     position: relative;
-    max-width: 480px;
+    /* max-width: 480px; */
     width: 100%;
     margin: 0 16px;
     background: #ffffff;

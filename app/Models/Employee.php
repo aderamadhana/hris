@@ -52,6 +52,12 @@ class Employee extends Model
         return $this->hasMany(EmployeeFamily::class);
     }
 
+    public function documents()
+    {
+        return $this->hasOne(EmployeeDocument::class);
+    }
+
+
     public function health()
     {
         return $this->hasOne(EmployeeHealth::class);
@@ -107,5 +113,10 @@ class Employee extends Model
     public function scopeActive($query)
     {
         return $query->whereNotNull('status_kary');
+    }
+
+    public function getTanggalLahirAttribute($value)
+    {
+        return $value ? \Carbon\Carbon::parse($value)->format('Y-m-d') : null;
     }
 }

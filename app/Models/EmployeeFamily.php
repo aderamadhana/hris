@@ -18,4 +18,9 @@ class EmployeeFamily extends Model
     {
         return $this->belongsTo(Employee::class);
     }
+
+    public function getTanggalLahirAttribute($value)
+    {
+        return $value ? \Carbon\Carbon::parse($value)->format('Y-m-d') : null;
+    }
 }

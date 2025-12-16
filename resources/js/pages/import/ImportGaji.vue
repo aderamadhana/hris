@@ -1,5 +1,5 @@
 <template>
-    <Modal>
+    <Modal size="sm">
         <div class="modal-header">
             <h3>Import Data Slip Gaji Karyawan</h3>
             <button

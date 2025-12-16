@@ -11,19 +11,11 @@
                     <p class="page-subtitle">Kelola informasi pelamar</p>
                 </div>
 
-                <!-- <div class="page-actions">
-                    <DropdownButton label="Upload Data">
-                        <a @click="openImportKaryawanModal">
-                            ⬆️ Upload Excel Karyawan
-                        </a>
-                        <a @click="openImportPayslipModal">
-                            🧾 Upload Slip Gaji Karyawan
-                        </a>
-                    </DropdownButton>
-                    <Button variant="primary" @click="tambahKaryawan">
-                        ➕ Tambah Karyawan
+                <div class="page-actions">
+                    <Button variant="primary" @click="fiturBelumTersedia">
+                        ➕ Tambah Pelamar
                     </Button>
-                </div> -->
+                </div>
             </div>
 
             <!-- RINGKASAN DI ATAS TABEL -->
@@ -73,7 +65,9 @@
                                 <th class="col-no">#</th>
                                 <th class="col-name">Nama</th>
                                 <th class="col-nik">NIK</th>
-                                <th class="col-tanggal-lahir">Tanggal Lahir</th>
+                                <th class="col-tanggal-lahir">
+                                    Tanggal Melamar
+                                </th>
                                 <th class="col-perusahaan">Perusahaan</th>
                                 <th class="col-position">Jabatan</th>
                                 <th class="col-status">Status</th>
@@ -390,7 +384,7 @@ export default {
         },
 
         openDetail(u) {
-            router.visit(`/employee/profil/${u}`);
+            router.visit(`/employee/detail_pelamar/${u}`);
         },
         editUser(u) {
             alert(`Edit: ${u.name}`);

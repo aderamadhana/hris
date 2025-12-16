@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('employee')->group(function () {
         Route::get('/', [EmployeeController::class, 'index']);
         Route::get('/profil/{id}', [EmployeeController::class, 'profil']);
+        Route::get('/detail_pelamar/{id}', [EmployeeController::class, 'detailPelamar']);
         Route::get('/change-password', [EmployeeController::class, 'changePassword']);
         Route::post('/proses-change-password', [EmployeeController::class, 'prosesChangePassword']);
         Route::get('/get-data/{id}', [EmployeeController::class, 'getData']);
@@ -40,6 +41,14 @@ Route::middleware('auth')->group(function () {
                 'employeeId' => $id
             ]);
         });
+
+        Route::get('/edit/{id}', [EmployeeController::class, 'edit']);
+        Route::post('/store', [EmployeeController::class, 'store']);
+        Route::get('/{id}', [EmployeeController::class, 'show']);
+        Route::post('/store-edit/{id}', [EmployeeController::class, 'update']);
+        Route::delete('/{id}', [EmployeeController::class, 'destroy']);
+        Route::get('/employees/{id}/with-relations', [EmployeeController::class, 'showWithRelations']);
+    
     });
 
     Route::prefix('payroll')->group(function () {
@@ -73,7 +82,7 @@ Route::middleware('auth')->group(function () {
 
 
         Route::get('/users/{id}', function () {
-            return Inertia::render('admin/UserDetail');
+            return Inertia::render('admin/DetailKaryawan');
         });
     });
 

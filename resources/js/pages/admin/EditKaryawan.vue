@@ -4,10 +4,10 @@
             <!-- HEADER -->
             <div class="page-header">
                 <div>
-                    <h2 class="page-title">Tambah Data Karyawan</h2>
+                    <h2 class="page-title">Edit Data Karyawan</h2>
                     <p class="page-subtitle">
-                        Tambah profil, pendidikan, pekerjaan, keluarga,
-                        kesehatan, dan kelengkapan dokumen.
+                        Ubah profil, pendidikan, pekerjaan, keluarga, kesehatan,
+                        dan kelengkapan dokumen.
                     </p>
                 </div>
             </div>
@@ -1308,6 +1308,9 @@ import { router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 
 export default {
+    props: {
+        employee_id: String,
+    },
     components: { AppLayout, Tabs },
 
     data() {
@@ -1458,52 +1461,151 @@ export default {
     mounted() {
         // TODO: ganti ini dengan fetch data kamu (props inertia / axios)
         // simulasi: setelah data ada, panggil hydrateFormsFromDetail()
-        this.hydrateFormsFromDetail();
+        this.getDataKaryawan();
+        console.log(this.employee_id);
         this.loading = false;
     },
 
     methods: {
         // ====== HYDRATE (DETAIL -> FORM) ======
-        hydrateFormsFromDetail() {
-            // kalau data berasal dari this.employee/dll, map ke form:
-            // ini aman meskipun objek kosong
-            this.formEmployee = {
-                ...this.formEmployee,
-                ...this.employee,
-                status: String(
-                    this.employee?.status ?? this.formEmployee.status,
-                ),
-            };
+        async getDataKaryawan() {
+            axios
+                .get(`/employee/${this.employee_id}`)
+                .then(({ data }) => {
+                    /* ===============================
+             | FORM EMPLOYEE
+             ===============================*/
+                    Object.assign(this.formEmployee, {
+                        nama: data.nama ?? '',
+                        nrp: data.nrp ?? '',
+                        jk: data.jenis_kelamin ?? '',
+                        tempat_lahir: data.tempat_lahir ?? '',
+                        tanggal_lahir: data.tanggal_lahir ?? '',
+                        perkawinan: data.status_perkawinan ?? '',
+                        agama: data.agama ?? '',
+                        kewarganegaraan: data.kewarganegaraan ?? '',
+                        status: data.status_active ?? '1',
 
-            this.formAlamat = {
-                ...this.formAlamat,
-                ...this.alamat,
-            };
+                        no_wa: data.personal?.no_wa ?? '',
+                        bpjs_tk: data.personal?.bpjs_tk ?? '',
+                        bpjs_kes: data.personal?.bpjs_kes ?? '',
+                        nama_faskes: data.personal?.nama_faskes ?? '',
+                        email: data.personal?.email ?? '',
+                        no_skck: data.personal?.no_skck ?? '',
+                        masa_berlaku_skck:
+                            data.personal?.masa_berlaku_skck ?? '',
+                        jenis_lisensi: data.personal?.jenis_lisensi ?? '',
+                        no_lisensi: data.personal?.no_lisensi ?? '',
+                        masa_berlaku_lisensi:
+                            data.personal?.masa_berlaku_lisensi ?? '',
+                    });
 
-            this.listPendidikan = Array.isArray(this.pendidikan)
-                ? [...this.pendidikan]
-                : [];
+                    /* ===============================
+             | FORM ALAMAT
+             ===============================*/
+                    Object.assign(this.formAlamat, {
+                        ktp: data.personal?.no_ktp ?? '',
+                        phone: data.personal?.no_hp ?? '',
+                        domisili: data.address?.alamat_lengkap ?? '',
+                        kota: data.address?.kota ?? '',
+                    });
 
-            this.listPekerjaan = Array.isArray(this.pekerjaan)
-                ? [...this.pekerjaan]
-                : [];
+                    /* ===============================
+             | PENDIDIKAN
+             ===============================*/
+                    this.listPendidikan = (data.educations ?? []).map((p) => ({
+                        jenjang: p.jenjang ?? '',
+                        jurusan: p.jurusan ?? '',
+                        sekolah: p.sekolah_asal ?? '',
+                        tahun_lulus: p.tahun_lulus ?? '',
+                    }));
 
-            this.listKeluarga = Array.isArray(this.keluarga)
-                ? [...this.keluarga]
-                : [];
+                    /* ===============================
+             | PEKERJAAN
+             ===============================*/
+                    this.listPekerjaan = (data.employmentss ?? []).map((j) => ({
+                        jabatan: j.jabatan ?? j.job_roll ?? '',
+                        perusahaan: j.perusahaan ?? '',
+                        bagian: j.penempatan ?? '',
+                        no_kontrak: j.no_kontrak ?? '',
+                        cost_center: j.cost_center ?? '',
+                        jenis_kontrak: j.jenis_kontrak ?? '',
+                        mulai: j.tgl_awal_kerja ?? '',
+                        selesai: j.tgl_akhir_kerja ?? '',
+                        jenis_kerja: j.jenis_kerja ?? '',
+                        pola_kerja: j.pola_kerja ?? '',
+                        hari_kerja: j.hari_kerja ?? '',
+                        status_kontrak: j.keterangan_status ?? j.status ?? '',
+                    }));
 
-            this.formKesehatan = {
-                ...this.formKesehatan,
-                ...this.kesehatan,
-                buta_warna: Boolean(this.kesehatan?.buta_warna),
-            };
+                    /* ===============================
+             | KELUARGA
+             ===============================*/
+                    this.listKeluarga = (data.families ?? []).map((f) => ({
+                        nama: f.nama ?? '',
+                        hubungan: f.hubungan ?? '',
+                        ttl:
+                            f.tempat_lahir && f.tanggal_lahir
+                                ? `${f.tempat_lahir}, ${f.tanggal_lahir}`
+                                : '',
+                        no_hp: f.no_hp ?? '',
+                    }));
 
-            // dokumen (boolean)
-            if (this.dokumen && typeof this.dokumen === 'object') {
-                Object.keys(this.formDokumen).forEach((k) => {
-                    this.formDokumen[k] = Boolean(this.dokumen?.[k]);
+                    /* ===============================
+             | KESEHATAN
+             ===============================*/
+                    if (data.health) {
+                        Object.assign(this.formKesehatan, {
+                            tinggi_badan: data.health.tinggi_badan ?? '',
+                            berat_badan: data.health.berat_badan ?? '',
+                            gol_darah: data.health.gol_darah ?? '',
+                            buta_warna: !!data.health.buta_warna,
+                            riwayat_penyakit:
+                                data.health.riwayat_penyakit ?? '',
+                            hasil_drug_test: data.health.hasil_drug_test ?? '',
+                            tanggal_drug_test:
+                                data.health.tanggal_drug_test ?? '',
+                            darah: data.health.darah ?? '',
+                            urine: data.health.urine ?? '',
+                            f_hati: data.health.f_hati ?? '',
+                            gula_darah: data.health.gula_darah ?? '',
+                            ginjal: data.health.ginjal ?? '',
+                            thorax: data.health.thorax ?? '',
+                            tensi: data.health.tensi ?? '',
+                            nadi: data.health.nadi ?? '',
+                            od: data.health.od ?? '',
+                            os: data.health.os ?? '',
+                        });
+                    }
+
+                    /* ===============================
+             | DOKUMEN (CHECKLIST)
+             ===============================*/
+                    if (data.documents) {
+                        Object.assign(this.formDokumen, {
+                            pas_foto: !!data.documents.pas_foto,
+                            ktp: !!data.documents.dokumen_ktp,
+                            kk: !!data.documents.dokumen_kk,
+                            bpjs_tk:
+                                !!data.documents.dokumen_bpjs_ketenagakerjaan,
+                            vaksin: !!data.documents.dokumen_sertifikat_vaksin,
+                            sio_forklift: !!data.documents.dokumen_sio_forklift,
+                            form_bpjs_tk:
+                                !!data.documents.dokumen_formulir_bpjs_tk,
+                            form_bpjs_kes:
+                                !!data.documents
+                                    .dokumen_formulir_bpjs_kesehatan,
+                            paklaring:
+                                !!data.documents.dokumen_surat_pengalaman_kerja,
+                            sim_b1: !!data.documents.dokumen_sim_b1,
+                            kartu_garda:
+                                !!data.documents.dokumen_kartu_garda_pratama,
+                        });
+                    }
+                })
+                .finally(() => {
+                    this.loading = false;
                 });
-            }
         },
 
         // ====== SUBMIT PER TAB (optional) ======
@@ -1792,7 +1894,7 @@ export default {
                 // Kirim ke backend
                 try {
                     const response = await axios.post(
-                        '/employees/store',
+                        '/employee/store-edit/' + this.employee_id,
                         formData,
                         {
                             headers: {

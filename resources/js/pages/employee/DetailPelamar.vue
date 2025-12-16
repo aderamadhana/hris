@@ -4,7 +4,7 @@
             <!-- HEADER -->
             <div class="page-header">
                 <div>
-                    <h2 class="page-title">Detail Karyawan</h2>
+                    <h2 class="page-title">Detail Pelamar</h2>
                     <p class="page-subtitle">
                         Ringkasan profil, riwayat pendidikan, pekerjaan,
                         keluarga, dan kesehatan karyawan.
@@ -583,16 +583,16 @@
                                         {{ doc.label }}
                                     </div>
                                     <div class="field-value">
-                                        <Button
-                                            v-if="doc.value"
-                                            variant="primary"
-                                            @click="lihatDokumen(doc.value)"
+                                        <span
+                                            :class="
+                                                doc.value
+                                                    ? 'status-ok'
+                                                    : 'status-empty'
+                                            "
                                         >
-                                            Ada
-                                        </Button>
-
-                                        <span v-else class="status-empty">
-                                            Tidak Ada
+                                            {{
+                                                doc.value ? 'Ada' : 'Tidak Ada'
+                                            }}
                                         </span>
                                     </div>
                                 </div>
@@ -612,43 +612,17 @@
                 </div>
             </div>
         </section>
-        <Modal v-if="showModalDocument" size="lg">
-            <div class="modal-header">
-                <h3>Dokumen</h3>
-                <button class="modal-close" @click="closeLihatDocumen">
-                    ✕
-                </button>
-            </div>
-            <div class="modal-body">
-                <iframe
-                    v-if="url"
-                    :src="url"
-                    class="doc-iframe"
-                    frameborder="0"
-                ></iframe>
-
-                <div v-else class="empty-doc">Dokumen tidak tersedia</div>
-            </div>
-
-            <div class="modal-footer">
-                <Button variant="secondary" @click="closeLihatDocumen">
-                    Tutup
-                </Button>
-            </div>
-        </Modal>
     </AppLayout>
 </template>
 
 <script>
-import Button from '@/components/Button.vue';
-import Modal from '@/components/Modal.vue';
 import Tabs from '@/components/Tabs.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 
 export default {
-    components: { AppLayout, Tabs, Link, Modal, Button },
+    components: { AppLayout, Tabs },
 
     data() {
         const page = usePage();
@@ -672,9 +646,6 @@ export default {
                 { key: 'kesehatan', label: 'Kesehatan' },
                 { key: 'dokumen', label: 'Kelengkapan Dokumen' },
             ],
-
-            url: null,
-            showModalDocument: false,
         };
     },
 
@@ -684,53 +655,45 @@ export default {
                 {
                     key: 'pas_foto',
                     label: 'Pas Foto',
-                    value: this.document?.pas_foto,
+                    value: this.dokumen?.pas_foto,
                 },
-                { key: 'ktp', label: 'KTP', value: this.document?.ktp },
-                {
-                    key: 'kk',
-                    label: 'Kartu Keluarga',
-                    value: this.document?.kk,
-                },
+                { key: 'ktp', label: 'KTP', value: this.dokumen?.ktp },
+                { key: 'kk', label: 'Kartu Keluarga', value: this.dokumen?.kk },
                 {
                     key: 'bpjs_tk',
                     label: 'BPJS Ketenagakerjaan',
-                    value: this.document?.bpjs_tk,
+                    value: this.dokumen?.bpjs_tk,
                 },
                 {
                     key: 'vaksin',
                     label: 'Sertifikat Vaksin',
-                    value: this.document?.vaksin,
+                    value: this.dokumen?.vaksin,
                 },
                 {
                     key: 'sio_forklift',
                     label: 'SIO Forklift',
-                    value: this.document?.sio_forklift,
+                    value: this.dokumen?.sio_forklift,
                 },
                 {
                     key: 'form_bpjs_tk',
                     label: 'Formulir BPJS TK',
-                    value: this.document?.form_bpjs_tk,
+                    value: this.dokumen?.form_bpjs_tk,
                 },
                 {
                     key: 'form_bpjs_kes',
                     label: 'Formulir BPJS Kesehatan',
-                    value: this.document?.form_bpjs_kes,
+                    value: this.dokumen?.form_bpjs_kes,
                 },
                 {
                     key: 'paklaring',
                     label: 'Surat Pengalaman Kerja / Paklaring',
-                    value: this.document?.paklaring,
+                    value: this.dokumen?.paklaring,
                 },
-                {
-                    key: 'sim_b1',
-                    label: 'SIM B1',
-                    value: this.document?.sim_b1,
-                },
+                { key: 'sim_b1', label: 'SIM B1', value: this.dokumen?.sim_b1 },
                 {
                     key: 'kartu_garda',
                     label: 'Kartu Garda Pratama',
-                    value: this.document?.kartu_garda,
+                    value: this.dokumen?.kartu_garda,
                 },
             ];
         },
@@ -741,14 +704,6 @@ export default {
     },
 
     methods: {
-        lihatDokumen(url) {
-            this.url = url;
-            this.showModalDocument = true;
-        },
-        closeLihatDocumen() {
-            this.url = null;
-            this.showModalDocument = false;
-        },
         fetchEmployee() {
             const id = window.location.pathname.split('/').pop();
             axios
@@ -756,7 +711,6 @@ export default {
                 .then((res) => {
                     this.employee = res.data.employee || {};
                     this.alamat = res.data.alamat || {};
-                    this.document = res.data.document || {};
                     this.pendidikan = res.data.pendidikan || [];
                     this.pekerjaan = res.data.pekerjaan || [];
                     this.keluarga = res.data.keluarga || [];
@@ -778,25 +732,5 @@ export default {
 .tag-status.is-inactive {
     background-color: #fdecea;
     color: #c0392b;
-}
-
-.iframe-wrapper {
-    width: 100%;
-    height: 70vh; /* kontrol tinggi modal */
-    overflow: hidden;
-}
-
-.doc-iframe {
-    width: 100%;
-    height: 100%;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    background: #fff;
-}
-
-.empty-doc {
-    text-align: center;
-    color: #9ca3af;
-    padding: 2rem;
 }
 </style>

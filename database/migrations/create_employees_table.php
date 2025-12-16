@@ -7,6 +7,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        Schema::create('roles', function (Blueprint $table) {
+            $table->id();
+            $table->string('role_name', 30);
+            $table->timestamps();
+        });
+
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
             $table->string('nrp', 30)->unique();
@@ -25,12 +31,6 @@ return new class extends Migration
             $table->string('status_perkawinan', 50)->nullable();
             $table->string('kewarganegaraan', 50)->nullable();
             $table->char('status_active', 1)->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('roles', function (Blueprint $table) {
-            $table->id();
-            $table->string('role_name', 30);
             $table->timestamps();
         });
 
@@ -141,6 +141,25 @@ return new class extends Migration
             $table->string('institusi')->nullable();
             $table->year('tahun_lulus')->nullable();
             $table->string('sekolah_asal')->nullable();
+
+            $table->timestamps();
+        });
+
+        Schema::create('employee_documents', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('employee_id')->constrained()->cascadeOnDelete();
+
+            $table->string('pas_foto')->nullable();
+            $table->string('dokumen_kk')->nullable();
+            $table->string('dokumen_sertifikat_vaksin')->nullable();
+            $table->string('dokumen_formulir_bpjs_tk')->nullable();
+            $table->string('dokumen_surat_pengalaman_kerja')->nullable();
+            $table->string('dokumen_kartu_garda_pratama')->nullable();
+            $table->string('dokumen_ktp')->nullable();
+            $table->string('dokumen_bpjs_ketenagakerjaan')->nullable();
+            $table->string('dokumen_sio_forklift')->nullable();
+            $table->string('dokumen_formulir_bpjs_kesehatan')->nullable();
+            $table->string('dokumen_sim_b1')->nullable();
 
             $table->timestamps();
         });

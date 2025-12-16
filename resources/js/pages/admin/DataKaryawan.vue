@@ -76,10 +76,10 @@
                                 <th class="col-no">#</th>
                                 <th class="col-name">Nama</th>
                                 <th class="col-nik">NIK</th>
-                                <th class="col-tanggal-lahir">Tanggal Lahir</th>
                                 <th class="col-perusahaan">Perusahaan</th>
                                 <th class="col-position">Jabatan</th>
-                                <th class="col-status">Status</th>
+                                <th class="col-status">Awal Kontrak</th>
+                                <th class="col-status">Akhir Kontrak</th>
                                 <th class="col-action">Detail</th>
                             </tr>
                         </thead>
@@ -127,34 +127,23 @@
                                 </td>
 
                                 <td>
-                                    <span class="cell-tanggal-lahir">
-                                        {{ u.tanggal_lahir }}
-                                    </span>
-                                </td>
-
-                                <td>
                                     <span class="cell-perusahaan">
                                         {{ u.perusahaan }}
                                     </span>
                                 </td>
 
                                 <td>{{ u.position }}</td>
-
-                                <td>
-                                    <span
-                                        class="status-pill"
-                                        :class="{
-                                            'status-active':
-                                                u.status === 'Aktif',
-                                            'status-inactive':
-                                                u.status !== 'Aktif',
-                                        }"
-                                    >
-                                        {{ u.status }}
-                                    </span>
-                                </td>
+                                <td>{{ u.awal_kontrak }}</td>
+                                <td>{{ u.akhir_kontrak }}</td>
 
                                 <td class="actions-cell">
+                                    <button
+                                        class="action-btn emoji primary"
+                                        title="Edit Karyawan"
+                                        @click="openEdit(u.id)"
+                                    >
+                                        ✏️
+                                    </button>
                                     <button
                                         class="action-btn emoji primary"
                                         title="Lihat Detail Karyawan"
@@ -163,6 +152,13 @@
                                         👁️
                                     </button>
 
+                                    <button
+                                        class="action-btn emoji primary"
+                                        title="Non Aktifkan Karyawan"
+                                        @click="fiturBelumTersedia"
+                                    >
+                                        🗑️
+                                    </button>
                                     <button
                                         class="action-btn emoji success"
                                         title="Slip Gaji Karyawan"
@@ -394,6 +390,9 @@ export default {
 
         openDetail(u) {
             router.visit(`/employee/profil/${u}`);
+        },
+        openEdit(u) {
+            router.visit(`/employee/edit/${u}`);
         },
         openPayslip(u) {
             router.visit(`/employee/salary/${u}`);
