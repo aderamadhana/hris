@@ -251,7 +251,7 @@ export default {
 
         downloadTemplate() {
             const link = document.createElement('a');
-            link.href = '/template/FORMAT UPLOAD PAYSLIP.xlsx'; // harus sama persis
+            link.href = '/template/FORMAT_UPLOAD_PAYSLIP.xlsx'; // harus sama persis
             link.download = 'template_import_gaji.xlsx';
             document.body.appendChild(link);
             link.click();
