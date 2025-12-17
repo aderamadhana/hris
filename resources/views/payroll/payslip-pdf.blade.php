@@ -180,7 +180,7 @@
 <body>
     <!-- HEADER -->
     <div class="header">
-        <h1>{{ $company_name }}</h1>
+        <h1>{{ $company_name }} </h1>
         <h2>Slip Gaji Karyawan</h2>
         <div style="margin-top: 8px; font-size: 11px;">
             <strong>{{ $period_name }}</strong><br>
