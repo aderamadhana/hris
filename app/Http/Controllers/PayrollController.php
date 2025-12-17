@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\{
     Employee,
     EmployeeEmployment,
+    EmployeePersonal,
     AdditionalEarning,
     OvertimeSummary,
     AttendanceSummary,
@@ -160,6 +161,9 @@ class PayrollController extends Controller
             // Get all related data
             $earnings = Earning::where('employee_id', $employee->id)
                 ->where('payroll_period_id', $period->id)
+                ->first();
+
+            $personal = EmployeePersonal::where('employee_id', $employee->id)
                 ->first();
 
             $deductions = Deduction::where('employee_id', $employee->id)
@@ -317,13 +321,13 @@ class PayrollController extends Controller
             // Prepare data for PDF
             $data = [
                 'company_name' => $employement?->perusahaan ?? 'N/A',
-                'period_name' => $period->name ?? 'N/A',
+                'period_name' => $period->judul_periode ?? 'N/A',
                 'period_range' => $period->start_date->format('d M Y') . ' – ' . $period->end_date->format('d M Y'),
                 'employee' => [
                     'nama' => $employee->nama,
-                    'nik' => $employee->nik_kary ?? $employee->nik,
-                    'jabatan' => $employee->jabatan ?? 'N/A',
-                    'divisi' => $employee->bagian ?? 'N/A',
+                    'nik' => $personal->no_ktp ?? $employee->nik,
+                    'jabatan' => $employement->jabatan ?? 'N/A',
+                    'divisi' => $employement->penempatan ?? 'N/A',
                     'no_rek' => $employee->no_rek ?? 'N/A',
                 ],
                 'payment' => [

@@ -211,11 +211,11 @@
                 <div class="info-separator">:</div>
                 <div class="info-value">{{ $employee['divisi'] }}</div>
             </div>
-            <div class="info-row">
+            <!-- <div class="info-row">
                 <div class="info-label">No. Rekening</div>
                 <div class="info-separator">:</div>
                 <div class="info-value">{{ $employee['no_rek'] }}</div>
-            </div>
+            </div> -->
         </div>
     </div>
 
