@@ -38,6 +38,7 @@ jobs:
             rsync -avz --update resources/ "$WORKING_DIR/resources/"
             rsync -avz --update bootstrap/ "$WORKING_DIR/bootstrap/"
             rsync -avz --update public/assets/ "$WORKING_DIR/public/assets/"
+            rsync -avz --update composer.json "$WORKING_DIR/composer.json"
 
             echo "Processing build & deploy..."
 
