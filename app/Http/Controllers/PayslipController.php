@@ -71,7 +71,7 @@ class PayslipController extends Controller
                 ['label' => 'Gaji HK', 'amount' => $earnings?->gaji_hk],
                 ['label' => 'Gaji HL', 'amount' => $earnings?->gaji_hl],
                 ['label' => 'Gaji HR', 'amount' => $earnings?->gaji_hr],
-                ['label' => 'Jumlah Gaji & Lembur', 'amount' => $earnings?->gaji_jml],
+                ['label' => 'Gaji', 'amount' => $earnings?->gaji_jml],
                 ['label' => 'Gaji Training', 'amount' => $earnings?->gaji_train_jml],
                 ['label' => 'Gaji Revisi', 'amount' => $earnings?->gaji_rev],
                 ['label' => 'Gaji Lebih Bulan Lalu', 'amount' => $earnings?->gaji_lbh_tgl23_bulan_lalu],
@@ -301,6 +301,7 @@ class PayslipController extends Controller
                         . ' – ' . $period->end_date->format('d M Y'),
 
                     'employee' => [
+                        'id' => $employee->id,
                         'nama' => $employee->nama,
                         'nik' => $employee->nik_kary ?? $employee->nik,
                         'jabatan' => $employee->jabatan ?? 'N/A',

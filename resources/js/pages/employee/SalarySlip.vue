@@ -351,6 +351,7 @@ export default {
             payrollPeriod: [],
             selectedGajiPeriodId: '', // Ini perlu diisi!
             loadingImportPayslip: false,
+            employee_id: null,
         };
     },
 
@@ -440,28 +441,6 @@ export default {
             }
         },
 
-        async downloadSlip() {
-            await axios({
-                url: `/payroll/${this.selectedGajiPeriodId}/payslip/export-pdf`,
-                method: 'GET',
-                responseType: 'blob',
-            }).then((response) => {
-                const url = window.URL.createObjectURL(
-                    new Blob([response.data]),
-                );
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute(
-                    'download',
-                    `Slip-Gaji-${this.user?.name}.pdf`,
-                );
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-            });
-            // triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
-        },
-
         formatCurrency(value) {
             return new Intl.NumberFormat('id-ID', {
                 style: 'currency',
@@ -487,6 +466,7 @@ export default {
 
                 const res = await axios.get(url);
                 this.slip = res.data.slip;
+                this.employee_id = this.slip.employee.id;
             } catch (err) {
                 console.error('Error loading slip:', err);
                 triggerAlert('error', 'Gagal memuat slip gaji.');
@@ -494,6 +474,28 @@ export default {
                 this.loading = false;
                 this.loadingImportPayslip = false;
             }
+        },
+
+        async downloadSlip() {
+            await axios({
+                url: `/payroll/${this.selectedGajiPeriodId}/${this.employee_id}/payslip/export-pdf`,
+                method: 'GET',
+                responseType: 'blob',
+            }).then((response) => {
+                const url = window.URL.createObjectURL(
+                    new Blob([response.data]),
+                );
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute(
+                    'download',
+                    `Slip-Gaji-${this.user?.name}.pdf`,
+                );
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            });
+            // triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
         },
     },
 

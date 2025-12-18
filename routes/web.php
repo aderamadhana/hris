@@ -97,7 +97,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/import/cache/{importId}', [PayrollController::class, 'clearImportCache'])
             ->name('payroll.import.clear-cache');
 
-        Route::get('/{payrollPeriodId}/payslip/export-pdf', [PayrollController::class, 'exportPayslipPdf'])
+        Route::get('/{payrollPeriodId}/{employeeId}/payslip/export-pdf', [PayrollController::class, 'exportPayslipPdf'])
             ->name('payroll.payslip.export-pdf');
     });
 
