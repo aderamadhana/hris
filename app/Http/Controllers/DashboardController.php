@@ -86,16 +86,20 @@ class DashboardController extends Controller
      */
     private function getKaryawanAktif()
     {
+        $id_dummy = [1,2];
         return Employee::whereIn('status_active', ['1', 'N', null])
+            ->whereNotIn('id', $id_dummy)
             ->count();
     }
 
     private function getKaryawanTidakAktif()
     {
+        $id_dummy = [1,2];
         return Employee::whereIn('status_active', ['0', 'N', null])
             ->orWhere('status_kary', 'like', '%tidak aktif%')
             ->orWhere('status_kary', 'like', '%PHK%')
             ->orWhere('status_kary', 'like', '%resign%')
+            ->whereNotIn('id', $id_dummy)
             ->count();
     }
 
@@ -104,6 +108,7 @@ class DashboardController extends Controller
      */
     private function getKontrakHampirHabis($days)
     {
+        $id_dummy = [1,2];
         $dateLimit = Carbon::now()->addDays($days);
         
         return EmployeeEmployment::where('status', 'Aktif')
@@ -114,6 +119,7 @@ class DashboardController extends Controller
                 $query->where('jenis_kontrak', 'PKWT')
                       ->orWhereNull('jenis_kontrak');
             })
+            ->whereNotIn('employee_id', $id_dummy)
             ->count();
     }
 
@@ -161,6 +167,7 @@ class DashboardController extends Controller
     private function getKaryawanBaru($days)
     {
         $dateFrom = Carbon::now()->subDays($days);
+        $id_dummy = [1,2];
         
         return EmployeeEmployment::where('status', 'aktif')
             ->where('tgl_awal_kerja', '>=', $dateFrom)
@@ -168,6 +175,7 @@ class DashboardController extends Controller
                 $query->where('status_active', '1')
                       ->orWhere('status_active', 'Y');
             })
+            ->whereNotIn('employee_id', $id_dummy)
             ->count();
     }
 
@@ -190,11 +198,13 @@ class DashboardController extends Controller
      */
     private function getResign($days)
     {
+        $id_dummy = [1,2];
         $dateFrom = Carbon::now()->subDays($days);
         
         return EmployeeEmployment::whereIn('status', ['resign', 'keluar', 'berhenti'])
             ->where('tgl_akhir_kerja', '>=', $dateFrom)
             ->where('tgl_akhir_kerja', '<=', Carbon::now())
+            ->whereNotIn('employee_id', $id_dummy)
             ->count();
     }
 }

@@ -39,6 +39,7 @@ class EmployeeController extends Controller
 
         $search = trim($request->query('search'));
         $status_active = trim($request->query('status_active'));
+        $id_dummy = [1,2];
 
         $employees = Employee::with(['personal', 'employments'])
             ->when($search, function ($query) use ($search) {
@@ -53,6 +54,7 @@ class EmployeeController extends Controller
                     });
                 });
             })
+            ->whereNotIn('id', $id_dummy)
             ->where('status_active', $status_active)
             ->orderBy('nama')
             ->paginate($perPage);
