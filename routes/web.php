@@ -15,6 +15,7 @@ use App\Http\Controllers\Masters\PayrollPeriodController;
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store'])->name('login.store');
+    Route::get('/reset-to-default', [LoginController::class, 'resetPasswordToDefault']);
 });
 
 // Authenticated routes (untuk user yang sudah login)
@@ -39,7 +40,7 @@ Route::middleware('auth')->group(function () {
         });
         Route::get('/edit-karyawan/{id}', [EmployeeController::class, 'edit']);
         Route::get('/detail-karyawan/{id}', [EmployeeController::class, 'profil']);
-        
+
         Route::get('/daftar-gaji/{id}', function ($id) {
             return Inertia::render('employee/SalarySlip', [
                 'employeeId' => $id
@@ -52,7 +53,7 @@ Route::middleware('auth')->group(function () {
             return Inertia::render('admin/DataPelamar');
         });
     });
-    
+
     Route::prefix('master')->group(function () {
         Route::prefix('payroll-period')->group(function () {
             Route::get('/all-data', function () {
@@ -81,19 +82,19 @@ Route::middleware('auth')->group(function () {
         Route::post('/store-edit/{id}', [EmployeeController::class, 'update']);
         Route::delete('/{id}', [EmployeeController::class, 'destroy']);
         Route::get('/employees/{id}/with-relations', [EmployeeController::class, 'showWithRelations']);
-    
+
     });
 
     Route::prefix('payroll')->group(function () {
         Route::post('/import', [PayrollController::class, 'import'])
             ->name('payroll.import');
-        
+
         Route::post('/import/sync', [PayrollController::class, 'importSync'])
             ->name('payroll.import.sync');
-        
+
         Route::get('/import/progress/{importId}', [PayrollController::class, 'checkProgress'])
             ->name('payroll.import.progress');
-        
+
         Route::delete('/import/cache/{importId}', [PayrollController::class, 'clearImportCache'])
             ->name('payroll.import.clear-cache');
 

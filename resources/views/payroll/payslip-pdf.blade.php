@@ -10,7 +10,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: Arial, sans-serif;
             font-size: 11px;
@@ -18,59 +18,59 @@
             color: #333;
             padding: 20px;
         }
-        
+
         .header {
             text-align: center;
             margin-bottom: 20px;
             border-bottom: 2px solid #333;
             padding-bottom: 15px;
         }
-        
+
         .header h1 {
             font-size: 18px;
             margin-bottom: 5px;
             text-transform: uppercase;
         }
-        
+
         .header h2 {
             font-size: 14px;
             color: #666;
             font-weight: normal;
         }
-        
+
         .info-section {
             margin-bottom: 15px;
         }
-        
+
         .info-grid {
             display: table;
             width: 100%;
             margin-bottom: 10px;
         }
-        
+
         .info-row {
             display: table-row;
         }
-        
+
         .info-label {
             display: table-cell;
             width: 30%;
             padding: 3px 0;
             font-weight: bold;
         }
-        
+
         .info-separator {
             display: table-cell;
             width: 5%;
             padding: 3px 0;
         }
-        
+
         .info-value {
             display: table-cell;
             width: 65%;
             padding: 3px 0;
         }
-        
+
         .section-title {
             background-color: #f0f0f0;
             padding: 6px 10px;
@@ -80,32 +80,32 @@
             font-size: 12px;
             border-left: 4px solid #333;
         }
-        
+
         .table-container {
             width: 100%;
             margin-bottom: 10px;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
         }
-        
+
         table td {
             padding: 4px 8px;
             border-bottom: 1px solid #ddd;
         }
-        
+
         .item-label {
             width: 70%;
         }
-        
+
         .item-amount {
             width: 30%;
             text-align: right;
             font-family: 'Courier New', monospace;
         }
-        
+
         .subtotal-row td {
             font-weight: bold;
             background-color: #f8f8f8;
@@ -113,7 +113,7 @@
             border-bottom: 2px solid #333;
             padding: 6px 8px;
         }
-        
+
         .total-row td {
             font-weight: bold;
             font-size: 13px;
@@ -122,7 +122,7 @@
             border-bottom: 3px double #333;
             padding: 8px;
         }
-        
+
         .summary-box {
             background-color: #f9f9f9;
             border: 2px solid #333;
@@ -130,20 +130,20 @@
             margin-top: 20px;
             text-align: center;
         }
-        
+
         .summary-box .label {
             font-size: 12px;
             font-weight: bold;
             margin-bottom: 5px;
         }
-        
+
         .summary-box .amount {
             font-size: 20px;
             font-weight: bold;
             font-family: 'Courier New', monospace;
             color: #2c5f2d;
         }
-        
+
         .footer {
             margin-top: 30px;
             padding-top: 15px;
@@ -152,26 +152,26 @@
             color: #666;
             text-align: center;
         }
-        
+
         .two-column {
             display: table;
             width: 100%;
         }
-        
+
         .column {
             display: table-cell;
             width: 48%;
             vertical-align: top;
             padding: 0 1%;
         }
-        
+
         .no-data {
             color: #999;
             font-style: italic;
             padding: 10px;
             text-align: center;
         }
-        
+
         .page-break {
             page-break-after: always;
         }
@@ -180,7 +180,11 @@
 <body>
     <!-- HEADER -->
     <div class="header">
-        <h1>{{ $company_name }} </h1>
+        <img
+            src="{{ public_path('assets/images/logo.png') }}"
+            alt="Logo"
+            style="height: 60px; margin-bottom: 10px;"
+        >
         <h2>Slip Gaji Karyawan</h2>
         <div style="margin-top: 8px; font-size: 11px;">
             <strong>{{ $period_name }}</strong><br>
@@ -200,6 +204,11 @@
                 <div class="info-label">NIK</div>
                 <div class="info-separator">:</div>
                 <div class="info-value">{{ $employee['nik'] }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Penempatan</div>
+                <div class="info-separator">:</div>
+                <div class="info-value">{{ $company_name }}</div>
             </div>
             <div class="info-row">
                 <div class="info-label">Jabatan</div>
@@ -342,7 +351,7 @@
             </div>
         </div>
         @endif
-        
+
         @if($overtime)
         <div class="column">
             <strong>Lembur:</strong>

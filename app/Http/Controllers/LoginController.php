@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use App\Models\EmployeePersonal;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -84,5 +87,27 @@ class LoginController extends Controller
 
         return redirect()->route('login')
             ->with('success', 'Anda telah keluar. Sampai jumpa, ' . $userName . '!');
+    }
+
+    public function resetPasswordToDefault(){
+        $users = EmployeePersonal::whereNotIn('employee_personals.employee_id', [1, 2])
+            ->whereNotNull('employee_personals.no_ktp')
+            ->join('employees', 'employee_personals.employee_id', '=', 'employees.id')
+            ->whereNotNull('employees.user_id')
+            ->select('employee_personals.no_ktp', 'employees.user_id')
+            ->get();
+
+        $resetCount = 0;
+
+        foreach($users as $user) {
+            User::where('id', $user->user_id)
+                ->update(['password' => Hash::make($user->no_ktp)]);
+            $resetCount++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $resetCount . ' passwords berhasil direset ke no KTP'
+        ]);
     }
 }
