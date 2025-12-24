@@ -37,17 +37,21 @@ jobs:
           echo "📂 Masuk ke directory deploy..."
           cd "$WORKING_DIR"
           
+          echo "🔐 Ubah ownership sementara untuk deployment..."
+          sudo chown -R $(whoami):$(whoami) .
+          
           echo "🔄 Sync source code..."
           rsync -avz --delete "${GITHUB_WORKSPACE}/app/" app/
           rsync -avz --delete "${GITHUB_WORKSPACE}/routes/" routes/
           rsync -avz --delete "${GITHUB_WORKSPACE}/config/" config/
           rsync -avz --delete "${GITHUB_WORKSPACE}/resources/" resources/
-          rsync -avz --delete "${GITHUB_WORKSPACE}/bootstrap/" bootstrap/
+          rsync -avz --delete --exclude='cache/*' "${GITHUB_WORKSPACE}/bootstrap/" bootstrap/
           rsync -avz --delete "${GITHUB_WORKSPACE}/public/assets/" public/assets/
           rsync -avz "${GITHUB_WORKSPACE}/composer.json" "${GITHUB_WORKSPACE}/composer.lock" ./
           
-          echo "🧹 Bersihkan vendor lama..."
-          sudo rm -rf vendor/
+          echo "🧹 Bersihkan cache dan vendor lama..."
+          rm -rf vendor/
+          rm -rf bootstrap/cache/*.php
           
           echo "📦 Install PHP dependencies (production only)..."
           composer install \
@@ -61,8 +65,9 @@ jobs:
           npm ci
           npm run build
           
-          echo "🔐 Set permission..."
-          sudo chown -R www-data:www-data storage bootstrap/cache public
+          echo "🔐 Set permission akhir..."
+          sudo chown -R www-data:www-data .
+          sudo chmod -R 755 .
           sudo chmod -R 775 storage bootstrap/cache
           sudo chmod -R 755 public
           
