@@ -28,35 +28,44 @@ jobs:
         run: |
           if [ -d "$WORKING_DIR" ]; then
             echo "Processing sync source code..."
-            rsync -avz --update app/ "$WORKING_DIR/app/"
-            rsync -avz --update routes/ "$WORKING_DIR/routes/"
-            rsync -avz --update config/ "$WORKING_DIR/config/"
-            rsync -avz --update resources/ "$WORKING_DIR/resources/"
-            rsync -avz --update bootstrap/ "$WORKING_DIR/bootstrap/"
-            rsync -avz --update public/assets/ "$WORKING_DIR/public/assets/"
-            rsync -avz --update composer.json "$WORKING_DIR/composer.json"
-            rsync -avz --update composer.lock "$WORKING_DIR/composer.lock"
-            rsync -avz --update package.json "$WORKING_DIR/package.json"
-            rsync -avz --update package-lock.json "$WORKING_DIR/package-lock.json"
+            # Sync hanya file yang berubah
+            rsync -avz --delete --exclude='vendor' --exclude='node_modules' --exclude='.env' --exclude='storage' \
+              app/ routes/ config/ resources/ bootstrap/ public/assets/ \
+              composer.json composer.lock package.json package-lock.json \
+              "$WORKING_DIR/"
             
             echo "Processing build & deploy..."
-            cd "$WORKING_DIR" && \
-              sudo rm -rf vendor && \
-              sudo composer install --no-dev --optimize-autoloader --no-interaction && \
-              sudo npm ci && \
-              sudo npm run build && \
-              sudo chown -R www-data:www-data storage bootstrap/cache && \
-              sudo chmod -R 775 storage bootstrap/cache && \
-              sudo php artisan config:clear && \
-              sudo php artisan config:cache && \
-              sudo php artisan cache:clear && \
-              sudo php artisan route:clear && \
-              sudo php artisan route:cache && \
-              sudo php artisan view:clear && \
-              sudo php artisan view:cache && \
-              sudo supervisorctl restart laravel-queue:*
+            cd "$WORKING_DIR"
+            
+            # Composer - hanya install jika composer.lock berubah
+            if ! sudo composer check-platform-reqs > /dev/null 2>&1 || [ vendor -ot composer.lock ]; then
+              echo "Installing Composer dependencies..."
+              sudo composer install --no-dev --optimize-autoloader --no-interaction --classmap-authoritative
+            else
+              echo "Composer dependencies up to date, skipping..."
+            fi
+            
+            # NPM - hanya build jika package-lock berubah
+            if [ ! -d "node_modules" ] || [ node_modules -ot package-lock.json ]; then
+              echo "Installing NPM dependencies..."
+              sudo npm ci --prefer-offline --no-audit
+              sudo npm run build
+            else
+              echo "NPM dependencies up to date, skipping build..."
+            fi
+            
+            # Fix permissions
+            sudo chown -R www-data:www-data storage bootstrap/cache
+            
+            # Clear caches (parallel where possible)
+            sudo php artisan optimize:clear
+            sudo php artisan optimize
+            
+            # Restart queue workers
+            sudo supervisorctl restart laravel-queue:* || true
+            
+            echo "Deployment completed successfully!"
           else
-            echo "Repo tidak ada"
-            echo "Posisi dir env: $WORKING_DIR"
+            echo "Directory not found: $WORKING_DIR"
             exit 1
           fi
