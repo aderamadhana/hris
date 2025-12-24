@@ -10,95 +10,91 @@ jobs:
     env:
       WORKING_DIR: ${{ vars.WORKING_DIR_PROD }}
     steps:
-      # === Checkout Repository ===
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
       
-      # === Deploy Script ===
       - name: Deploy application
         run: |
-          if [ -d "$WORKING_DIR" ]; then
-            echo "🚀 Starting deployment..."
-            
-            # Backup .env file
-            echo "📦 Backing up .env file..."
-            if [ -f "$WORKING_DIR/.env" ]; then
-              sudo cp "$WORKING_DIR/.env" "/tmp/.env.backup"
-            fi
-            
-            # Fix permissions before sync
-            echo "🔓 Preparing directories..."
-            sudo chown -R $(whoami):$(whoami) "$WORKING_DIR" 2>/dev/null || true
-            
-            # Full sync - EXCLUDE entire storage directory
-            echo "📂 Syncing source code..."
-            rsync -avz --delete \
-              --exclude='storage/' \
-              --exclude='vendor/' \
-              --exclude='node_modules/' \
-              --exclude='.env' \
-              --exclude='.git/' \
-              --exclude='.github/' \
-              --exclude='tests/' \
-              --exclude='phpunit.xml' \
-              ./ "$WORKING_DIR/"
-            
-            # Sync only storage structure (gitignore files) if needed
-            echo "📁 Ensuring storage structure..."
-            if [ ! -d "$WORKING_DIR/storage" ]; then
-              rsync -avz storage/ "$WORKING_DIR/storage/"
-            fi
-            
-            # Restore .env
-            echo "🔐 Restoring .env file..."
-            if [ -f "/tmp/.env.backup" ]; then
-              sudo cp "/tmp/.env.backup" "$WORKING_DIR/.env"
-            fi
-            
-            # Navigate to working directory
-            cd "$WORKING_DIR"
-            
-            # Create storage directories if they don't exist
-            echo "📁 Creating storage directories..."
-            mkdir -p storage/framework/{sessions,views,cache}
-            mkdir -p storage/logs
-            mkdir -p storage/app/public
-            
-            # Install PHP dependencies
-            echo "📥 Installing Composer dependencies..."
-            composer install --no-dev --optimize-autoloader --no-interaction
-            
-            # Install Node dependencies
-            echo "📥 Installing NPM dependencies..."
-            npm ci
-            
-            # Build assets
-            echo "🔨 Building TypeScript & Vue assets..."
-            npm run build
-            
-            # Set proper permissions for web server
-            echo "🔒 Setting final permissions..."
-            sudo chown -R www-data:www-data storage bootstrap/cache
-            sudo chmod -R 775 storage bootstrap/cache
-            
-            # Laravel optimization
-            echo "⚡ Optimizing Laravel..."
-            php artisan optimize:clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            
-            # Create storage link if needed
-            php artisan storage:link 2>/dev/null || true
-            
-            # Restart services
-            echo "🔄 Restarting services..."
-            sudo supervisorctl restart laravel-queue:* 2>/dev/null || echo "No queue workers configured"
-            
-            echo "✅ Deployment completed successfully!"
-          else
+          set -e  # Exit on error
+          
+          if [ ! -d "$WORKING_DIR" ]; then
             echo "❌ Directory not found: $WORKING_DIR"
             exit 1
           fi
+          
+          echo "🚀 Starting deployment..."
+          
+          # Backup .env
+          echo "📦 Backing up .env..."
+          if [ -f "$WORKING_DIR/.env" ]; then
+            sudo cp "$WORKING_DIR/.env" "/tmp/.env.backup"
+          fi
+          
+          # Fix permissions
+          echo "🔓 Setting permissions..."
+          sudo chown -R $(whoami):$(whoami) "$WORKING_DIR" || true
+          
+          # Sync code
+          echo "📂 Syncing source code..."
+          rsync -avz --delete \
+            --exclude='storage/' \
+            --exclude='vendor/' \
+            --exclude='node_modules/' \
+            --exclude='.env' \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            ./ "$WORKING_DIR/"
+          
+          # Restore .env
+          if [ -f "/tmp/.env.backup" ]; then
+            sudo cp "/tmp/.env.backup" "$WORKING_DIR/.env"
+          fi
+          
+          cd "$WORKING_DIR"
+          
+          # Ensure storage exists
+          mkdir -p storage/framework/{sessions,views,cache/data}
+          mkdir -p storage/logs storage/app/public
+          
+          # Clean installations
+          echo "🧹 Cleaning old installations..."
+          rm -rf vendor node_modules
+          
+          # Composer install with retry
+          echo "📥 Installing Composer dependencies..."
+          composer clear-cache
+          
+          # Try install, if fails try with composer.lock removal
+          if ! composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist; then
+            echo "⚠️  First install failed, trying without lock file..."
+            rm -f composer.lock
+            composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+          fi
+          
+          # NPM install
+          echo "📥 Installing NPM dependencies..."
+          npm ci || npm install
+          
+          # Build
+          echo "🔨 Building assets..."
+          npm run build
+          
+          # Permissions
+          echo "🔒 Setting permissions..."
+          sudo chown -R www-data:www-data storage bootstrap/cache
+          sudo chmod -R 775 storage bootstrap/cache
+          
+          # Optimize
+          echo "⚡ Optimizing..."
+          php artisan optimize:clear
+          php artisan optimize
+          
+          # Storage link
+          php artisan storage:link || true
+          
+          # Restart queue
+          sudo supervisorctl restart laravel-queue:* 2>/dev/null || true
+          
+          echo "✅ Deployment completed!"
