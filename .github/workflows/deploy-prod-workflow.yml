@@ -1,187 +1,63 @@
 name: Deploy PROD HRIS APPS
+
 on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: haris_apps
     environment: hris_apps
     env:
       WORKING_DIR: ${{ vars.WORKING_DIR_PROD }}
+
     steps:
+      # === Before Script ===
+      - name: Before script section
+        run: |
+          echo "Before script section"
+          git checkout "$GITHUB_REF_NAME" || true
+          git pull origin "$GITHUB_REF_NAME" || true
+
+      # === Checkout Repository ===
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          clean: true
-      
+
+      # === Deploy Script ===
       - name: Deploy application
         run: |
-          set -e
-          
-          if [ ! -d "$WORKING_DIR" ]; then
-            echo "❌ Directory not found: $WORKING_DIR"
+          if [ -d "$WORKING_DIR" ]; then
+            echo "Processing sync source code..."
+
+            rsync -avz --update app/ "$WORKING_DIR/app/"
+            rsync -avz --update routes/ "$WORKING_DIR/routes/"
+            rsync -avz --update config/ "$WORKING_DIR/config/"
+            rsync -avz --update resources/ "$WORKING_DIR/resources/"
+            rsync -avz --update bootstrap/ "$WORKING_DIR/bootstrap/"
+            rsync -avz --update public/assets/ "$WORKING_DIR/public/assets/"
+            rsync -avz --update composer.json "$WORKING_DIR/composer.json"
+
+            echo "Processing build & deploy..."
+
+            cd "$WORKING_DIR" &&
+              sudo composer update &&
+              sudo composer install --no-dev --optimize-autoloader &&
+              sudo npm install && npm run build
+              sudo chown -R www-data storage &&
+              sudo php artisan config:clear &&
+              sudo php artisan config:cache &&
+              sudo php artisan cache:clear &&
+              sudo php artisan route:clear &&
+              sudo php artisan route:cache &&
+              sudo php artisan view:clear &&
+              sudo php artisan view:cache &&
+              sudo supervisorctl restart laravel-queue:*
+
+          else
+            echo "Repo tidak ada"
+            echo "Posisi dir env: $WORKING_DIR"
             exit 1
           fi
-          
-          echo "🚀 Starting deployment..."
-          
-          # Backup .env
-          echo "📦 Backing up .env..."
-          if [ -f "$WORKING_DIR/.env" ]; then
-            sudo cp "$WORKING_DIR/.env" "/tmp/.env.backup"
-          fi
-          
-          # Fix permissions
-          echo "🔓 Setting permissions..."
-          sudo chown -R $(whoami):$(whoami) "$WORKING_DIR" || true
-          
-          # Sync code
-          echo "📂 Syncing source code..."
-          rsync -avz --delete \
-            --exclude='storage/' \
-            --exclude='vendor/' \
-            --exclude='node_modules/' \
-            --exclude='.env' \
-            --exclude='.git/' \
-            --exclude='.github/' \
-            --exclude='tests/' \
-            --exclude='phpunit.xml' \
-            ./ "$WORKING_DIR/"
-          
-          # Restore .env
-          if [ -f "/tmp/.env.backup" ]; then
-            sudo cp "/tmp/.env.backup" "$WORKING_DIR/.env"
-          fi
-          
-          cd "$WORKING_DIR"
-          
-          # === AUTO-FIX ALL MISSING ROUTE FILES ===
-          echo "🔧 Auto-fixing missing route imports..."
-          
-          # Create routes directory
-          mkdir -p resources/js/routes
-          
-          # Find all route imports in Vue files
-          echo "🔍 Scanning for route imports..."
-          ROUTE_IMPORTS=$(grep -rh "from ['\"]@/routes/[^'\"]*['\"]" resources/js/ 2>/dev/null | \
-                         sed -n "s/.*from ['\"]@\/routes\/\([^'\"]*\)['\"].*/\1/p" | \
-                         sort -u || true)
-          
-          # Alternative pattern: ~/routes/
-          ROUTE_IMPORTS2=$(grep -rh "from ['\"]~/routes/[^'\"]*['\"]" resources/js/ 2>/dev/null | \
-                          sed -n "s/.*from ['\"]~\/routes\/\([^'\"]*\)['\"].*/\1/p" | \
-                          sort -u || true)
-          
-          # Combine and remove duplicates
-          ALL_IMPORTS=$(echo -e "$ROUTE_IMPORTS\n$ROUTE_IMPORTS2" | sort -u | grep -v '^$')
-          
-          # Create missing route files
-          if [ ! -z "$ALL_IMPORTS" ]; then
-            echo "📝 Found route imports:"
-            echo "$ALL_IMPORTS"
-            echo ""
-            
-            for route_file in $ALL_IMPORTS; do
-              # Skip if it's 'index' (handled separately)
-              if [ "$route_file" = "index" ]; then
-                continue
-              fi
-              
-              FILE_PATH="resources/js/routes/${route_file}.ts"
-              
-              if [ ! -f "$FILE_PATH" ]; then
-                echo "⚠️  Creating missing: $FILE_PATH"
-                
-                # Create a generic route file
-                cat > "$FILE_PATH" << EOF
-// Auto-generated route file for ${route_file}
-import { route } from 'ziggy-js'
-
-export const ${route_file}Routes = {
-  index: () => route('${route_file}.index'),
-  show: (id: string | number) => route('${route_file}.show', id),
-  create: () => route('${route_file}.create'),
-  store: () => route('${route_file}.store'),
-  edit: (id: string | number) => route('${route_file}.edit', id),
-  update: (id: string | number) => route('${route_file}.update', id),
-  destroy: (id: string | number) => route('${route_file}.destroy', id),
-}
-
-export default ${route_file}Routes
-EOF
-              else
-                echo "✅ Already exists: $FILE_PATH"
-              fi
-            done
-          else
-            echo "ℹ️  No route imports found"
-          fi
-          
-          # Create main routes index if needed
-          if ! grep -rq "from ['\"]@/routes['\"]" resources/js/ 2>/dev/null && \
-             ! grep -rq "from ['\"]~/routes['\"]" resources/js/ 2>/dev/null; then
-            echo "ℹ️  No main routes index import found, skipping"
-          elif [ ! -f "resources/js/routes/index.ts" ] && [ ! -f "resources/js/routes.ts" ]; then
-            echo "⚠️  Creating resources/js/routes/index.ts"
-            cat > resources/js/routes/index.ts << 'EOF'
-// Auto-generated main routes file
-import { route } from 'ziggy-js'
-
-export const routes = {
-  home: () => route('home'),
-  dashboard: () => route('dashboard'),
-}
-
-export default routes
-EOF
-          fi
-          
-          echo "✅ Route files check completed"
-          echo ""
-          
-          # Ensure storage structure exists
-          echo "📁 Ensuring storage directories..."
-          mkdir -p storage/framework/{sessions,views,cache/data}
-          mkdir -p storage/logs
-          mkdir -p storage/app/public
-          
-          # Clean old installations
-          echo "🧹 Cleaning old installations..."
-          rm -rf vendor node_modules
-          
-          # Composer install
-          echo "📥 Installing Composer dependencies..."
-          composer clear-cache
-          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
-          
-          # NPM install
-          echo "📥 Installing NPM dependencies..."
-          npm ci || npm install
-          
-          # Build assets
-          echo "🔨 Building TypeScript & Vue assets..."
-          npm run build
-          
-          # Set proper permissions
-          echo "🔒 Setting permissions..."
-          sudo chown -R www-data:www-data storage bootstrap/cache
-          sudo chmod -R 775 storage bootstrap/cache
-          
-          # Laravel optimization
-          echo "⚡ Optimizing Laravel..."
-          php artisan optimize:clear
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache
-          
-          # Create storage link
-          echo "🔗 Creating storage link..."
-          php artisan storage:link || true
-          
-          # Restart queue workers
-          echo "🔄 Restarting queue workers..."
-          sudo supervisorctl restart laravel-queue:* 2>/dev/null || echo "No queue workers configured"
-          
-          echo "✅ Deployment completed successfully!"
