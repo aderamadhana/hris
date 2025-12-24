@@ -1,14 +1,17 @@
 name: Deploy PROD HRIS APPS
+
 on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: haris_apps
     environment: hris_apps
     env:
       WORKING_DIR: ${{ vars.WORKING_DIR_PROD }}
+
     steps:
       # === Before Script ===
       - name: Before script section
@@ -16,56 +19,45 @@ jobs:
           echo "Before script section"
           git checkout "$GITHUB_REF_NAME" || true
           git pull origin "$GITHUB_REF_NAME" || true
-      
+
       # === Checkout Repository ===
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       # === Deploy Script ===
       - name: Deploy application
         run: |
           if [ -d "$WORKING_DIR" ]; then
             echo "Processing sync source code..."
-            # Sync hanya file yang berubah
-            rsync -avz --delete --exclude='vendor' --exclude='node_modules' --exclude='.env' --exclude='storage' \
-              app/ routes/ config/ resources/ bootstrap/ public/assets/ \
-              composer.json composer.lock package.json package-lock.json \
-              "$WORKING_DIR/"
-            
+
+            rsync -avz --update app/ "$WORKING_DIR/app/"
+            rsync -avz --update routes/ "$WORKING_DIR/routes/"
+            rsync -avz --update config/ "$WORKING_DIR/config/"
+            rsync -avz --update resources/ "$WORKING_DIR/resources/"
+            rsync -avz --update bootstrap/ "$WORKING_DIR/bootstrap/"
+            rsync -avz --update public/assets/ "$WORKING_DIR/public/assets/"
+            rsync -avz --update composer.json "$WORKING_DIR/composer.json"
+
             echo "Processing build & deploy..."
-            cd "$WORKING_DIR"
-            
-            # Composer - hanya install jika composer.lock berubah
-            if ! sudo composer check-platform-reqs > /dev/null 2>&1 || [ vendor -ot composer.lock ]; then
-              echo "Installing Composer dependencies..."
-              sudo composer install --no-dev --optimize-autoloader --no-interaction --classmap-authoritative
-            else
-              echo "Composer dependencies up to date, skipping..."
-            fi
-            
-            # NPM - hanya build jika package-lock berubah
-            if [ ! -d "node_modules" ] || [ node_modules -ot package-lock.json ]; then
-              echo "Installing NPM dependencies..."
-              sudo npm ci --prefer-offline --no-audit
-              sudo npm run build
-            else
-              echo "NPM dependencies up to date, skipping build..."
-            fi
-            
-            # Fix permissions
-            sudo chown -R www-data:www-data storage bootstrap/cache
-            
-            # Clear caches (parallel where possible)
-            sudo php artisan optimize:clear
-            sudo php artisan optimize
-            
-            # Restart queue workers
-            sudo supervisorctl restart laravel-queue:* || true
-            
-            echo "Deployment completed successfully!"
+
+            cd "$WORKING_DIR" &&
+              sudo composer update &&
+              sudo composer install --no-dev --optimize-autoloader &&
+              sudo npm install && npm run build
+              sudo chown -R www-data storage &&
+              sudo php artisan config:clear &&
+              sudo php artisan config:cache &&
+              sudo php artisan cache:clear &&
+              sudo php artisan route:clear &&
+              sudo php artisan route:cache &&
+              sudo php artisan view:clear &&
+              sudo php artisan view:cache &&
+              sudo supervisorctl restart laravel-queue:*
+
           else
-            echo "Directory not found: $WORKING_DIR"
+            echo "Repo tidak ada"
+            echo "Posisi dir env: $WORKING_DIR"
             exit 1
           fi
