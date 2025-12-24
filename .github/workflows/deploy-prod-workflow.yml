@@ -11,7 +11,7 @@ jobs:
     environment: hris_apps
     env:
       WORKING_DIR: ${{ vars.WORKING_DIR_PROD }}
-    
+
     steps:
       # =============================
       # Checkout Repository
@@ -27,19 +27,19 @@ jobs:
       - name: Deploy application
         run: |
           set -e
-          
+
           # Validasi working directory
           if [ ! -d "$WORKING_DIR" ]; then
             echo "❌ WORKING_DIR tidak ditemukan: $WORKING_DIR"
             exit 1
           fi
-          
+
           echo "📂 Masuk ke directory deploy..."
           cd "$WORKING_DIR"
-          
+
           echo "🔐 Ubah ownership sementara untuk deployment..."
           sudo chown -R $(whoami):$(whoami) .
-          
+
           echo "🔄 Sync source code..."
           rsync -avz --delete "${GITHUB_WORKSPACE}/app/" app/
           rsync -avz --delete "${GITHUB_WORKSPACE}/routes/" routes/
@@ -48,11 +48,11 @@ jobs:
           rsync -avz --delete --exclude='cache/*' "${GITHUB_WORKSPACE}/bootstrap/" bootstrap/
           rsync -avz --delete "${GITHUB_WORKSPACE}/public/assets/" public/assets/
           rsync -avz "${GITHUB_WORKSPACE}/composer.json" "${GITHUB_WORKSPACE}/composer.lock" ./
-          
+
           echo "🧹 Bersihkan cache dan vendor lama..."
           rm -rf vendor/
           rm -rf bootstrap/cache/*.php
-          
+
           echo "📦 Install PHP dependencies (production only)..."
           composer install \
             --no-dev \
@@ -60,22 +60,36 @@ jobs:
             --no-interaction \
             --prefer-dist \
             --classmap-authoritative
-          
+
           echo "🎨 Install & build frontend..."
           npm ci
           npm run build
-          
-          echo "🔐 Set permission akhir..."
-          sudo chown -R www-data:www-data .
-          sudo chmod -R 755 .
-          sudo chmod -R 775 storage bootstrap/cache
-          sudo chmod -R 755 public
-          
+
+          echo "🔐 Set permission akhir (Laravel-safe)..."
+
+          # Pastikan folder runtime ada
+          sudo mkdir -p storage/logs bootstrap/cache
+          sudo touch storage/logs/laravel.log || true
+
+          # Ownership: hanya folder runtime yang perlu writable oleh www-data
+          sudo chown -R www-data:www-data storage bootstrap/cache
+
+          # Permission: directory 775, file 664 untuk runtime folder
+          sudo find storage -type d -exec chmod 775 {} \;
+          sudo find bootstrap/cache -type d -exec chmod 775 {} \;
+          sudo find storage -type f -exec chmod 664 {} \;
+          sudo find bootstrap/cache -type f -exec chmod 664 {} \;
+
+          # Public read-only standar
+          sudo chown -R www-data:www-data public
+          sudo find public -type d -exec chmod 755 {} \;
+          sudo find public -type f -exec chmod 644 {} \;
+
           echo "⚡ Optimize Laravel..."
           php artisan optimize:clear
           php artisan optimize
-          
+
           echo "🔄 Restart queue worker..."
           sudo supervisorctl restart laravel-queue:*
-          
+
           echo "✅ Deploy selesai!"
