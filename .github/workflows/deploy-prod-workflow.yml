@@ -10,13 +10,6 @@ jobs:
     env:
       WORKING_DIR: ${{ vars.WORKING_DIR_PROD }}
     steps:
-      # === Before Script ===
-      - name: Before script section
-        run: |
-          echo "Before script section"
-          git checkout "$GITHUB_REF_NAME" || true
-          git pull origin "$GITHUB_REF_NAME" || true
-      
       # === Checkout Repository ===
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -27,66 +20,70 @@ jobs:
       - name: Deploy application
         run: |
           if [ -d "$WORKING_DIR" ]; then
-            echo "Processing sync source code..."
+            echo "🚀 Starting deployment..."
             
-            # Sync directories
-            rsync -avz --update app/ "$WORKING_DIR/app/"
-            rsync -avz --update routes/ "$WORKING_DIR/routes/"
-            rsync -avz --update config/ "$WORKING_DIR/config/"
-            rsync -avz --update resources/ "$WORKING_DIR/resources/"
-            rsync -avz --update bootstrap/ "$WORKING_DIR/bootstrap/"
-            rsync -avz --update database/ "$WORKING_DIR/database/"
-            rsync -avz --update public/assets/ "$WORKING_DIR/public/assets/" || true
+            # Backup .env file
+            echo "📦 Backing up .env file..."
+            if [ -f "$WORKING_DIR/.env" ]; then
+              cp "$WORKING_DIR/.env" "/tmp/.env.backup"
+            fi
             
-            # Sync required root files
-            [ -f composer.json ] && rsync -avz composer.json "$WORKING_DIR/"
-            [ -f composer.lock ] && rsync -avz composer.lock "$WORKING_DIR/"
-            [ -f package.json ] && rsync -avz package.json "$WORKING_DIR/"
-            [ -f package-lock.json ] && rsync -avz package-lock.json "$WORKING_DIR/"
-            [ -f artisan ] && rsync -avz artisan "$WORKING_DIR/"
+            # Full sync with proper exclusions
+            echo "📂 Syncing source code..."
+            rsync -avz --delete \
+              --exclude='storage/app/public/*' \
+              --exclude='storage/logs/*' \
+              --exclude='storage/framework/cache/data/*' \
+              --exclude='storage/framework/sessions/*' \
+              --exclude='storage/framework/views/*' \
+              --exclude='vendor/' \
+              --exclude='node_modules/' \
+              --exclude='.env' \
+              --exclude='.git/' \
+              --exclude='.github/' \
+              --exclude='tests/' \
+              --exclude='phpunit.xml' \
+              ./ "$WORKING_DIR/"
             
-            # Sync vite config (check both .js and .ts)
-            [ -f vite.config.js ] && rsync -avz vite.config.js "$WORKING_DIR/"
-            [ -f vite.config.ts ] && rsync -avz vite.config.ts "$WORKING_DIR/"
+            # Restore .env
+            echo "🔐 Restoring .env file..."
+            if [ -f "/tmp/.env.backup" ]; then
+              cp "/tmp/.env.backup" "$WORKING_DIR/.env"
+            fi
             
-            # Sync other config files if exist
-            [ -f tsconfig.json ] && rsync -avz tsconfig.json "$WORKING_DIR/"
-            [ -f jsconfig.json ] && rsync -avz jsconfig.json "$WORKING_DIR/"
-            [ -f tailwind.config.js ] && rsync -avz tailwind.config.js "$WORKING_DIR/"
-            [ -f postcss.config.js ] && rsync -avz postcss.config.js "$WORKING_DIR/"
-            
-            echo "Processing build & deploy..."
+            # Navigate to working directory
             cd "$WORKING_DIR"
             
-            # Composer operations
-            echo "Installing PHP dependencies..."
-            sudo composer install --no-dev --optimize-autoloader --no-interaction
+            # Install PHP dependencies
+            echo "📥 Installing Composer dependencies..."
+            composer install --no-dev --optimize-autoloader --no-interaction
             
-            # NPM operations
-            echo "Installing Node dependencies..."
-            sudo npm ci || sudo npm install
+            # Install Node dependencies
+            echo "📥 Installing NPM dependencies..."
+            npm ci
             
-            echo "Building assets..."
-            sudo npm run build
+            # Build assets
+            echo "🔨 Building TypeScript & Vue assets..."
+            npm run build
             
             # Set permissions
-            echo "Setting permissions..."
-            sudo chown -R www-data:www-data storage bootstrap/cache
-            sudo chmod -R 775 storage bootstrap/cache
+            echo "🔒 Setting permissions..."
+            chown -R www-data:www-data storage bootstrap/cache
+            chmod -R 775 storage bootstrap/cache
             
-            # Clear & cache Laravel
-            echo "Optimizing Laravel..."
-            sudo php artisan optimize:clear
-            sudo php artisan config:cache
-            sudo php artisan route:cache
-            sudo php artisan view:cache
+            # Laravel optimization
+            echo "⚡ Optimizing Laravel..."
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
             
-            # Restart queue workers
-            echo "Restarting queue workers..."
-            sudo supervisorctl restart laravel-queue:* || echo "No queue workers to restart"
+            # Restart services
+            echo "🔄 Restarting services..."
+            supervisorctl restart laravel-queue:* 2>/dev/null || echo "No queue workers configured"
             
             echo "✅ Deployment completed successfully!"
           else
-            echo "❌ Directory tidak ada: $WORKING_DIR"
+            echo "❌ Directory not found: $WORKING_DIR"
             exit 1
           fi
