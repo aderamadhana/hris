@@ -15,9 +15,23 @@ jobs:
         with:
           fetch-depth: 0
       
+      # === DEBUG STEP: Check what files we have ===
+      - name: Debug - List repository structure
+        run: |
+          echo "📋 Checking repository structure..."
+          echo ""
+          echo "=== Root files ==="
+          ls -la | grep -E "(vite|package|composer|artisan|tsconfig)"
+          echo ""
+          echo "=== resources/js structure ==="
+          find resources/js -type f -name "*.ts" -o -name "*.js" -o -name "*.vue" | head -20
+          echo ""
+          echo "=== Checking for routes files ==="
+          find resources/js -name "*route*" -o -name "*password*" 2>/dev/null || echo "No route files found"
+      
       - name: Deploy application
         run: |
-          set -e  # Exit on error
+          set -e
           
           if [ ! -d "$WORKING_DIR" ]; then
             echo "❌ Directory not found: $WORKING_DIR"
@@ -36,7 +50,7 @@ jobs:
           echo "🔓 Setting permissions..."
           sudo chown -R $(whoami):$(whoami) "$WORKING_DIR" || true
           
-          # Sync code
+          # Sync code with VERBOSE output
           echo "📂 Syncing source code..."
           rsync -avz --delete \
             --exclude='storage/' \
@@ -54,6 +68,14 @@ jobs:
           
           cd "$WORKING_DIR"
           
+          # === DEBUG: Check what was synced ===
+          echo "🔍 Verifying synced files..."
+          echo "=== Checking resources/js/routes ==="
+          ls -la resources/js/routes/ 2>/dev/null || echo "⚠️  resources/js/routes directory NOT FOUND"
+          
+          echo "=== Checking for password route file ==="
+          find resources/js -name "*password*" 2>/dev/null || echo "⚠️  No password related files found"
+          
           # Ensure storage exists
           mkdir -p storage/framework/{sessions,views,cache/data}
           mkdir -p storage/logs storage/app/public
@@ -62,24 +84,27 @@ jobs:
           echo "🧹 Cleaning old installations..."
           rm -rf vendor node_modules
           
-          # Composer install with retry
+          # Composer install
           echo "📥 Installing Composer dependencies..."
           composer clear-cache
-          
-          # Try install, if fails try with composer.lock removal
-          if ! composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist; then
-            echo "⚠️  First install failed, trying without lock file..."
-            rm -f composer.lock
-            composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
-          fi
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
           
           # NPM install
           echo "📥 Installing NPM dependencies..."
           npm ci || npm install
           
-          # Build
+          # === BEFORE BUILD: Final check ===
+          echo "🔍 Final check before build..."
+          echo "=== All TypeScript files in resources/js ==="
+          find resources/js -name "*.ts" -o -name "*.vue" | sort
+          
+          # Build with better error output
           echo "🔨 Building assets..."
-          npm run build
+          npm run build 2>&1 | tee /tmp/build.log || {
+            echo "❌ Build failed! Showing error context..."
+            tail -50 /tmp/build.log
+            exit 1
+          }
           
           # Permissions
           echo "🔒 Setting permissions..."
