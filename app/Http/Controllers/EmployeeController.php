@@ -6,8 +6,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
 use App\Models\ImportLog;
 use App\Models\ImportLogPayslip;
-use App\Models\EmployeePersonal;
-use App\Models\EmployeeAddress;
+// use App\Models\EmployeePersonal;
+// use App\Models\EmployeeAddress;
 use App\Models\EmployeeEducation;
 use App\Models\EmployeeEmployment;
 use App\Models\EmployeeFamily;
@@ -42,14 +42,12 @@ class EmployeeController extends Controller
         $status_active = trim($request->query('status_active'));
         $id_dummy = [1,2];
 
-        $employees = Employee::with(['personal', 'employments'])
+        $employees = Employee::with(['employments'])
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('nrp', 'like', "%{$search}%")
                     ->orWhere('nama', 'like', "%{$search}%")
-                    ->orWhereHas('personal', function ($qe) use ($search) {
-                        $qe->where('no_ktp', 'like', "%{$search}%");
-                    })
+                    ->orWhere('no_ktp', 'like', "%{$search}%")
                     ->orWhereHas('employments', function ($qe) use ($search) {
                         $qe->where('jabatan', 'like', "%{$search}%");
                     });
@@ -65,7 +63,7 @@ class EmployeeController extends Controller
                 'id' => $e->id,
                 'name' => $e->nama,
                 'nrp' => $e->nrp,
-                'nik' => $e->personal->no_ktp ?? '-',
+                'nik' => $e->no_ktp ?? '-',
 
                 'tanggal_lahir' => $e->tanggal_lahir
                     ? \Carbon\Carbon::parse($e->tanggal_lahir)->format('d/m/Y')
@@ -136,8 +134,6 @@ class EmployeeController extends Controller
 
     public function getData($id){
         $employee = Employee::with([
-            'personal',
-            'address',
             'educations',
             'employmentss',
             'families',
@@ -147,84 +143,85 @@ class EmployeeController extends Controller
 
         return response()->json([
             /* ===============================
-             | TAB: DATA KARYAWAN
-             ===============================*/
+            | TAB: DATA KARYAWAN
+            ===============================*/
             'employee' => [
                 'id'        => $employee->id,
                 'nrp'       => $employee->nrp,
-                'nik'       => $employee->personal->nik,
+                'nik'       => $employee->no_ktp,
                 'status'    => $employee->status_active,
-                'nama'      => $employee->nama ?? null,
-                'jk'        => $employee->jenis_kelamin ?? null,
-                'agama'     => $employee->agama ?? null,
-                'perkawinan'=> $employee->status_perkawinan ?? null,
-                'kewarganegaraan' => $employee->kewarganegaraan ?? null,
-                'tempat_lahir' => $employee->tempat_lahir ?? null,
-                'tanggal_lahir'=> Carbon::parse($employee->tanggal_lahir)->format('d M Y') ?? null,
-                'usia' => optional($employee->tanggal_lahir)
-                            ? now()->diffInYears($employee->tanggal_lahir)
-                            : null,
+                'nama'      => $employee->nama,
+                'jk'        => $employee->jenis_kelamin,
+                'agama'     => $employee->agama,
+                'perkawinan'=> $employee->status_perkawinan,
+                'kewarganegaraan' => $employee->kewarganegaraan,
+                'tempat_lahir' => $employee->tempat_lahir,
+                'tanggal_lahir'=> $employee->tanggal_lahir
+                    ? Carbon::parse($employee->tanggal_lahir)->format('d M Y')
+                    : null,
+                'usia' => $employee->tanggal_lahir
+                    ? now()->diffInYears($employee->tanggal_lahir)
+                    : null,
 
                 // Kontak
-                'no_wa' => optional($employee->personal)->no_wa,
-                'email' => optional($employee->personal)->email,
+                'no_wa' => $employee->no_wa,
+                'email' => $employee->email,
 
                 // BPJS
-                'bpjs_tk' => optional($employee->personal)->bpjs_tk,
-                'x' => optional($employee->personal)->x,
-                'bpjs_kes' => optional($employee->personal)->bpjs_kes,
-                'x_ks' => optional($employee->personal)->x_ks,
-                'nama_faskes' => optional($employee->personal)->nama_faskes,
+                'bpjs_tk' => $employee->bpjs_tk,
+                'x' => $employee->x,
+                'bpjs_kes' => $employee->bpjs_kes,
+                'x_ks' => $employee->x_ks,
+                'nama_faskes' => $employee->nama_faskes,
 
                 // SKCK
-                'no_skck' => optional($employee->personal)->no_skck,
-                'masa_berlaku_skck' => optional($employee->personal?->masa_berlaku_skck)
-                    ? Carbon::parse($employee->personal->masa_berlaku_skck)->format('d M Y')
+                'no_skck' => $employee->no_skck,
+                'masa_berlaku_skck' => $employee->masa_berlaku_skck
+                    ? Carbon::parse($employee->masa_berlaku_skck)->format('d M Y')
                     : null,
 
                 // Lisensi
-                'jenis_lisensi' => optional($employee->personal)->jenis_lisensi,
-                'no_lisensi' => optional($employee->personal)->no_lisensi,
-                'masa_berlaku_lisensi' => optional($employee->personal?->masa_berlaku_lisensi)
-                    ? Carbon::parse($employee->personal->masa_berlaku_lisensi)->format('d M Y')
+                'jenis_lisensi' => $employee->jenis_lisensi,
+                'no_lisensi' => $employee->no_lisensi,
+                'masa_berlaku_lisensi' => $employee->masa_berlaku_lisensi
+                    ? Carbon::parse($employee->masa_berlaku_lisensi)->format('d M Y')
                     : null,
 
                 // Bank
-                'no_rekening' => optional($employee->personal)->no_rekening,
-                'no_cif' => optional($employee->personal)->no_cif,
-                'bank' => optional($employee->personal)->bank,
+                'no_rekening' => $employee->no_rekening,
+                'no_cif' => $employee->no_cif,
+                'bank' => $employee->bank,
 
                 // Pajak & atribut fisik
-                'npwp' => optional($employee->personal)->npwp,
-                'ptkp' => optional($employee->personal)->ptkp,
-                'shoe_size' => optional($employee->personal)->shoe_size,
-                'uniform_size' => optional($employee->personal)->uniform_size,
+                'npwp' => $employee->npwp,
+                'ptkp' => $employee->ptkp,
+                'shoe_size' => $employee->shoe_size,
+                'uniform_size' => $employee->uniform_size,
 
-                // Payroll (tetap di employee)
+                // Payroll
                 'gp' => $employee->gp,
                 'via' => $employee->via,
 
                 // Riwayat penggantian
-                'reg_digantikan' => optional($employee->personal)->reg_digantikan,
-                'nama_digantikan' => optional($employee->personal)->nama_digantikan,
-
+                'reg_digantikan' => $employee->reg_digantikan,
+                'nama_digantikan' => $employee->nama_digantikan,
             ],
 
             /* ===============================
-             | KONTAK & ALAMAT
-             ===============================*/
+            | KONTAK & ALAMAT
+            ===============================*/
             'alamat' => [
-                'ktp'       => $employee->personal->no_ktp ?? null,
-                'email'     => $employee->personal->email ?? null,
-                'phone'     => $employee->personal->no_hp ?? null,
-                'domisili'  => $employee->address->alamat_lengkap ?? null,
-                'tinggal'   => $employee->address->alamat_tinggal ?? null,
-                'kota'      => $employee->address->kota ?? null,
+                'ktp'      => $employee->no_ktp,
+                'email'    => $employee->email,
+                'phone'    => $employee->no_hp,
+                'domisili' => $employee->alamat_lengkap_ktp,
+                'tinggal'  => $employee->alamat_lengkap_domisili,
+                'kota'     => $employee->kota_ktp,
             ],
 
             /* ===============================
-             | TAB: PENDIDIKAN
-             ===============================*/
+            | TAB: PENDIDIKAN
+            ===============================*/
             'pendidikan' => $employee->educations->map(fn ($p) => [
                 'jenjang'     => $p->jenjang,
                 'jurusan'     => $p->jurusan,
@@ -233,11 +230,11 @@ class EmployeeController extends Controller
             ]),
 
             /* ===============================
-             | TAB: RIWAYAT KERJA
-             ===============================*/
+            | TAB: RIWAYAT KERJA
+            ===============================*/
             'pekerjaan' => $employee->employmentss->map(fn ($j) => [
                 'perusahaan'      => $j->perusahaan,
-                'jabatan'         => $j->jabatan ?? $j->job_roll, // pilih salah satu sesuai model
+                'jabatan'         => $j->jabatan ?? $j->job_roll,
                 'bagian'          => $j->penempatan,
                 'mulai'           => $j->tgl_awal_kerja,
                 'selesai'         => $j->tgl_akhir_kerja,
@@ -253,8 +250,8 @@ class EmployeeController extends Controller
             ]),
 
             /* ===============================
-             | TAB: KELUARGA
-             ===============================*/
+            | TAB: KELUARGA
+            ===============================*/
             'keluarga' => $employee->families->map(fn ($f) => [
                 'nama'      => $f->nama,
                 'hubungan'  => $f->hubungan,
@@ -263,88 +260,72 @@ class EmployeeController extends Controller
             ]),
 
             /* ===============================
-             | DATA KESEHATAN (opsional tab)
-             ===============================*/
+            | DATA KESEHATAN
+            ===============================*/
             'kesehatan' => $employee->health ? [
-                'employee_id'        => $employee->health->employee_id,
-
-                'tanggal_mcu'        => optional($employee->health->tanggal_mcu)
-                                            ? Carbon::parse($employee->health->tanggal_mcu)->format('d M Y')
-                                            : null,
-
-                'tinggi_badan'       => $employee->health->tinggi_badan,
-                'berat_badan'        => $employee->health->berat_badan,
-                'gol_darah'          => $employee->health->gol_darah,
-                'buta_warna'         => $employee->health->buta_warna,
-
-                'hasil_drug_test'    => $employee->health->hasil_drug_test,
-                'tanggal_drug_test'  => optional($employee->health->tanggal_drug_test)
-                                            ? Carbon::parse($employee->health->tanggal_drug_test)->format('d M Y')
-                                            : null,
-
-                'riwayat_penyakit'   => $employee->health->riwayat_penyakit,
-
-                // Detail MCU tambahan
-                'darah'              => $employee->health->darah,
-                'urine'              => $employee->health->urine,
-                'f_hati'             => $employee->health->f_hati,
-                'gula_darah'         => $employee->health->gula_darah,
-                'ginjal'             => $employee->health->ginjal,
-                'thorax'             => $employee->health->thorax,
-                'tensi'              => $employee->health->tensi,
-                'nadi'               => $employee->health->nadi,
-                'od'                 => $employee->health->od,
-                'os'                 => $employee->health->os,
+                'employee_id' => $employee->health->employee_id,
+                'tanggal_mcu' => $employee->health->tanggal_mcu
+                    ? Carbon::parse($employee->health->tanggal_mcu)->format('d M Y')
+                    : null,
+                'tinggi_badan' => $employee->health->tinggi_badan,
+                'berat_badan'  => $employee->health->berat_badan,
+                'gol_darah'    => $employee->health->gol_darah,
+                'buta_warna'   => $employee->health->buta_warna,
+                'hasil_drug_test' => $employee->health->hasil_drug_test,
+                'tanggal_drug_test' => $employee->health->tanggal_drug_test
+                    ? Carbon::parse($employee->health->tanggal_drug_test)->format('d M Y')
+                    : null,
+                'riwayat_penyakit' => $employee->health->riwayat_penyakit,
+                'darah'  => $employee->health->darah,
+                'urine'  => $employee->health->urine,
+                'f_hati' => $employee->health->f_hati,
+                'gula_darah' => $employee->health->gula_darah,
+                'ginjal' => $employee->health->ginjal,
+                'thorax' => $employee->health->thorax,
+                'tensi'  => $employee->health->tensi,
+                'nadi'   => $employee->health->nadi,
+                'od'     => $employee->health->od,
+                'os'     => $employee->health->os,
             ] : null,
 
             /* ===============================
             | TAB: DOKUMEN
             ===============================*/
             'document' => $employee->documents ? [
-            'pas_foto' => $employee->documents->pas_foto
-                ? url(Storage::url($employee->documents->pas_foto))
-                : null,
-
-            'ktp' => $employee->documents->dokumen_ktp
-                ? url(Storage::url($employee->documents->dokumen_ktp))
-                : null,
-
-            'kk' => $employee->documents->dokumen_kk
-                ? url(Storage::url($employee->documents->dokumen_kk))
-                : null,
-
-            'bpjs_tk' => $employee->documents->dokumen_bpjs_ketenagakerjaan
-                ? url(Storage::url($employee->documents->dokumen_bpjs_ketenagakerjaan))
-                : null,
-
-            'vaksin' => $employee->documents->dokumen_sertifikat_vaksin
-                ? url(Storage::url($employee->documents->dokumen_sertifikat_vaksin))
-                : null,
-
-            'sio_forklift' => $employee->documents->dokumen_sio_forklift
-                ? url(Storage::url($employee->documents->dokumen_sio_forklift))
-                : null,
-
-            'form_bpjs_tk' => $employee->documents->dokumen_formulir_bpjs_tk
-                ? url(Storage::url($employee->documents->dokumen_formulir_bpjs_tk))
-                : null,
-
-            'form_bpjs_kes' => $employee->documents->dokumen_formulir_bpjs_kesehatan
-                ? url(Storage::url($employee->documents->dokumen_formulir_bpjs_kesehatan))
-                : null,
-
-            'paklaring' => $employee->documents->dokumen_surat_pengalaman_kerja
-                ? url(Storage::url($employee->documents->dokumen_surat_pengalaman_kerja))
-                : null,
-
-            'sim_b1' => $employee->documents->dokumen_sim_b1
-                ? url(Storage::url($employee->documents->dokumen_sim_b1))
-                : null,
-
-            'kartu_garda' => $employee->documents->dokumen_kartu_garda_pratama
-                ? url(Storage::url($employee->documents->dokumen_kartu_garda_pratama))
-                : null,
-        ] : null,
+                'pas_foto' => $employee->documents->pas_foto
+                    ? url(Storage::url($employee->documents->pas_foto))
+                    : null,
+                'ktp' => $employee->documents->dokumen_ktp
+                    ? url(Storage::url($employee->documents->dokumen_ktp))
+                    : null,
+                'kk' => $employee->documents->dokumen_kk
+                    ? url(Storage::url($employee->documents->dokumen_kk))
+                    : null,
+                'bpjs_tk' => $employee->documents->dokumen_bpjs_ketenagakerjaan
+                    ? url(Storage::url($employee->documents->dokumen_bpjs_ketenagakerjaan))
+                    : null,
+                'vaksin' => $employee->documents->dokumen_sertifikat_vaksin
+                    ? url(Storage::url($employee->documents->dokumen_sertifikat_vaksin))
+                    : null,
+                'sio_forklift' => $employee->documents->dokumen_sio_forklift
+                    ? url(Storage::url($employee->documents->dokumen_sio_forklift))
+                    : null,
+                'form_bpjs_tk' => $employee->documents->dokumen_formulir_bpjs_tk
+                    ? url(Storage::url($employee->documents->dokumen_formulir_bpjs_tk))
+                    : null,
+                'form_bpjs_kes' => $employee->documents->dokumen_formulir_bpjs_kesehatan
+                    ? url(Storage::url($employee->documents->dokumen_formulir_bpjs_kesehatan))
+                    : null,
+                'paklaring' => $employee->documents->dokumen_surat_pengalaman_kerja
+                    ? url(Storage::url($employee->documents->dokumen_surat_pengalaman_kerja))
+                    : null,
+                'sim_b1' => $employee->documents->dokumen_sim_b1
+                    ? url(Storage::url($employee->documents->dokumen_sim_b1))
+                    : null,
+                'kartu_garda' => $employee->documents->dokumen_kartu_garda_pratama
+                    ? url(Storage::url($employee->documents->dokumen_kartu_garda_pratama))
+                    : null,
+            ] : null,
 
         ]);
     }
@@ -684,7 +665,6 @@ class EmployeeController extends Controller
     public function show($id)
     {
         $employee = Employee::with([
-            'personal',
             'address',
             'educations',
             'employmentss',

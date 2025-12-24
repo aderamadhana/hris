@@ -4,8 +4,8 @@ namespace App\Imports;
 
 use App\Models\User;
 use App\Models\Employee;
-use App\Models\EmployeePersonal;
-use App\Models\EmployeeAddress;
+// use App\Models\EmployeePersonal;
+// use App\Models\EmployeeAddress;
 use App\Models\EmployeeHealth;
 use App\Models\EmployeeEducation;
 use App\Models\EmployeeEmployment;
@@ -54,7 +54,6 @@ class EmployeesImport implements
         ]);
         
         $chunks = $rows->chunk(50); // Process 50 rows per batch
-        
         foreach ($chunks as $chunk) {
             if ($this->isTimeout()) {
                 Log::warning('Import dihentikan karena timeout', [
@@ -115,47 +114,69 @@ class EmployeesImport implements
             throw new \Exception('NRP atau Nama kosong');
         }
         
+        // Basic Info
         $noKtp = trim($row['no_ktp'] ?? '');
         $tempatLahir = trim($row['tempat_lahir'] ?? '');
         $tanggalLahir = $this->parseDate($row['tanggal_lahir'] ?? null);
         $email = strtolower(trim($row['e_mail'] ?? ''));
+        if ($email === '' || $email === '-' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $email = null;
+        }
         $noKontrak = trim($row['no_kontrak'] ?? '');
         $waAktif = trim($row['wa_aktif_tlp'] ?? '');
         $agama = trim($row['agama'] ?? '');
+        $statusKary = trim($row['status_kary'] ?? '');
         $statusNikah = trim($row['status_perkawinan'] ?? '');
         $kewarganegaraan = trim($row['kewarganegaraan'] ?? '');
+        $jenisKelamin = trim($row['jk'] ?? '');
+        $bagian = trim($row['penempatan_bagian'] ?? '');
+        $areaKerja = ''; // tidak ada di data JSON
         
-        // Address
-        $alamatLengkap = trim($row['alamat_lengkap'] ?? '');
-        $desa = $row['desa_kelurahan'] ?? null;
-        $kecamatan = trim($row['kecamatan'] ?? '');
-        $kota = trim($row['kota_kabupaten'] ?? '');
-        $kodePos = trim($row['kode_pos'] ?? '');
+        // Address KTP (sama dengan domisili jika tidak ada data KTP terpisah)
+        $alamatLengkapKtp = trim($row['alamat_lengkap'] ?? '');
+        $desaKtp = trim($row['desa_kelurahan'] ?? '');
+        $kecamatanKtp = trim($row['kecamatan'] ?? '');
+        $kotaKtp = trim($row['kota_kabupaten'] ?? '');
+        $kodePosKtp = trim($row['kode_pos'] ?? '');
+        
+        // Address Domisili
+        $alamatLengkapDomisili = trim($row['alamat_lengkap'] ?? '');
+        $desaDomisili = trim($row['desa_kelurahan'] ?? '');
+        $kecamatanDomisili = trim($row['kecamatan'] ?? '');
+        $kotaDomisili = trim($row['kota_kabupaten'] ?? '');
+        $kodePosDomisili = trim($row['kode_pos'] ?? '');
         
         // Personal
         $noKk = trim($row['no_kartu_keluarga'] ?? '');
         $npwp = trim($row['npwp'] ?? '');
         $bpjsTk = trim($row['bpjs_tk'] ?? '');
+        $xTk = trim($row['x'] ?? '');
         $bpjsKes = trim($row['bpjs_kes'] ?? '');
+        $xKs = trim($row['x_ks'] ?? '');
         $namaFaskes = trim($row['nama_faskes'] ?? '');
         $noSkck = trim($row['catatan_kepolisian_skck'] ?? '');
         $masaBerlakuSkck = $this->parseDate($row['masa_berlaku'] ?? null);
         $jenisLisensi = trim($row['jenis_lisensi'] ?? '');
         $noLisensi = trim($row['no_lisensi_sio_sim_lainnya'] ?? '');
-        $masaBerlakuLisensi = $this->parseDate($row['berlaku'] ?? null);
+        $masaBerlakuLisensi = trim($row['berlaku'] ?? '');
         $noRekening = trim($row['no_rekening'] ?? '');
+        $noCif = trim($row['no_cif'] ?? '');
         $bank = trim($row['bank'] ?? '');
         $ptkp = trim($row['ptkp'] ?? '');
         
         $shoeSizeRaw = trim($row['shoes_size'] ?? '');
-        $shoeSize = $shoeSizeRaw === '' ? null : (int) $shoeSizeRaw;
+        $shoeSize = $shoeSizeRaw === '' ? null : $shoeSizeRaw;
         $uniformSize = trim($row['uniform_size'] ?? '');
+        $gp = trim($row['gp'] ?? '');
+        $via = trim($row['via'] ?? '');
+        $regDigantikan = trim($row['reg_digantikan'] ?? '');
+        $namaDigantikan = trim($row['nama_digantikan'] ?? '');
         
         // Health
         $tglMcu = $this->parseDate($row['tgl_mcu'] ?? null);
         $tinggiBadan = $this->parseInt($row['tb'] ?? null);
         $beratBadan = $this->parseInt($row['bb'] ?? null);
-        $golDarah = trim($row['darah'] ?? '');
+        $golDarah = trim($row['gd'] ?? '');
         $butaWarnaRaw = trim($row['buta_warna'] ?? '');
         $riwayatSakit = trim($row['riwayat_sakit'] ?? '');
         $tglDrugTest = $this->parseDate($row['tgl_drug_test'] ?? null);
@@ -164,8 +185,8 @@ class EmployeesImport implements
         $darah = trim($row['darah'] ?? '');
         $urine = trim($row['urine'] ?? '');
         $f_hati = trim($row['f_hati'] ?? '');
-        $gula_darah = trim($row['gula_darah'] ?? '');
-        $ginjal = trim($row['ginjal'] ?? '');
+        $gula_darah = trim($row['gula_darah_creatinin'] ?? '');
+        $ginjal = trim($row['f_ginjal_puasa'] ?? '');
         $thorax = trim($row['thorax'] ?? '');
         $tensi = trim($row['tensi'] ?? '');
         $nadi = trim($row['nadi'] ?? '');
@@ -173,9 +194,9 @@ class EmployeesImport implements
         $os = trim($row['os'] ?? '');
         
         // Education
-        $pendidikan = $row['pendidikan'] ?? null;
+        $pendidikan = trim($row[''] ?? ''); // kolom kosong di JSON untuk pendidikan
         $jurusan = trim($row['jurusan'] ?? '');
-        $sekolahAsal = $row['sekolah_asal'] ?? null;
+        $sekolahAsal = trim($row['sekolah_asal'] ?? '');
         $tahunLulus = $this->parseYear($row['tahun_lulus'] ?? null);
         
         // Employment
@@ -197,64 +218,47 @@ class EmployeesImport implements
         // Family
         $namaAyah = trim($row['nama_ayah_kandung'] ?? '');
         $namaIbu = trim($row['nama_ibu_kandung'] ?? '');
+        $namaPasangan = trim($row['suami_istri'] ?? '');
+        $noKtpPasangan = trim($row['no_ktp_suamiistri'] ?? '');
+        $jkPasangan = trim($row['jk_istri'] ?? '');
         $tempatLahirPasangan = trim($row['tempat_lahir_suamiistri'] ?? '');
         $tglLahirPasangan = $this->parseDate($row['tanggal_lahir_suamiistri'] ?? null);
+        $pendidikanPasangan = trim($row['pendidikan'] ?? '');
+        $pekerjaanPasangan = trim($row['pekerjaan'] ?? '');
+        $tglPerkawinan = $this->parseDate($row['tgl_perkawinan'] ?? null);
         $anak1 = trim($row['anak_ke_1'] ?? '');
         $anak2 = trim($row['anak_ke_2'] ?? '');
         $anak3 = trim($row['anak_ke_3'] ?? '');
         
         // Create/Update User
         $userId = null;
-        $status_active = 0;
+        $status_active = '0';
         
-        if ($noKontrak !== '' && $email !== '') {
-            try {
-                $user = User::updateOrCreate(
-                    ['email' => $email],
-                    [
-                        'name' => $nama,
-                        'password' => Hash::make($noKtp),
-                        'role_id' => 2,
-                    ]
-                );
-                $userId = $user->id;
-                $status_active = 1;
-            } catch (QueryException $e) {
-                if ($e->getCode() === '23000') {
-                    $user = User::where('email', $email)->first();
-                    $userId = $user?->id;
-                    $status_active = 1;
-                } else {
-                    throw $e;
-                }
-            }
-        }
-        
-        // Create/Update Employee
+        // Create/Update Employee (dengan data personal dan address digabung)
         $employee = Employee::updateOrCreate(
             ['nrp' => $nrp],
             [
                 'user_id' => $userId,
                 'nama' => $nama,
+                'bagian' => $bagian,
+                'area_kerja' => $areaKerja,
+                'jenis_kelamin' => $jenisKelamin,
                 'status_active' => $status_active,
+                'status_kary' => $statusKary,
                 'tempat_lahir' => $tempatLahir,
                 'tanggal_lahir' => $tanggalLahir,
                 'agama' => $agama,
                 'status_perkawinan' => $statusNikah,
-                'kewarganegaraan' => $kewarganegaraan
-            ]
-        );
-        
-        // Personal
-        EmployeePersonal::updateOrInsert(
-            ['employee_id' => $employee->id],
-            [
+                'kewarganegaraan' => $kewarganegaraan,
+                
+                // Personal data
                 'no_ktp' => $noKtp,
                 'no_kk' => $noKk,
-                'npwp' => $npwp,
                 'no_wa' => $waAktif,
                 'bpjs_tk' => $bpjsTk,
+                'x' => $xTk,
                 'bpjs_kes' => $bpjsKes,
+                'x_ks' => $xKs,
                 'nama_faskes' => $namaFaskes,
                 'email' => $email,
                 'no_skck' => $noSkck,
@@ -263,29 +267,77 @@ class EmployeesImport implements
                 'no_lisensi' => $noLisensi,
                 'masa_berlaku_lisensi' => $masaBerlakuLisensi,
                 'no_rekening' => $noRekening,
+                'no_cif' => $noCif,
                 'bank' => $bank,
+                'npwp' => $npwp,
                 'ptkp' => $ptkp,
                 'shoe_size' => $shoeSize,
                 'uniform_size' => $uniformSize,
+                'gp' => $gp,
+                'via' => $via,
+                'reg_digantikan' => $regDigantikan,
+                'nama_digantikan' => $namaDigantikan,
+                
+                // Address KTP
+                'alamat_lengkap_ktp' => $alamatLengkapKtp,
+                'desa_ktp' => $desaKtp,
+                'kecamatan_ktp' => $kecamatanKtp,
+                'kota_ktp' => $kotaKtp,
+                'kode_pos_ktp' => $kodePosKtp,
+                
+                // Address Domisili
+                'alamat_lengkap_domisili' => $alamatLengkapDomisili,
+                'desa_domisili' => $desaDomisili,
+                'kecamatan_domisili' => $kecamatanDomisili,
+                'kota_domisili' => $kotaDomisili,
+                'kode_pos_domisili' => $kodePosDomisili,
             ]
         );
+
+        if ($noKontrak !== '' && $noKtp !== '') {
+            try {
+                $user = User::updateOrCreate(
+                    ['no_ktp' => $noKtp],
+                    [
+                        'email' => $email ?: null,
+                        'name' => $nama,
+                        'password' => Hash::make($noKtp),
+                        'role_id' => 2,
+                        'employee_id' => $employee->id,
+                    ]
+                );
+
+                $employee->update([
+                    'user_id' => $user->id,
+                    'status_active' => $noKontrak !== '' ? 1 : 0,
+                ]);
+            } catch (QueryException $e) {
+                if ($e->getCode() === '23000') {
+                    $user = User::where('no_ktp', $noKtp)->first();
+                    if ($user) {
+                        $userId = $user->id;
+                        $status_active = '1';
+                        
+                        // Update user dengan data terbaru
+                        $user->update([
+                            'name' => $nama,
+                            'no_ktp' => $noKtp,
+                            'employee_id' => $employee->id,
+                        ]);
+                        
+                        // Update employee dengan user_id dan status_active
+                        $employee->update([
+                            'user_id' => $userId,
+                            'status_active' => $status_active,
+                        ]);
+                    }
+                } else {
+                    throw $e;
+                }
+            }
+        }
         
-        // Address
-        EmployeeAddress::updateOrCreate(
-            [
-                'employee_id' => $employee->id,
-                'tipe' => 'Domisili'
-            ],
-            [
-                'alamat_lengkap' => $alamatLengkap,
-                'desa' => $desa,
-                'kecamatan' => $kecamatan,
-                'kota' => $kota,
-                'kode_pos' => $kodePos,
-            ]
-        );
-        
-        // Health
+        // Health Record
         EmployeeHealth::updateOrCreate(
             ['employee_id' => $employee->id],
             [
@@ -293,7 +345,7 @@ class EmployeesImport implements
                 'tinggi_badan' => $tinggiBadan,
                 'berat_badan' => $beratBadan,
                 'gol_darah' => $golDarah,
-                'buta_warna' => in_array(strtoupper($butaWarnaRaw), ['YA','Y','1','TRUE']),
+                'buta_warna' => !in_array(strtolower($butaWarnaRaw), ['normal', 'tidak', 'n', '-', '']),
                 'riwayat_penyakit' => $riwayatSakit,
                 'tanggal_drug_test' => $tglDrugTest,
                 'hasil_drug_test' => $hasilDrugTest,
@@ -311,20 +363,22 @@ class EmployeesImport implements
         );
         
         // Education
-        EmployeeEducation::updateOrCreate(
-            [
-                'employee_id' => $employee->id,
-                'jenjang' => $pendidikan,
-            ],
-            [
-                'jurusan' => $jurusan,
-                'institusi' => $sekolahAsal,
-                'tahun_lulus' => $tahunLulus,
-                'sekolah_asal' => $sekolahAsal,
-            ]
-        );
+        if (!empty($pendidikan)) {
+            EmployeeEducation::updateOrCreate(
+                [
+                    'employee_id' => $employee->id,
+                    'jenjang' => $pendidikan,
+                ],
+                [
+                    'jurusan' => $jurusan,
+                    'institusi' => $sekolahAsal,
+                    'tahun_lulus' => $tahunLulus,
+                    'sekolah_asal' => $sekolahAsal,
+                ]
+            );
+        }
         
-        // Employment
+        // Employment History
         EmployeeEmployment::updateOrCreate(
             [
                 'employee_id' => $employee->id,
@@ -349,52 +403,66 @@ class EmployeesImport implements
             ]
         );
         
-        // Family
+        // Family Members
         if (!empty($namaAyah)) {
-            EmployeeFamily::updateOrCreate(
+            EmployeeFamilyMember::updateOrCreate(
                 [
                     'employee_id' => $employee->id,
-                    'hubungan' => 'ayah',
+                    'hubungan' => 'Ayah',
                 ],
                 [
                     'nama' => $namaAyah,
-                    'tanggal_lahir' => $tglLahirPasangan,
-                    'tempat_lahir' => $tempatLahirPasangan
                 ]
             );
         }
         
         if (!empty($namaIbu)) {
-            EmployeeFamily::updateOrCreate(
+            EmployeeFamilyMember::updateOrCreate(
                 [
                     'employee_id' => $employee->id,
-                    'hubungan' => 'ibu',
+                    'hubungan' => 'Ibu',
                 ],
                 [
                     'nama' => $namaIbu,
+                ]
+            );
+        }
+        
+        if (!empty($namaPasangan)) {
+            $hubunganPasangan = strtolower($jenisKelamin) === 'laki-laki' ? 'Istri' : 'Suami';
+            EmployeeFamilyMember::updateOrCreate(
+                [
+                    'employee_id' => $employee->id,
+                    'hubungan' => $hubunganPasangan,
+                ],
+                [
+                    'nama' => $namaPasangan,
+                    'tempat_lahir' => $tempatLahirPasangan,
                     'tanggal_lahir' => $tglLahirPasangan,
+                    'pendidikan' => $pendidikanPasangan,
+                    'pekerjaan' => $pekerjaanPasangan,
+                    'tgl_perkawinan' => $tglPerkawinan,
                 ]
             );
         }
         
         $anakList = [$anak1, $anak2, $anak3];
-        foreach ($anakList as $anak) {
+        foreach ($anakList as $index => $anak) {
             if (!empty($anak)) {
-                EmployeeFamily::updateOrCreate(
+                EmployeeFamilyMember::updateOrCreate(
                     [
                         'employee_id' => $employee->id,
-                        'hubungan' => 'anak',
+                        'hubungan' => 'Anak',
                         'nama' => $anak,
                     ],
                     [
                         'nama' => $anak,
-                        'hubungan' => 'anak',
+                        'hubungan' => 'Anak',
                     ]
                 );
             }
         }
     }
-
     private function logError($row, \Throwable $e)
     {
         $nrp = trim($row['nrp'] ?? '');

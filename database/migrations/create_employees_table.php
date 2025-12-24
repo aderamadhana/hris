@@ -18,27 +18,19 @@ return new class extends Migration
             $table->string('nrp', 30)->unique();
             $table->string('user_id', 30)->nullable();
             $table->string('nama', 150);
-            $table->string('nik', 20)->nullable();
-            $table->string('nik_kary', 20)->nullable();
-            $table->string('no_rek', 20)->nullable();
-            $table->string('status_kary', 50)->nullable();
             $table->string('bagian', 50)->nullable();
             $table->string('area_kerja', 50)->nullable();
             $table->enum('jenis_kelamin', ['Laki-laki', 'Perempuan']);
             $table->string('tempat_lahir', 100)->nullable();
             $table->date('tanggal_lahir')->nullable();
             $table->string('agama', 50)->nullable();
+            $table->string('status_kary', 50)->nullable();
             $table->string('status_perkawinan', 50)->nullable();
             $table->string('kewarganegaraan', 50)->nullable();
             $table->char('status_active', 1)->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('employee_personals', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('employee_id')->constrained()->cascadeOnDelete();
-
-            $table->string('no_ktp', 25)->unique();
+            
+            // Gabungan dari employee_personals
+            $table->string('no_ktp', 25)->unique()->nullable();
             $table->string('no_kk', 25)->nullable();
             $table->string('no_wa', 100)->nullable();
             $table->string('bpjs_tk', 100)->nullable();
@@ -63,26 +55,21 @@ return new class extends Migration
             $table->string('via')->nullable();
             $table->string('reg_digantikan')->nullable();
             $table->string('nama_digantikan')->nullable();
-
-            $table->string('agama', 50)->nullable();
-            $table->string('status_perkawinan', 50)->nullable();
-            $table->string('kewarganegaraan', 50)->nullable();
-
-            $table->timestamps();
-        });
-
-        Schema::create('employee_addresses', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('employee_id')->constrained()->cascadeOnDelete();
-
-            $table->text('alamat_lengkap');
-            $table->string('desa')->nullable();
-            $table->string('kecamatan')->nullable();
-            $table->string('kota')->nullable();
-            $table->string('kode_pos')->nullable();
-
-            $table->enum('tipe', ['KTP', 'Domisili'])->default('Domisili');
-
+            
+            // Gabungan dari employee_addresses - Alamat KTP
+            $table->text('alamat_lengkap_ktp')->nullable();
+            $table->string('desa_ktp')->nullable();
+            $table->string('kecamatan_ktp')->nullable();
+            $table->string('kota_ktp')->nullable();
+            $table->string('kode_pos_ktp')->nullable();
+            
+            // Gabungan dari employee_addresses - Alamat Domisili
+            $table->text('alamat_lengkap_domisili')->nullable();
+            $table->string('desa_domisili')->nullable();
+            $table->string('kecamatan_domisili')->nullable();
+            $table->string('kota_domisili')->nullable();
+            $table->string('kode_pos_domisili')->nullable();
+            
             $table->timestamps();
         });
 
@@ -112,7 +99,6 @@ return new class extends Migration
             $table->string('nadi')->nullable();
             $table->string('od')->nullable();
             $table->string('os')->nullable();
-
 
             $table->timestamps();
         });
@@ -181,8 +167,8 @@ return new class extends Migration
             $table->string('jenis_kerja')->nullable();
             $table->string('hari_kerja')->nullable();
 
-            $table->date('tgl_awal_kerja')->nullable();
-            $table->date('tgl_akhir_kerja')->nullable();
+            $table->string('tgl_awal_kerja')->nullable();
+            $table->string('tgl_akhir_kerja')->nullable();
 
             $table->string('jenis_kontrak')->nullable(); // PKWT, PKWTT
             $table->string('status')->nullable(); // aktif, resign, dll
@@ -227,21 +213,6 @@ return new class extends Migration
             // $table->unique(['period_year', 'period_month']);
             $table->index(['period_year', 'period_month']);
         });
-
-        // Schema::create('employees', function (Blueprint $table) {
-        //     $table->id();
-        //     $table->string('nik', 20)->unique();
-        //     $table->string('nik_kary', 20)->nullable();
-        //     $table->string('no_rek', 20)->nullable();
-        //     $table->string('nama', 100);
-        //     $table->string('status_kary', 50)->nullable();
-        //     $table->string('bagian', 50)->nullable();
-        //     $table->string('area_kerja', 50)->nullable();
-        //     $table->timestamps();
-            
-        //     $table->index('nik');
-        //     $table->index('nama');
-        // });
 
         Schema::create('salary_configurations', function (Blueprint $table) {
             $table->id();
@@ -463,8 +434,6 @@ return new class extends Migration
         Schema::dropIfExists('employee_educations');
         Schema::dropIfExists('employee_family_members');
         Schema::dropIfExists('employee_health_records');
-        Schema::dropIfExists('employee_addresses');
-        Schema::dropIfExists('employee_personals');
         Schema::dropIfExists('roles');
         Schema::dropIfExists('employees');
 

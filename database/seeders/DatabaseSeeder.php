@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Employee;
-use App\Models\EmployeePersonal;
 use App\Models\PayrollPeriod;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -17,23 +16,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     { 
         $now = Carbon::now();
-        // Proteksi: Harus konfirmasi dulu
-        // if (!$this->command->confirm('Create initial roles and users for production?', false)) {
-        //     $this->command->warn('Cancelled.');
-        //     return;
-        // }
 
-        // // Cek apakah sudah ada
-        // if (Role::count() > 0 || User::count() > 0) {
-        //     if (!$this->command->confirm('Data already exists. Continue anyway?', false)) {
-        //         $this->command->warn('Cancelled.');
-        //         return;
-        //     }
-        // }
-
-        // $this->command->info('Creating roles...');
-
-        // Create roles
         $roles = [
             ['id' => 1, 'role_name' => 'admin'],
             ['id' => 2, 'role_name' => 'employee'],
@@ -46,13 +29,13 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // $this->command->info('✓ Roles created');
-        // $this->command->info('Creating users...');
-
         // Create users
         $users = [
             [
                 'name' => 'Admin HRIS',
+                'email' => 'admin@admin.com',
+                'no_ktp' => 'admin',
+                'employee_id' => '1',
                 'email' => 'admin@admin.com',
                 'role_id' => 1,
                 'password' => Hash::make(env('ADMIN_PASSWORD', '123456')),
@@ -60,6 +43,8 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Employee HRIS',
                 'email' => 'employee@admin.com',
+                'no_ktp' => 'employee',
+                'employee_id' => '2',
                 'role_id' => 2,
                 'password' => Hash::make(env('EMPLOYEE_PASSWORD', '123456')),
             ],
@@ -77,9 +62,6 @@ class DatabaseSeeder extends Seeder
                 ])
             );
         }
-
-        // $this->command->info('✓ Users created');
-        // $this->command->newLine();
         
         // Display created data
         $this->command->table(
@@ -121,44 +103,6 @@ class DatabaseSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
-        ]);
-
-        EmployeePersonal::insert([
-            [
-                'employee_id' => 1,
-                'no_ktp' => 'admin',
-                'no_kk' => '3507120101010001',
-                'npwp' => '12.345.678.9-012.000',
-                'agama' => 'Islam',
-                'status_perkawinan' => 'Menikah',
-                'kewarganegaraan' => 'Indonesia',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'employee_id' => 2,
-                'no_ktp' => 'employee',
-                'no_kk' => '3507050202020002',
-                'npwp' => '98.765.432.1-987.000',
-                'agama' => 'Islam',
-                'status_perkawinan' => 'Menikah',
-                'kewarganegaraan' => 'Indonesia',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ]);
-
-        /** ADDRESS */
-        DB::table('employee_addresses')->insert([
-            'employee_id'     => 2,
-            'alamat_lengkap'  => 'Jl. Mawar No. 12, RT 02 RW 03',
-            'desa'            => 'Sawojajar',
-            'kecamatan'       => 'Kedungkandang',
-            'kota'            => 'Kota Malang',
-            'kode_pos'        => '65139',
-            'tipe'            => 'Domisili',
-            'created_at'      => $now,
-            'updated_at'      => $now,
         ]);
 
         /** EMPLOYMENT HISTORY */

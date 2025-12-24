@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
-use App\Models\EmployeePersonal;
+// use App\Models\EmployeePersonal;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,7 +35,7 @@ class LoginController extends Controller
 
         // Cari employee berdasarkan NRP (NIK)
         $employee = Employee::where('status_active', 1)
-        ->whereHas('personal', function ($q) use ($request) {
+        ->whereHas('user', function ($q) use ($request) {
             $q->where('no_ktp', $request->nik);
         })
         ->first();

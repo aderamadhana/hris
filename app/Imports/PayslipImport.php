@@ -3,8 +3,6 @@
 namespace App\Imports;
 
 use App\Models\Employee;
-use App\Models\EmployeePersonal;
-use App\Models\PayrollPeriod;
 use App\Models\SalaryConfiguration;
 use App\Models\AttendanceSummary;
 use App\Models\OvertimeSummary;
@@ -24,10 +22,10 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
 
-class PayslipImport implements 
-    ToCollection, 
-    WithHeadingRow, 
-    WithChunkReading, 
+class PayslipImport implements
+    ToCollection,
+    WithHeadingRow,
+    WithChunkReading,
     WithCalculatedFormulas,
     ShouldQueue
 {
@@ -44,8 +42,7 @@ class PayslipImport implements
         $this->payrollPeriodId = $payrollPeriodId;
         $this->importId = $importId ?? uniqid('import_', true);
         $this->startTime = time();
-        
-        // Initialize counters
+
         Cache::put("import_{$this->importId}_success", 0, now()->addHours(24));
         Cache::put("import_{$this->importId}_failed", 0, now()->addHours(24));
         Cache::put("import_{$this->importId}_errors", [], now()->addHours(24));
@@ -55,59 +52,58 @@ class PayslipImport implements
     public function collection(Collection $rows)
     {
         DB::connection()->disableQueryLog();
-        
-        // Log::info("Starting import with {$rows->count()} rows for import ID: {$this->importId}");
-        
-        // Filter row yang benar-benar kosong
+
+        // 1) buang row benar-benar kosong
         $rows = $rows->filter(function ($row) {
-            // Cek apakah row punya minimal 1 kolom yang terisi
             return collect($row)->filter(function ($value) {
                 return $value !== null && $value !== '';
             })->isNotEmpty();
         });
-        
-        // Atau lebih spesifik: cek NIK harus ada
+
+        // 2) pastikan NIK ada (jangan cast int)
         $rows = $rows->filter(function ($row) {
-            $nik = (string)((int)($row['nik'] ?? 0));
-            return $nik !== '0' && $nik !== '';
+            $nik = $this->sanitizeNik($row['nik'] ?? '');
+            return $nik !== '';
         });
-        
+
         if ($rows->isEmpty()) {
             Log::warning('No valid rows to import', ['import_id' => $this->importId]);
             $this->finalizeImport();
             return;
         }
-        
-        // Log::info("Starting import with {$rows->count()} valid rows for import ID: {$this->importId}");
-        
-        $niks = $rows->pluck('nik')->map(fn($nik) => (string)((int)$nik))->filter()->unique();
+
+        $niks = $rows->pluck('nik')
+            ->map(fn ($nik) => $this->sanitizeNik($nik))
+            ->filter()
+            ->unique();
+
         $employeeMap = $this->preloadEmployees($niks);
-        
-        // Process dalam batch
-        $chunks = $rows->chunk(50); // 50 rows per batch
-        
+
+        // Process dalam batch kecil supaya transaksi lebih aman
+        $chunks = $rows->chunk(50);
+
         foreach ($chunks as $chunkIndex => $chunk) {
             if ($this->isTimeout()) {
                 $this->handleTimeout();
                 break;
             }
-            
-            Log::info("Processing chunk " . ($chunkIndex + 1) . " with {$chunk->count()} rows");
-            
+
             DB::beginTransaction();
             try {
                 foreach ($chunk as $index => $row) {
                     $this->processRow($row, $employeeMap, $index);
                 }
-                
+
                 DB::commit();
                 $this->incrementSuccess($chunk->count());
-                
             } catch (\Throwable $e) {
                 DB::rollBack();
-                Log::error("Batch failed, processing individually", ['error' => $e->getMessage()]);
-                
-                // Process ulang satu per satu untuk error tracking
+                Log::error("Batch failed, processing individually", [
+                    'error' => $e->getMessage(),
+                    'import_id' => $this->importId,
+                ]);
+
+                // ulang satu per satu untuk tracking error yang akurat
                 foreach ($chunk as $index => $row) {
                     DB::beginTransaction();
                     try {
@@ -121,78 +117,82 @@ class PayslipImport implements
                 }
             }
         }
-        
+
         $this->finalizeImport();
     }
 
     /**
-     * Pre-load semua employee data untuk menghindari N+1 query
+     * Preload employee berdasarkan no_ktp (karena personals sudah digabung ke employees)
      */
     protected function preloadEmployees(Collection $niks): array
     {
-        $employeePersonals = EmployeePersonal::whereIn('no_ktp', $niks)
-            ->with('employee')
-            ->get()
-            ->keyBy('no_ktp');
-        
+        $employees = Employee::whereIn('no_ktp', $niks)->get();
+
         $map = [];
-        foreach ($employeePersonals as $nik => $personal) {
-            if ($personal->employee) {
-                $map[$nik] = [
-                    'personal' => $personal,
-                    'employee' => $personal->employee,
-                    'employee_id' => $personal->employee_id
+        foreach ($employees as $employee) {
+            $key = $this->sanitizeNik($employee->no_ktp ?? '');
+            if ($key !== '') {
+                $map[$key] = [
+                    'employee' => $employee,
+                    'employee_id' => $employee->id,
                 ];
             }
         }
-        
+
         return $map;
     }
 
     /**
      * Process single row
      */
-    
     protected function processRow($row, array $employeeMap, int $index)
     {
-        // Sanitize semua numeric values
-        $row = collect($row)->map(fn($val) => $this->sanitizeNumeric($val))->toArray();
+        $nik = $this->sanitizeNik($row['nik'] ?? '');
 
-        $nik = (string)((int)($row['nik'] ?? 0));
-        
-        if (empty($nik) || $nik === '0') {
+        if ($nik === '') {
             throw new \Exception("NIK kosong atau invalid pada row " . ($index + 2));
         }
-        
+
         $hasData = collect($row)->filter(function ($value) {
-            return $value !== null && $value !== '' && $value !== '0';
+            return $value !== null && $value !== '';
         })->isNotEmpty();
-        
+
         if (!$hasData) {
             throw new \Exception("Row kosong pada row " . ($index + 2));
         }
 
-        // Cek dari pre-loaded map
         if (!isset($employeeMap[$nik])) {
-            throw new \Exception("NIK {$nik} tidak ditemukan di employee_personals");
+            throw new \Exception("NIK {$nik} tidak ditemukan di employees.no_ktp");
         }
-        
-        $employeeData = $employeeMap[$nik];
-        $employee = $employeeData['employee'];
-        $employeeId = $employeeData['employee_id'];
-        
-        // Update Employee data (nik_kary dan no_rek)
-        $employee->update([
-            'nik_kary' => $row['nik_kary'] ?? null,
-            'no_rek' => $row['no_rek'] ?? null,
-        ]);
-        
-        // 1. Salary Configuration
-        if (isset($row['gaji_pokok']) || isset($row['gaji_per_hari']) || 
-            isset($row['gaji_hk']) || isset($row['gaji_train_hk']) || 
-            isset($row['gaji_train_upah_per_jam']) || isset($row['lembur_per_hari']) || 
-            isset($row['lembur_per_jam'])) {
-            
+
+        $employee = $employeeMap[$nik]['employee'];
+        $employeeId = $employeeMap[$nik]['employee_id'];
+
+        /**
+         * Update data employee sesuai migration baru:
+         * - nik_kary -> nrp (jika file excel memang isinya NRP)
+         * - no_rek   -> no_rekening
+         */
+        $employeeUpdate = [];
+
+        if (isset($row['nik_kary']) && $row['nik_kary'] !== '') {
+            $employeeUpdate['nrp'] = (string) $row['nik_kary'];
+        }
+        if (isset($row['no_rek']) && $row['no_rek'] !== '') {
+            $employeeUpdate['no_rekening'] = (string) $row['no_rek'];
+        }
+
+        if (!empty($employeeUpdate)) {
+            $employee->update($employeeUpdate);
+        }
+
+        // 1. Salary Configuration (numeric)
+        if (
+            isset($row['gaji_pokok']) || isset($row['gaji_per_hari']) ||
+            isset($row['gaji_hk']) || isset($row['gaji_train_hk']) ||
+            isset($row['gaji_train_upah_per_jam']) || isset($row['lembur_per_hari']) ||
+            isset($row['lembur_per_jam'])
+        ) {
             SalaryConfiguration::updateOrCreate(
                 [
                     'employee_id' => $employeeId,
@@ -209,10 +209,10 @@ class PayslipImport implements
                 ]
             );
         }
-        
-        // 2. Attendance Summary
+
+        // 2. Attendance Summary (sebagian numeric, jam_kerja biarkan raw)
         $attendanceData = [
-            'jam_kerja' => $row['jam_kerja'] ?? null,
+            'jam_kerja' => $row['jam_kerja'] ?? null, // bisa format non-numeric
             'jam_hk' => $row['jam_hk'] ?? null,
             'jam_hl' => $row['jam_hl'] ?? null,
             'jam_hr' => $row['jam_hr'] ?? null,
@@ -228,8 +228,14 @@ class PayslipImport implements
             'ijin_pulang' => $row['ijin_pulang'] ?? null,
             'cuti_dibayar' => $row['cuti_dibayar'] ?? null,
         ];
-        
-        if (collect($attendanceData)->filter()->isNotEmpty()) {
+
+        $attendanceData = $this->sanitizeNumericArray($attendanceData, [
+            'jam_hk', 'jam_hl', 'jam_hr', 'jml_hl', 'jml_hr', 'hadir', 'mangkir_hari',
+            'pot_tdk_masuk_hari', 'pot_tdk_masuk_upah', 'terlambat_hari', 'terlambat_menit',
+            'terlambat_jam', 'ijin_pulang', 'cuti_dibayar',
+        ]);
+
+        if (collect($attendanceData)->filter(fn ($v) => $v !== null && $v !== '')->isNotEmpty()) {
             AttendanceSummary::updateOrCreate(
                 [
                     'employee_id' => $employeeId,
@@ -238,8 +244,8 @@ class PayslipImport implements
                 $attendanceData
             );
         }
-        
-        // 3. Overtime Summary
+
+        // 3. Overtime Summary (numeric)
         $overtimeData = [
             'overtime_jam' => $row['overtime_jam'] ?? null,
             'lembur_hari' => $row['lembur_hari'] ?? null,
@@ -255,8 +261,10 @@ class PayslipImport implements
             'lembur_libur' => $row['lembur_libur'] ?? null,
             'lembur_2' => $row['lembur_2'] ?? null,
         ];
-        
-        if (collect($overtimeData)->filter()->isNotEmpty()) {
+
+        $overtimeData = $this->sanitizeNumericArray($overtimeData, array_keys($overtimeData));
+
+        if (collect($overtimeData)->filter(fn ($v) => $v !== null && $v !== '')->isNotEmpty()) {
             OvertimeSummary::updateOrCreate(
                 [
                     'employee_id' => $employeeId,
@@ -265,8 +273,8 @@ class PayslipImport implements
                 $overtimeData
             );
         }
-        
-        // 4. Earnings
+
+        // 4. Earnings (numeric)
         $earningsData = [
             'gaji_hk' => $row['gaji_hk'] ?? null,
             'gaji_hl' => $row['gaji_hl'] ?? null,
@@ -285,8 +293,10 @@ class PayslipImport implements
             'overtime' => $row['overtime'] ?? null,
             'fee_lembur' => $row['fee_lembur'] ?? null,
         ];
-        
-        if (collect($earningsData)->filter()->isNotEmpty()) {
+
+        $earningsData = $this->sanitizeNumericArray($earningsData, array_keys($earningsData));
+
+        if (collect($earningsData)->filter(fn ($v) => $v !== null && $v !== '')->isNotEmpty()) {
             Earning::updateOrCreate(
                 [
                     'employee_id' => $employeeId,
@@ -295,8 +305,8 @@ class PayslipImport implements
                 $earningsData
             );
         }
-        
-        // 5. Allowances
+
+        // 5. Allowances (numeric)
         $allowancesData = [
             'tunj' => $row['tunj'] ?? null,
             'tunj_sewa_motor' => $row['tunj_sewa_motor'] ?? null,
@@ -315,8 +325,10 @@ class PayslipImport implements
             'tunj_jabatan' => $row['tunj_jabatan'] ?? null,
             'tunj_bag' => $row['tunj_bag'] ?? null,
         ];
-        
-        if (collect($allowancesData)->filter()->isNotEmpty()) {
+
+        $allowancesData = $this->sanitizeNumericArray($allowancesData, array_keys($allowancesData));
+
+        if (collect($allowancesData)->filter(fn ($v) => $v !== null && $v !== '')->isNotEmpty()) {
             Allowance::updateOrCreate(
                 [
                     'employee_id' => $employeeId,
@@ -325,8 +337,8 @@ class PayslipImport implements
                 $allowancesData
             );
         }
-        
-        // 6. Additional Earnings
+
+        // 6. Additional Earnings (numeric)
         $additionalEarningsData = [
             'anjem_jam' => $row['anjem_jam'] ?? null,
             'anjem_hari' => $row['anjem_hari'] ?? null,
@@ -361,8 +373,10 @@ class PayslipImport implements
             'pembulatan' => $row['pembulatan'] ?? null,
             'lain_lain' => $row['lain_lain'] ?? null,
         ];
-        
-        if (collect($additionalEarningsData)->filter()->isNotEmpty()) {
+
+        $additionalEarningsData = $this->sanitizeNumericArray($additionalEarningsData, array_keys($additionalEarningsData));
+
+        if (collect($additionalEarningsData)->filter(fn ($v) => $v !== null && $v !== '')->isNotEmpty()) {
             AdditionalEarning::updateOrCreate(
                 [
                     'employee_id' => $employeeId,
@@ -371,8 +385,8 @@ class PayslipImport implements
                 $additionalEarningsData
             );
         }
-        
-        // 7. Deductions
+
+        // 7. Deductions (numeric)
         $deductionsData = [
             'pot_makan' => $row['pot_makan'] ?? null,
             'pot_bpjs_tk' => $row['pot_bpjs_tk'] ?? null,
@@ -404,8 +418,10 @@ class PayslipImport implements
             'terlambat_jml' => $row['terlambat_jml'] ?? null,
             'koreksi_gaji_minus' => $row['koreksi_gaji_minus'] ?? null,
         ];
-        
-        if (collect($deductionsData)->filter()->isNotEmpty()) {
+
+        $deductionsData = $this->sanitizeNumericArray($deductionsData, array_keys($deductionsData));
+
+        if (collect($deductionsData)->filter(fn ($v) => $v !== null && $v !== '')->isNotEmpty()) {
             Deduction::updateOrCreate(
                 [
                     'employee_id' => $employeeId,
@@ -414,8 +430,8 @@ class PayslipImport implements
                 $deductionsData
             );
         }
-        
-        // 8. Payroll Summary (SELALU dibuat karena ini master record)
+
+        // 8. Payroll Summary (selalu dibuat)
         PayrollSummary::updateOrCreate(
             [
                 'employee_id' => $employeeId,
@@ -423,7 +439,7 @@ class PayslipImport implements
             ],
             [
                 'no' => $row['no'] ?? null,
-                'grand_total' => $row['grand_total'] ?? 0,
+                'grand_total' => $this->sanitizeNumeric($row['grand_total'] ?? 0) ?? 0,
                 'exactsumef2ef10485761rincian_46ab761trainingn24' => $row['exactsumef2ef10485761rincian_46ab761trainingn24'] ?? null,
             ]
         );
@@ -434,11 +450,11 @@ class PayslipImport implements
      */
     protected function logError($row, \Throwable $e, int $index)
     {
-        $nik = (string)((int)($row['nik'] ?? 0));
+        $nik = $this->sanitizeNik($row['nik'] ?? '');
         $errorMessage = "Row " . ($index + 2) . " - NIK: {$nik} - Error: " . $e->getMessage();
-        
+
         $this->incrementFailed($errorMessage);
-        
+
         Log::error('Payroll Import Error', [
             'row' => $index + 2,
             'nik' => $nik,
@@ -447,40 +463,31 @@ class PayslipImport implements
         ]);
     }
 
-    /**
-     * Check timeout
-     */
     protected function isTimeout(): bool
     {
         $elapsed = time() - $this->startTime;
         return $elapsed >= $this->maxExecutionTime;
     }
 
-    /**
-     * Handle timeout scenario
-     */
     protected function handleTimeout()
     {
         Log::warning('Import timeout', ['import_id' => $this->importId]);
-        
+
         Cache::put("import_{$this->importId}_status", 'timeout', now()->addHours(24));
-        
+
         $errors = Cache::get("import_{$this->importId}_errors", []);
         $errors[] = "Import dihentikan karena timeout. Sebagian data berhasil diimport.";
         Cache::put("import_{$this->importId}_errors", $errors, now()->addHours(24));
     }
 
-    /**
-     * Finalize import
-     */
     protected function finalizeImport()
     {
         $status = Cache::get("import_{$this->importId}_status", 'processing');
-        
+
         if ($status !== 'timeout') {
             Cache::put("import_{$this->importId}_status", 'completed', now()->addHours(24));
         }
-        
+
         Log::info('Import finished', [
             'import_id' => $this->importId,
             'status' => $status,
@@ -488,9 +495,6 @@ class PayslipImport implements
         ]);
     }
 
-    /**
-     * Increment success counter
-     */
     protected function incrementSuccess(int $count = 1)
     {
         $key = "import_{$this->importId}_success";
@@ -498,32 +502,26 @@ class PayslipImport implements
         Cache::put($key, $current + $count, now()->addHours(24));
     }
 
-    /**
-     * Increment failed counter and add error
-     */
     protected function incrementFailed(string $error)
     {
         $keyFailed = "import_{$this->importId}_failed";
         $currentFailed = Cache::get($keyFailed, 0);
         Cache::put($keyFailed, $currentFailed + 1, now()->addHours(24));
-        
+
         $keyErrors = "import_{$this->importId}_errors";
         $errors = Cache::get($keyErrors, []);
         $errors[] = $error;
         Cache::put($keyErrors, $errors, now()->addHours(24));
     }
 
-    /**
-     * Handle job failure
-     */
     public function failed(\Throwable $exception)
     {
         Cache::put("import_{$this->importId}_status", 'failed', now()->addHours(24));
-        
+
         $errors = Cache::get("import_{$this->importId}_errors", []);
         $errors[] = "Job failed: " . $exception->getMessage();
         Cache::put("import_{$this->importId}_errors", $errors, now()->addHours(24));
-        
+
         Log::error('Payroll import job failed', [
             'import_id' => $this->importId,
             'error' => $exception->getMessage(),
@@ -533,53 +531,82 @@ class PayslipImport implements
 
     public function chunkSize(): int
     {
-        return 500; // Lebih besar untuk efisiensi queue
+        return 500;
     }
 
     public function getResults(): array
     {
+        $success = Cache::get("import_{$this->importId}_success", 0);
+        $failed = Cache::get("import_{$this->importId}_failed", 0);
+
         return [
             'import_id' => $this->importId,
             'status' => Cache::get("import_{$this->importId}_status", 'unknown'),
-            'success' => Cache::get("import_{$this->importId}_success", 0),
-            'failed' => Cache::get("import_{$this->importId}_failed", 0),
+            'success' => $success,
+            'failed' => $failed,
             'errors' => Cache::get("import_{$this->importId}_errors", []),
-            'total' => Cache::get("import_{$this->importId}_success", 0) + Cache::get("import_{$this->importId}_failed", 0),
+            'total' => $success + $failed,
         ];
     }
 
     public static function getImportProgress($importId): array
     {
+        $success = Cache::get("import_{$importId}_success", 0);
+        $failed = Cache::get("import_{$importId}_failed", 0);
+
         return [
             'import_id' => $importId,
             'status' => Cache::get("import_{$importId}_status", 'unknown'),
-            'success' => Cache::get("import_{$importId}_success", 0),
-            'failed' => Cache::get("import_{$importId}_failed", 0),
+            'success' => $success,
+            'failed' => $failed,
             'errors' => Cache::get("import_{$importId}_errors", []),
-            'total' => Cache::get("import_{$importId}_success", 0) + Cache::get("import_{$importId}_failed", 0),
+            'total' => $success + $failed,
         ];
     }
 
-    private function sanitizeNumeric($value)
+    /**
+     * NIK: ambil digit saja (aman untuk 16 digit, tidak cast int)
+     */
+    private function sanitizeNik($value): string
     {
-        if ($value === null || $value === '' || $value === '0') {
-            return null;
-        }
-        
-        // Remove non-numeric characters except dot and minus
-        $cleaned = preg_replace('/[^0-9.-]/', '', (string)$value);
-        
-        // Convert to float
-        return is_numeric($cleaned) ? (float)$cleaned : null;
+        return preg_replace('/\D+/', '', trim((string) $value));
     }
 
-/**
- * Sanitize array of numeric values
- */
+    /**
+     * Numeric sanitizer:
+     * - NULL / '' => null
+     * - '0' => 0 (JANGAN jadi null)
+     * - buang karakter non-numeric (kecuali . dan -)
+     */
+    private function sanitizeNumeric($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $str = trim((string) $value);
+        if ($str === '') {
+            return null;
+        }
+
+        // Keep digits, dot, minus
+        $cleaned = preg_replace('/[^0-9.\-]/', '', $str);
+
+        // Handle cases like "-" or "." after cleaning
+        if ($cleaned === '' || $cleaned === '-' || $cleaned === '.' || $cleaned === '-.') {
+            return null;
+        }
+
+        return is_numeric($cleaned) ? (float) $cleaned : null;
+    }
+
+    /**
+     * Sanitize array of numeric values (hanya keys tertentu)
+     */
     protected function sanitizeNumericArray(array $data, array $keys): array
     {
         foreach ($keys as $key) {
-            if (isset($data[$key])) {
+            if (array_key_exists($key, $data)) {
                 $data[$key] = $this->sanitizeNumeric($data[$key]);
             }
         }
