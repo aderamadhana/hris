@@ -9,55 +9,65 @@ jobs:
   deploy:
     runs-on: haris_apps
     environment: hris_apps
+
     env:
       WORKING_DIR: ${{ vars.WORKING_DIR_PROD }}
 
     steps:
-      # === Before Script ===
-      - name: Before script section
-        run: |
-          echo "Before script section"
-          git checkout "$GITHUB_REF_NAME" || true
-          git pull origin "$GITHUB_REF_NAME" || true
-
-      # === Checkout Repository ===
+      # =============================
+      # Checkout Repository
+      # =============================
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # === Deploy Script ===
+      # =============================
+      # Deploy Application
+      # =============================
       - name: Deploy application
         run: |
-          if [ -d "$WORKING_DIR" ]; then
-            echo "Processing sync source code..."
+          set -e
 
-            rsync -avz --update app/ "$WORKING_DIR/app/"
-            rsync -avz --update routes/ "$WORKING_DIR/routes/"
-            rsync -avz --update config/ "$WORKING_DIR/config/"
-            rsync -avz --update resources/ "$WORKING_DIR/resources/"
-            rsync -avz --update bootstrap/ "$WORKING_DIR/bootstrap/"
-            rsync -avz --update public/assets/ "$WORKING_DIR/public/assets/"
-            rsync -avz --update composer.json "$WORKING_DIR/composer.json"
-
-            echo "Processing build & deploy..."
-
-            cd "$WORKING_DIR" &&
-              sudo composer update &&
-              sudo composer install --no-dev --optimize-autoloader &&
-              sudo npm install && npm run build
-              sudo chown -R www-data storage &&
-              sudo php artisan config:clear &&
-              sudo php artisan config:cache &&
-              sudo php artisan cache:clear &&
-              sudo php artisan route:clear &&
-              sudo php artisan route:cache &&
-              sudo php artisan view:clear &&
-              sudo php artisan view:cache &&
-              sudo supervisorctl restart laravel-queue:*
-
-          else
-            echo "Repo tidak ada"
-            echo "Posisi dir env: $WORKING_DIR"
+          if [ ! -d "$WORKING_DIR" ]; then
+            echo "WORKING_DIR tidak ditemukan: $WORKING_DIR"
             exit 1
           fi
+
+          echo "Masuk ke directory deploy..."
+          cd "$WORKING_DIR"
+
+          echo "Sync source code..."
+          rsync -avz app/ app/
+          rsync -avz routes/ routes/
+          rsync -avz config/ config/
+          rsync -avz resources/ resources/
+          rsync -avz bootstrap/ bootstrap/
+          rsync -avz public/assets/ public/assets/
+          rsync -avz composer.json composer.lock ./
+
+          echo "Bersihkan vendor lama..."
+          rm -rf vendor/
+
+          echo "Install PHP dependencies (production only)..."
+          composer install \
+            --no-dev \
+            --optimize-autoloader \
+            --no-interaction \
+            --prefer-dist
+
+          echo "Install & build frontend..."
+          npm ci
+          npm run build
+
+          echo "Set permission..."
+          chown -R www-data:www-data storage bootstrap/cache
+
+          echo "Optimize Laravel..."
+          php artisan optimize:clear
+          php artisan optimize
+
+          echo "Restart queue worker..."
+          supervisorctl restart laravel-queue:*
+
+          echo "Deploy selesai."
