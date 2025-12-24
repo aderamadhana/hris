@@ -25,17 +25,17 @@ jobs:
             # Backup .env file
             echo "📦 Backing up .env file..."
             if [ -f "$WORKING_DIR/.env" ]; then
-              cp "$WORKING_DIR/.env" "/tmp/.env.backup"
+              sudo cp "$WORKING_DIR/.env" "/tmp/.env.backup"
             fi
             
-            # Full sync with proper exclusions
+            # Fix permissions before sync
+            echo "🔓 Preparing directories..."
+            sudo chown -R $(whoami):$(whoami) "$WORKING_DIR" 2>/dev/null || true
+            
+            # Full sync - EXCLUDE entire storage directory
             echo "📂 Syncing source code..."
             rsync -avz --delete \
-              --exclude='storage/app/public/*' \
-              --exclude='storage/logs/*' \
-              --exclude='storage/framework/cache/data/*' \
-              --exclude='storage/framework/sessions/*' \
-              --exclude='storage/framework/views/*' \
+              --exclude='storage/' \
               --exclude='vendor/' \
               --exclude='node_modules/' \
               --exclude='.env' \
@@ -45,14 +45,26 @@ jobs:
               --exclude='phpunit.xml' \
               ./ "$WORKING_DIR/"
             
+            # Sync only storage structure (gitignore files) if needed
+            echo "📁 Ensuring storage structure..."
+            if [ ! -d "$WORKING_DIR/storage" ]; then
+              rsync -avz storage/ "$WORKING_DIR/storage/"
+            fi
+            
             # Restore .env
             echo "🔐 Restoring .env file..."
             if [ -f "/tmp/.env.backup" ]; then
-              cp "/tmp/.env.backup" "$WORKING_DIR/.env"
+              sudo cp "/tmp/.env.backup" "$WORKING_DIR/.env"
             fi
             
             # Navigate to working directory
             cd "$WORKING_DIR"
+            
+            # Create storage directories if they don't exist
+            echo "📁 Creating storage directories..."
+            mkdir -p storage/framework/{sessions,views,cache}
+            mkdir -p storage/logs
+            mkdir -p storage/app/public
             
             # Install PHP dependencies
             echo "📥 Installing Composer dependencies..."
@@ -66,10 +78,10 @@ jobs:
             echo "🔨 Building TypeScript & Vue assets..."
             npm run build
             
-            # Set permissions
-            echo "🔒 Setting permissions..."
-            chown -R www-data:www-data storage bootstrap/cache
-            chmod -R 775 storage bootstrap/cache
+            # Set proper permissions for web server
+            echo "🔒 Setting final permissions..."
+            sudo chown -R www-data:www-data storage bootstrap/cache
+            sudo chmod -R 775 storage bootstrap/cache
             
             # Laravel optimization
             echo "⚡ Optimizing Laravel..."
@@ -78,9 +90,12 @@ jobs:
             php artisan route:cache
             php artisan view:cache
             
+            # Create storage link if needed
+            php artisan storage:link 2>/dev/null || true
+            
             # Restart services
             echo "🔄 Restarting services..."
-            supervisorctl restart laravel-queue:* 2>/dev/null || echo "No queue workers configured"
+            sudo supervisorctl restart laravel-queue:* 2>/dev/null || echo "No queue workers configured"
             
             echo "✅ Deployment completed successfully!"
           else
