@@ -1,17 +1,14 @@
 name: Deploy PROD HRIS APPS
-
 on:
   push:
     branches:
       - main
-
 jobs:
   deploy:
     runs-on: haris_apps
     environment: hris_apps
     env:
       WORKING_DIR: ${{ vars.WORKING_DIR_PROD }}
-
     steps:
       # === Before Script ===
       - name: Before script section
@@ -19,45 +16,64 @@ jobs:
           echo "Before script section"
           git checkout "$GITHUB_REF_NAME" || true
           git pull origin "$GITHUB_REF_NAME" || true
-
+      
       # === Checkout Repository ===
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
+      
       # === Deploy Script ===
       - name: Deploy application
         run: |
           if [ -d "$WORKING_DIR" ]; then
             echo "Processing sync source code..."
-
+            
+            # Sync semua folder yang diperlukan
             rsync -avz --update app/ "$WORKING_DIR/app/"
             rsync -avz --update routes/ "$WORKING_DIR/routes/"
             rsync -avz --update config/ "$WORKING_DIR/config/"
             rsync -avz --update resources/ "$WORKING_DIR/resources/"
             rsync -avz --update bootstrap/ "$WORKING_DIR/bootstrap/"
+            rsync -avz --update database/ "$WORKING_DIR/database/"
             rsync -avz --update public/assets/ "$WORKING_DIR/public/assets/"
+            
+            # PENTING: Sync file-file root yang diperlukan
             rsync -avz --update composer.json "$WORKING_DIR/composer.json"
-
+            rsync -avz --update composer.lock "$WORKING_DIR/composer.lock"
+            rsync -avz --update package.json "$WORKING_DIR/package.json"
+            rsync -avz --update package-lock.json "$WORKING_DIR/package-lock.json"
+            rsync -avz --update artisan "$WORKING_DIR/artisan"
+            rsync -avz --update vite.config.js "$WORKING_DIR/vite.config.js"
+            
             echo "Processing build & deploy..."
-
-            cd "$WORKING_DIR" &&
-              sudo composer update &&
-              sudo composer install --no-dev --optimize-autoloader &&
-              sudo npm install && npm run build
-              sudo chown -R www-data storage &&
-              sudo php artisan config:clear &&
-              sudo php artisan config:cache &&
-              sudo php artisan cache:clear &&
-              sudo php artisan route:clear &&
-              sudo php artisan route:cache &&
-              sudo php artisan view:clear &&
-              sudo php artisan view:cache &&
-              sudo supervisorctl restart laravel-queue:*
-
+            cd "$WORKING_DIR"
+            
+            # Composer operations
+            sudo composer install --no-dev --optimize-autoloader --no-interaction
+            
+            # NPM operations
+            sudo npm install
+            sudo npm run build
+            
+            # Set permissions
+            sudo chown -R www-data:www-data storage bootstrap/cache
+            sudo chmod -R 775 storage bootstrap/cache
+            
+            # Clear & cache Laravel
+            sudo php artisan config:clear
+            sudo php artisan config:cache
+            sudo php artisan cache:clear
+            sudo php artisan route:clear
+            sudo php artisan route:cache
+            sudo php artisan view:clear
+            sudo php artisan view:cache
+            
+            # Restart queue workers
+            sudo supervisorctl restart laravel-queue:* || true
+            
+            echo "Deployment completed successfully!"
           else
-            echo "Repo tidak ada"
-            echo "Posisi dir env: $WORKING_DIR"
+            echo "Directory tidak ada: $WORKING_DIR"
             exit 1
           fi
