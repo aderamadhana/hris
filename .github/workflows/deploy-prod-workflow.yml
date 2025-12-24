@@ -62,8 +62,9 @@ jobs:
           npm run build
           
           echo "🔐 Set permission..."
-          sudo chown -R www-data:www-data storage bootstrap/cache
+          sudo chown -R www-data:www-data storage bootstrap/cache public
           sudo chmod -R 775 storage bootstrap/cache
+          sudo chmod -R 755 public
           
           echo "⚡ Optimize Laravel..."
           php artisan optimize:clear
