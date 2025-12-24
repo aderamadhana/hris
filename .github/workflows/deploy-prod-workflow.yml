@@ -9,10 +9,9 @@ jobs:
   deploy:
     runs-on: haris_apps
     environment: hris_apps
-
     env:
       WORKING_DIR: ${{ vars.WORKING_DIR_PROD }}
-
+    
     steps:
       # =============================
       # Checkout Repository
@@ -28,46 +27,49 @@ jobs:
       - name: Deploy application
         run: |
           set -e
-
+          
+          # Validasi working directory
           if [ ! -d "$WORKING_DIR" ]; then
-            echo "WORKING_DIR tidak ditemukan: $WORKING_DIR"
+            echo "❌ WORKING_DIR tidak ditemukan: $WORKING_DIR"
             exit 1
           fi
-
-          echo "Masuk ke directory deploy..."
+          
+          echo "📂 Masuk ke directory deploy..."
           cd "$WORKING_DIR"
-
-          echo "Sync source code..."
-          rsync -avz app/ app/
-          rsync -avz routes/ routes/
-          rsync -avz config/ config/
-          rsync -avz resources/ resources/
-          rsync -avz bootstrap/ bootstrap/
-          rsync -avz public/assets/ public/assets/
-          rsync -avz composer.json composer.lock ./
-
-          echo "Bersihkan vendor lama..."
-          rm -rf vendor/
-
-          echo "Install PHP dependencies (production only)..."
+          
+          echo "🔄 Sync source code..."
+          rsync -avz --delete "${GITHUB_WORKSPACE}/app/" app/
+          rsync -avz --delete "${GITHUB_WORKSPACE}/routes/" routes/
+          rsync -avz --delete "${GITHUB_WORKSPACE}/config/" config/
+          rsync -avz --delete "${GITHUB_WORKSPACE}/resources/" resources/
+          rsync -avz --delete "${GITHUB_WORKSPACE}/bootstrap/" bootstrap/
+          rsync -avz --delete "${GITHUB_WORKSPACE}/public/assets/" public/assets/
+          rsync -avz "${GITHUB_WORKSPACE}/composer.json" "${GITHUB_WORKSPACE}/composer.lock" ./
+          
+          echo "🧹 Bersihkan vendor lama..."
+          sudo rm -rf vendor/
+          
+          echo "📦 Install PHP dependencies (production only)..."
           composer install \
             --no-dev \
             --optimize-autoloader \
             --no-interaction \
-            --prefer-dist
-
-          echo "Install & build frontend..."
+            --prefer-dist \
+            --classmap-authoritative
+          
+          echo "🎨 Install & build frontend..."
           npm ci
           npm run build
-
-          echo "Set permission..."
-          chown -R www-data:www-data storage bootstrap/cache
-
-          echo "Optimize Laravel..."
+          
+          echo "🔐 Set permission..."
+          sudo chown -R www-data:www-data storage bootstrap/cache
+          sudo chmod -R 775 storage bootstrap/cache
+          
+          echo "⚡ Optimize Laravel..."
           php artisan optimize:clear
           php artisan optimize
-
-          echo "Restart queue worker..."
-          supervisorctl restart laravel-queue:*
-
-          echo "Deploy selesai."
+          
+          echo "🔄 Restart queue worker..."
+          sudo supervisorctl restart laravel-queue:*
+          
+          echo "✅ Deploy selesai!"
