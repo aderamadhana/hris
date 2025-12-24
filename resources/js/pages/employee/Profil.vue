@@ -738,6 +738,7 @@ export default {
 
     mounted() {
         this.fetchEmployee();
+        console.log(this.user);
     },
 
     methods: {
@@ -750,7 +751,12 @@ export default {
             this.showModalDocument = false;
         },
         fetchEmployee() {
-            const id = window.location.pathname.split('/').pop();
+            var id = null;
+            if (this.user.role_id == 2) {
+                id = this.user.employee.id;
+            } else {
+                id = window.location.pathname.split('/').pop();
+            }
             axios
                 .get(`/employee/get-data/${id}`)
                 .then((res) => {
