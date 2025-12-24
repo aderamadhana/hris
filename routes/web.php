@@ -82,8 +82,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/store-edit/{id}', [EmployeeController::class, 'update']);
         Route::delete('/{id}', [EmployeeController::class, 'destroy']);
         Route::get('/employees/{id}/with-relations', [EmployeeController::class, 'showWithRelations']);
+    });
+
+    Route::prefix('export')->group(function () {
+        Route::get('/karyawan', [EmployeeController::class, 'downloadEmployees']);
 
     });
+
 
     Route::prefix('payroll')->group(function () {
         Route::post('/import', [PayrollController::class, 'import'])

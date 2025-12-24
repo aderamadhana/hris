@@ -23,6 +23,9 @@
                             🧾 Upload Slip Gaji Karyawan
                         </a>
                     </DropdownButton>
+                    <Button variant="success" @click="downloadKaryawan">
+                        ⬇️ Download Karyawan
+                    </Button>
                     <Button variant="primary" @click="tambahKaryawan">
                         ➕ Tambah Karyawan
                     </Button>
@@ -407,6 +410,31 @@ export default {
         },
         tambahKaryawan() {
             this.$inertia.visit('/karyawan/tambah-karyawan');
+        },
+        async downloadKaryawan() {
+            try {
+                const response = await axios.get('/export/karyawan', {
+                    responseType: 'blob',
+                });
+
+                const blob = new Blob([response.data], {
+                    type: response.headers['content-type'],
+                });
+
+                const url = window.URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', 'karyawan.xlsx');
+
+                document.body.appendChild(link);
+                link.click();
+
+                link.remove();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Download gagal', error);
+            }
         },
     },
 };

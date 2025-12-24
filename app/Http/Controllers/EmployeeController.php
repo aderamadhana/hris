@@ -14,6 +14,7 @@ use App\Models\EmployeeFamily;
 use App\Models\EmployeeHealth;
 use App\Models\EmployeeDocument;
 use App\Models\User;
+use App\Exports\EmployeesExport;
 
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
@@ -977,6 +978,13 @@ class EmployeeController extends Controller
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    public function downloadEmployees(Request $request){
+        return Excel::download(
+            new EmployeesExport,
+            'karyawan.xlsx'
+        );
     }
 
 }
