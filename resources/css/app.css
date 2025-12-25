@@ -1144,10 +1144,25 @@ body {
     color: #1d4ed8;
 }
 
-/* grid field */
+/* Section Subtitle - Style Modern */
+.section-subtitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #2563eb;
+    margin: 20px 0 14px 0;
+    padding: 8px 12px;
+    background: linear-gradient(to right, #eff6ff 0%, transparent 100%);
+    border-left: 4px solid #2563eb;
+}
+
+/* Detail Grid - dengan border */
 .detail-grid {
     display: grid;
-    gap: 10px 16px;
+    gap: 14px 24px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #ffffff;
 }
 
 .detail-grid.two-col {
@@ -1155,9 +1170,43 @@ body {
 }
 
 .detail-grid.secondary {
-    margin-top: 6px;
-    padding-top: 8px;
-    border-top: 1px dashed #e5e7eb;
+    margin-top: 16px;
+    border-style: dashed;
+    border-color: #d1d5db;
+    background-color: #f9fafb;
+}
+
+/* Detail Item */
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-item .label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.detail-item .value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+    line-height: 1.4;
+}
+
+.detail-item .value.empty {
+    color: #9ca3af;
+    font-style: italic;
 }
 
 /* field */
@@ -1230,144 +1279,318 @@ body {
     border: 1px dashed #e5e7eb;
 }
 
-/* timeline riwayat kerja */
+/* ===== Modern Timeline (sleek + premium) ===== */
 .timeline {
-    position: relative;
-    margin-top: 4px;
+  --bg: #ffffff;
+  --text: #0f172a;      /* slate-900 */
+  --muted: #64748b;     /* slate-500 */
+  --line: rgba(148, 163, 184, .35);
+  --shadow: 0 14px 40px rgba(2, 6, 23, .08);
+  --shadowHover: 0 22px 60px rgba(2, 6, 23, .12);
+  --ring: rgba(59, 130, 246, .18);
+  --accent1: #60a5fa;
+  --accent2: #a78bfa;
+
+  position: relative;
+  margin-top: 10px;
+  padding-left: 34px;
 }
 
 .timeline::before {
-    content: '';
-    position: absolute;
-    left: 10px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: #e5e7eb;
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--line) 10%,
+    var(--line) 90%,
+    transparent
+  );
+  border-radius: 999px;
 }
 
+/* spacing antar item */
 .timeline-item {
-    position: relative;
-    padding-left: 30px;
-    padding-bottom: 12px;
+  position: relative;
+  padding-bottom: 16px;
 }
-
 .timeline-item:last-child {
-    padding-bottom: 0;
+  padding-bottom: 0;
 }
 
+/* dot modern */
 .timeline-dot {
-    position: absolute;
-    left: 4px;
-    top: 4px;
-    width: 12px;
-    height: 12px;
-    border-radius: 999px;
-    background: #3b82f6;
-    border: 2px solid #eff6ff;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  position: absolute;
+  left: 9px;
+  top: 18px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #93c5fd, #2563eb);
+  box-shadow:
+    0 0 0 6px var(--ring),
+    0 10px 22px rgba(37, 99, 235, .18);
 }
 
+/* card modern */
 .timeline-body {
-    border-radius: 12px;
-    padding: 8px 10px;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
+  position: relative;
+  background: rgba(255,255,255,.82);
+  border: 1px solid rgba(148, 163, 184, .28);
+  border-radius: 16px;
+  padding: 14px 14px 12px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow: hidden;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+/* accent bar kiri */
+.timeline-body::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--accent1), var(--accent2));
+  opacity: .9;
+}
+
+.timeline-item:hover .timeline-body {
+  transform: translateY(-2px);
+  box-shadow: var(--shadowHover);
+  border-color: rgba(148, 163, 184, .45);
 }
 
 .timeline-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px 12px;
+  align-items: start;
 }
 
 .job-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #111827;
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  line-height: 1.25;
 }
 
 .job-company {
-    font-size: 14px;
-    color: #4b5563;
+  margin-top: 4px;
+  font-size: 13px;
+  color: rgba(15, 23, 42, .78);
 }
 
+.job-meta {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.job-meta::before {
+  content: "•";
+  margin: 0 8px 0 0;
+  color: rgba(148, 163, 184, .9);
+}
+
+/* pill period modern */
 .job-period {
-    font-size: 13px;
-    color: #6b7280;
-    white-space: nowrap;
+  font-size: 12px;
+  color: rgba(15, 23, 42, .82);
+  padding: 7px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  border: 1px solid rgba(148, 163, 184, .35);
+  background: linear-gradient(180deg, rgba(248,250,252,.95), rgba(241,245,249,.75));
 }
 
-.job-desc {
-    margin: 6px 0 0;
-    padding-left: 18px;
-    font-size: 13px;
-    color: #4b5563;
+/* jenis kontrak jadi chip */
+.job-type {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 650;
+  color: rgba(30, 64, 175, .95);
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(147, 197, 253, .6);
+  background: linear-gradient(180deg, rgba(239,246,255,.9), rgba(219,234,254,.55));
 }
 
-.job-desc li + li {
-    margin-top: 2px;
+.job-type::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--accent1), var(--accent2));
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, .18);
 }
 
-/* keluarga */
+/* chips meta bawah */
+.job-extra {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.job-extra > div {
+  font-size: 12px;
+  color: rgba(15, 23, 42, .78);
+  padding: 7px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, .22);
+  background: rgba(248,250,252,.7);
+}
+
+/* empty state modern */
+.empty {
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px dashed rgba(148, 163, 184, .45);
+  background: linear-gradient(180deg, rgba(248,250,252,.9), rgba(241,245,249,.6));
+  color: #64748b;
+}
+
+/* responsive */
+@media (max-width: 640px) {
+  .timeline { padding-left: 28px; }
+  .timeline::before { left: 13px; }
+  .timeline-dot { left: 6px; }
+
+  .timeline-header {
+    grid-template-columns: 1fr;
+  }
+  .job-period {
+    justify-self: start;
+    white-space: normal;
+  }
+}
+
+
+/* ===== Modern Family List ===== */
 .family-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .family-item {
-    border-radius: 12px;
-    padding: 10px 12px;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
+  position: relative;
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: 0 14px 40px rgba(2, 6, 23, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow: hidden;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+/* accent bar kiri */
+.family-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #60a5fa, #a78bfa);
+  opacity: 0.9;
+}
+
+.family-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 60px rgba(2, 6, 23, 0.12);
+  border-color: rgba(148, 163, 184, 0.45);
 }
 
 .family-main {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px 12px;
+  align-items: start;
 }
 
 .family-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: #111827;
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  color: #0f172a; /* slate-900 */
+  line-height: 1.25;
 }
 
 .family-relation {
-    font-size: 14px;
-    color: #6b7280;
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.62);
 }
 
+/* chip status/meta */
 .family-meta {
-    font-size: 12px;
-    color: #2563eb;
-    padding: 3px 8px;
-    border-radius: 999px;
-    background: #dbeafe;
+  justify-self: end;
+  font-size: 12px;
+  font-weight: 650;
+  color: rgba(30, 64, 175, 0.95);
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(147, 197, 253, 0.6);
+  background: linear-gradient(180deg, rgba(239, 246, 255, 0.9), rgba(219, 234, 254, 0.55));
+  white-space: nowrap;
 }
 
+/* detail chips */
 .family-detail {
-    margin-top: 4px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 12px;
-    font-size: 14px;
-    color: #4b5563;
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.family-note {
-    margin-top: 6px;
-    font-size: 12px;
-    color: #6b7280;
-    padding: 8px 10px;
-    border-radius: 10px;
-    background: #fefce8;
-    border: 1px dashed #facc15;
+.family-detail > div,
+.family-detail > span {
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.76);
+  padding: 7px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(248, 250, 252, 0.70);
 }
+
+/* note modern (lebih subtle, bukan kuning menyala) */
+.family-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.68);
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px dashed rgba(251, 191, 36, 0.55);
+  background: linear-gradient(180deg, rgba(254, 252, 232, 0.92), rgba(254, 249, 195, 0.55));
+}
+
+/* responsive */
+@media (max-width: 640px) {
+  .family-main {
+    grid-template-columns: 1fr;
+  }
+
+  .family-meta {
+    justify-self: start;
+  }
+}
+
 
 /* responsif */
 @media (max-width: 800px) {

@@ -1715,7 +1715,7 @@ export default {
                             kk: !!data.documents.dokumen_kk,
                             lisensi: !!data.documents.dokumen_lisensi,
                             form_bpjs_tk:
-                                !!data.documents.dokumen_formulir_bpjs_tk,
+                                !!data.documents.dokumen_bpjs_ketenagakerjaan,
                             form_bpjs_kes:
                                 !!data.documents
                                     .dokumen_formulir_bpjs_kesehatan,

@@ -327,8 +327,8 @@ class EmployeeController extends Controller
                 'lisensi' => $employee->documents->dokumen_lisensi
                     ? url(Storage::url($employee->documents->dokumen_lisensi))
                     : null,
-                'form_bpjs_tk' => $employee->documents->dokumen_formulir_bpjs_tk
-                    ? url(Storage::url($employee->documents->dokumen_formulir_bpjs_tk))
+                'form_bpjs_tk' => $employee->documents->dokumen_bpjs_ketenagakerjaan
+                    ? url(Storage::url($employee->documents->dokumen_bpjs_ketenagakerjaan))
                     : null,
                 'form_bpjs_kes' => $employee->documents->dokumen_formulir_bpjs_kesehatan
                     ? url(Storage::url($employee->documents->dokumen_formulir_bpjs_kesehatan))
@@ -487,24 +487,7 @@ class EmployeeController extends Controller
                     }
                 }
             }
-
-            // Create user jika memenuhi syarat
-            if ($shouldCreateUser && $request->email) {
-                $existingUser = User::where('email', $request->email)->first();
-                
-                if (!$existingUser) {
-                    $user = User::create([
-                        'name' => $request->nama,
-                        'email' => $request->email,
-                        'password' => Hash::make($request->nrp),
-                        'role_id' => '2',
-                        'email_verified_at' => now(),
-                    ]);
-                    $userId = $user->id;
-                } else {
-                    $userId = $existingUser->id;
-                }
-            }
+            
 
             // 2. Create Employee (semua data langsung di table employees)
             $employee = Employee::create([
@@ -540,6 +523,26 @@ class EmployeeController extends Controller
                 'alamat_lengkap_domisili' => $request->alamat_lengkap_domisili,
                 'kota_domisili' => $request->kota_domisili,
             ]);
+
+            // Create user jika memenuhi syarat
+            if ($shouldCreateUser && $request->no_ktp) {
+                $existingUser = User::where('no_ktp', $request->no_ktp)->first();
+                
+                if (!$existingUser) {
+                    $user = User::create([
+                        'name' => $request->nama,
+                        'email' => $request->email,
+                        'no_ktp' => $request->no_ktp,
+                        'employee_id' => $employee->id,
+                        'password' => Hash::make($request->no_ktp),
+                        'role_id' => '2',
+                        'email_verified_at' => now(),
+                    ]);
+                    $userId = $user->id;
+                } else {
+                    $userId = $existingUser->id;
+                }
+            }
 
             // 3. Create Employee Education Records
             if ($request->pendidikan) {
@@ -714,25 +717,6 @@ class EmployeeController extends Controller
                 }
             }
 
-            // Create/update user jika memenuhi syarat
-            if ($shouldCreateUser && $request->email) {
-                $existingUser = User::where('email', $request->email)->first();
-                
-                if (!$existingUser && !$userId) {
-                    // Create new user
-                    $user = User::create([
-                        'name' => $request->nama,
-                        'email' => $request->email,
-                        'password' => Hash::make($request->nrp),
-                        'role_id' => '2',
-                        'email_verified_at' => now(),
-                    ]);
-                    $userId = $user->id;
-                } elseif ($existingUser) {
-                    $userId = $existingUser->id;
-                }
-            }
-
             // 2. Update Employee (semua data langsung di table employees)
             $employee->update([
                 // Data utama
@@ -767,6 +751,36 @@ class EmployeeController extends Controller
                 'alamat_lengkap_domisili' => $request->alamat_lengkap_domisili,
                 'kota_domisili' => $request->kota_domisili,
             ]);
+
+            // Create/update user jika memenuhi syarat
+            if ($shouldCreateUser && $request->no_ktp) {
+                $user = User::where('no_ktp', $request->no_ktp)->first();
+
+                if (!$user) {
+                    // Create user baru
+                    $user = User::create([
+                        'name' => $request->nama,
+                        'email' => $request->email,
+                        'no_ktp' => $request->no_ktp,
+                        'employee_id' => $employee->id,
+                        'password' => Hash::make($request->no_ktp),
+                        'role_id' => '2',
+                        'email_verified_at' => now(),
+                    ]);
+                } else {
+                    // Update user yang sudah ada
+                    $user->update([
+                        'employee_id' => $employee->id,
+                        'no_ktp' => $request->no_ktp,
+                        'password' => Hash::make($request->no_ktp),
+                    ]);
+                }
+
+                // Pastikan employee menunjuk user yang sama (sinkronisasi 2 arah)
+                $employee->update([
+                    'user_id' => $user->id,
+                ]);
+            }
 
             // 3. Update Employee Education Records
             $employee->educations()->delete();
@@ -1033,4 +1047,45 @@ class EmployeeController extends Controller
         );
     }
 
+    public function downloadProfil($id)
+    {
+        try {
+            $employee = Employee::with([
+                'educations',
+                'employmentss',
+                'families',
+                'health',
+                'documents'
+            ])->findOrFail($id);
+
+            // Siapkan data untuk PDF
+            $data = [
+                'employee' => $employee,
+                'pendidikan' => $employee->educations,
+                'pekerjaan' => $employee->employmentss,
+                'keluarga' => $employee->families,
+                'kesehatan' => $employee->health,
+                'documents' => $employee->documents,
+            ];
+
+            // Generate PDF
+            $pdf = \PDF::loadView('pdf.employee-profile', $data);
+            $pdf->setPaper('a4', 'portrait');
+            
+            $filename = 'Profil-Karyawan-' . $employee->nama . '-' . $employee->nrp . '.pdf';
+            
+            return $pdf->download($filename);
+
+        } catch (\Throwable $th) {
+            \Log::error('Error exporting employee profile PDF: ' . $th->getMessage(), [
+                'trace' => $th->getTraceAsString(),
+                'employee_id' => $id,
+            ]);
+
+            return response()->json([
+                'error' => 'Gagal mengekspor profil karyawan ke PDF',
+                'message' => $th->getMessage(),
+            ], 500);
+        }
+    }
 }

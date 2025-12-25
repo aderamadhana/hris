@@ -14,6 +14,7 @@
                     variant="primary"
                     size="md"
                     @click="downloadSlip"
+                    :loading="isDownloading"
                     :disabled="!slip || !selectedGajiPeriodId"
                     class="download-btn"
                 >
@@ -352,6 +353,7 @@ export default {
             selectedGajiPeriodId: '', // Ini perlu diisi!
             loadingImportPayslip: false,
             employee_id: null,
+            isDownloading: false,
         };
     },
 
@@ -477,6 +479,7 @@ export default {
         },
 
         async downloadSlip() {
+            this.isDownloading = true;
             await axios({
                 url: `/payroll/${this.selectedGajiPeriodId}/${this.employee_id}/payslip/export-pdf`,
                 method: 'GET',
@@ -492,6 +495,7 @@ export default {
                     `Slip-Gaji-${this.user?.name}.pdf`,
                 );
                 document.body.appendChild(link);
+                this.isDownloading = false;
                 link.click();
                 link.remove();
             });

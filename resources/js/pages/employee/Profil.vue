@@ -10,6 +10,15 @@
                         keluarga, dan kesehatan karyawan.
                     </p>
                 </div>
+                <Button
+                    variant="primary"
+                    size="md"
+                    :loading="isDownloading"
+                    @click="downloadProfil"
+                    class="download-btn"
+                >
+                    Download PDF
+                </Button>
             </div>
 
             <!-- CONTENT -->
@@ -270,7 +279,7 @@
                                                 {{ edu.jurusan }}
                                             </div>
                                             <div class="edu-school">
-                                                {{ edu.sekolah || '-' }}
+                                                {{ edu.institusi || '-' }}
                                             </div>
                                         </div>
                                         <div class="edu-year">
@@ -398,20 +407,9 @@
                         <div class="tab-section">
                             <h3 class="tab-title">Informasi Kesehatan</h3>
 
-                            <div class="detail-grid two-col secondary">
-                                <!-- ANTR0P0METRI -->
-                                <div
-                                    class="field"
-                                    style="
-                                        grid-column: 1 / -1;
-                                        font-weight: 600;
-                                        border-bottom: 1px solid #e5e7eb;
-                                        padding-bottom: 6px;
-                                    "
-                                >
-                                    Data Fisik
-                                </div>
-
+                            <!-- DATA FISIK -->
+                            <h4 class="section-subtitle">Data Fisik</h4>
+                            <div class="detail-grid two-col">
                                 <div class="field">
                                     <div class="field-label">Tinggi Badan</div>
                                     <div class="field-value">
@@ -445,36 +443,31 @@
                                         }}
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- RIWAYAT & DRUG TEST -->
-                                <div
-                                    class="field"
-                                    style="
-                                        grid-column: 1 / -1;
-                                        margin-top: 8px;
-                                        font-weight: 600;
-                                        border-bottom: 1px solid #e5e7eb;
-                                        padding-bottom: 6px;
-                                    "
-                                >
-                                    Riwayat & Screening
-                                </div>
-
+                            <!-- RIWAYAT & SCREENING -->
+                            <h4 class="section-subtitle">
+                                Riwayat & Screening
+                            </h4>
+                            <div class="detail-grid two-col secondary">
                                 <div class="field">
                                     <div class="field-label">
-                                        Riwayat Penyakit
+                                        Tanggal Medical Check Up
                                     </div>
                                     <div class="field-value">
-                                        {{ kesehatan.riwayat_penyakit || '-' }}
+                                        {{ kesehatan.tanggal_mcu || '-' }}
                                     </div>
                                 </div>
 
                                 <div class="field">
                                     <div class="field-label">
-                                        Hasil Drug Test
+                                        Kesimpulan Hasil MCU
                                     </div>
                                     <div class="field-value">
-                                        {{ kesehatan.hasil_drug_test || '-' }}
+                                        {{
+                                            kesehatan.kesimpulan_hasil_mcu ||
+                                            '-'
+                                        }}
                                     </div>
                                 </div>
 
@@ -487,20 +480,30 @@
                                     </div>
                                 </div>
 
-                                <!-- LAB & MCU -->
-                                <div
-                                    class="field"
-                                    style="
-                                        grid-column: 1 / -1;
-                                        margin-top: 8px;
-                                        font-weight: 600;
-                                        border-bottom: 1px solid #e5e7eb;
-                                        padding-bottom: 6px;
-                                    "
-                                >
-                                    Hasil Laboratorium & MCU
+                                <div class="field">
+                                    <div class="field-label">
+                                        Hasil Drug Test
+                                    </div>
+                                    <div class="field-value">
+                                        {{ kesehatan.hasil_drug_test || '-' }}
+                                    </div>
                                 </div>
 
+                                <div class="field" style="grid-column: 1 / -1">
+                                    <div class="field-label">
+                                        Riwayat Penyakit
+                                    </div>
+                                    <div class="field-value">
+                                        {{ kesehatan.riwayat_penyakit || '-' }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- HASIL LABORATORIUM & MCU -->
+                            <h4 class="section-subtitle">
+                                Hasil Laboratorium & MCU
+                            </h4>
+                            <div class="detail-grid two-col secondary">
                                 <div class="field">
                                     <div class="field-label">
                                         Pemeriksaan Darah
@@ -534,7 +537,7 @@
                                 </div>
 
                                 <div class="field">
-                                    <div class="field-label">Ginjal</div>
+                                    <div class="field-label">Fungsi Ginjal</div>
                                     <div class="field-value">
                                         {{ kesehatan.ginjal || '-' }}
                                     </div>
@@ -546,23 +549,17 @@
                                         {{ kesehatan.thorax || '-' }}
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- VITAL & MATA -->
-                                <div
-                                    class="field"
-                                    style="
-                                        grid-column: 1 / -1;
-                                        margin-top: 8px;
-                                        font-weight: 600;
-                                        border-bottom: 1px solid #e5e7eb;
-                                        padding-bottom: 6px;
-                                    "
-                                >
-                                    Tanda Vital & Pemeriksaan Mata
-                                </div>
-
+                            <!-- TANDA VITAL & PEMERIKSAAN MATA -->
+                            <h4 class="section-subtitle">
+                                Tanda Vital & Pemeriksaan Mata
+                            </h4>
+                            <div class="detail-grid two-col secondary">
                                 <div class="field">
-                                    <div class="field-label">Tensi</div>
+                                    <div class="field-label">
+                                        Tekanan Darah (Tensi)
+                                    </div>
                                     <div class="field-value">
                                         {{ kesehatan.tensi || '-' }}
                                     </div>
@@ -576,14 +573,18 @@
                                 </div>
 
                                 <div class="field">
-                                    <div class="field-label">Mata OD</div>
+                                    <div class="field-label">
+                                        Mata Kanan (OD)
+                                    </div>
                                     <div class="field-value">
                                         {{ kesehatan.od || '-' }}
                                     </div>
                                 </div>
 
                                 <div class="field">
-                                    <div class="field-label">Mata OS</div>
+                                    <div class="field-label">
+                                        Mata Kiri (OS)
+                                    </div>
                                     <div class="field-value">
                                         {{ kesehatan.os || '-' }}
                                     </div>
@@ -691,6 +692,7 @@ export default {
         return {
             user: page.props.auth.user,
             loading: true,
+            isDownloading: false,
 
             employee: {},
             alamat: {},
@@ -729,19 +731,19 @@ export default {
                     value: this.document?.kk,
                 },
                 {
-                    key: 'bpjs_tk',
-                    label: 'BPJS Ketenagakerjaan',
-                    value: this.document?.bpjs_tk,
+                    key: 'ijazah_terakhir',
+                    label: 'Ijazah Terakhir',
+                    value: this.document?.ijazah_terakhir,
                 },
                 {
-                    key: 'vaksin',
-                    label: 'Sertifikat Vaksin',
-                    value: this.document?.vaksin,
+                    key: 'skck',
+                    label: 'SKCK',
+                    value: this.document?.skck,
                 },
                 {
-                    key: 'sio_forklift',
-                    label: 'SIO Forklift',
-                    value: this.document?.sio_forklift,
+                    key: 'lisensi',
+                    label: 'Lisensi',
+                    value: this.document?.lisensi,
                 },
                 {
                     key: 'form_bpjs_tk',
@@ -757,16 +759,6 @@ export default {
                     key: 'paklaring',
                     label: 'Surat Pengalaman Kerja / Paklaring',
                     value: this.document?.paklaring,
-                },
-                {
-                    key: 'sim_b1',
-                    label: 'SIM B1',
-                    value: this.document?.sim_b1,
-                },
-                {
-                    key: 'kartu_garda',
-                    label: 'Kartu Garda Pratama',
-                    value: this.document?.kartu_garda,
                 },
             ];
         },
@@ -806,6 +798,32 @@ export default {
                 .finally(() => {
                     this.loading = false;
                 });
+        },
+
+        async downloadProfil() {
+            this.isDownloading = true;
+            var id = null;
+            if (this.user.role_id == 2) {
+                id = this.user.employee.id;
+            } else {
+                id = window.location.pathname.split('/').pop();
+            }
+            await axios({
+                url: `/export/profil/${id}`,
+                method: 'GET',
+                responseType: 'blob',
+            }).then((response) => {
+                const url = window.URL.createObjectURL(
+                    new Blob([response.data]),
+                );
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `Profil.pdf`);
+                document.body.appendChild(link);
+                this.isDownloading = false;
+                link.click();
+                link.remove();
+            });
         },
     },
 };

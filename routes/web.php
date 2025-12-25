@@ -86,7 +86,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('export')->group(function () {
         Route::get('/karyawan', [EmployeeController::class, 'downloadEmployees']);
-
+        Route::get('/profil/{id}', [EmployeeController::class, 'downloadProfil']);
     });
 
 
