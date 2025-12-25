@@ -825,8 +825,6 @@
                                                 <div class="job-meta">
                                                     No. Kontrak:
                                                     {{ job.no_kontrak || '-' }}
-                                                    | Cost Center:
-                                                    {{ job.cost_center || '-' }}
                                                 </div>
                                             </div>
 
@@ -986,9 +984,6 @@
 
                                     <div class="family-detail">
                                         <span>TTL: {{ f.ttl || '-' }}</span>
-                                        <span
-                                            >No. HP: {{ f.no_hp || '-' }}</span
-                                        >
                                     </div>
 
                                     <button
@@ -1088,22 +1083,6 @@
                                     </h4>
 
                                     <div class="detail-grid two-col">
-                                        <div
-                                            class="form-group"
-                                            style="grid-column: 1 / -1"
-                                        >
-                                            <label class="field-label"
-                                                >Riwayat Penyakit</label
-                                            >
-                                            <textarea
-                                                v-model="
-                                                    formKesehatan.riwayat_penyakit
-                                                "
-                                                class="form-input"
-                                                placeholder="Contoh: Asma sejak kecil, alergi obat tertentu, dll."
-                                            ></textarea>
-                                        </div>
-
                                         <div class="form-group">
                                             <label class="field-label"
                                                 >Tanggal Pemeriksaan Medical
@@ -1128,6 +1107,21 @@
                                             <textarea
                                                 v-model="
                                                     formKesehatan.kesimpulan_hasil_mcu
+                                                "
+                                                class="form-input"
+                                                placeholder="Contoh: Asma sejak kecil, alergi obat tertentu, dll."
+                                            ></textarea>
+                                        </div>
+                                        <div
+                                            class="form-group"
+                                            style="grid-column: 1 / -1"
+                                        >
+                                            <label class="field-label"
+                                                >Riwayat Penyakit</label
+                                            >
+                                            <textarea
+                                                v-model="
+                                                    formKesehatan.riwayat_penyakit
                                                 "
                                                 class="form-input"
                                                 placeholder="Contoh: Asma sejak kecil, alergi obat tertentu, dll."
@@ -1477,11 +1471,13 @@ export default {
                 kewarganegaraan: '',
                 status: '1',
 
-                // Data personal (sekarang langsung di employees table, bukan employee_personals)
+                // Data dari employee_personals table
                 no_wa: '',
                 bpjs_tk: '',
                 bpjs_kes: '',
+                jenis_bpjs_tk: '',
                 nama_faskes: '',
+                status_bpjs_ks: '',
                 email: '',
                 no_skck: '',
                 masa_berlaku_skck: '',
@@ -1491,17 +1487,16 @@ export default {
             },
 
             formAlamat: {
-                // Data alamat (sekarang langsung di employees table, bukan employee_addresses)
-                ktp: '', // no_ktp di employees table
-                phone: '', // no_wa di employees table (duplikat dari formEmployee.no_wa)
-                domisili: '', // alamat_lengkap_domisili di employees table
-                kota: '', // kota_domisili di employees table
+                ktp: '',
+                phone: '',
+                domisili: '',
+                kota: '',
             },
 
             formPendidikan: {
                 jenjang: '',
                 jurusan: '',
-                sekolah: '', // akan di-map ke 'institusi' saat submit
+                sekolah: '',
                 tahun_lulus: '',
             },
             listPendidikan: [],
@@ -1509,23 +1504,23 @@ export default {
             formPekerjaan: {
                 jabatan: '',
                 perusahaan: '',
-                bagian: '', // akan di-map ke 'penempatan' saat submit
+                bagian: '',
                 no_kontrak: '',
                 cost_center: '',
                 jenis_kontrak: '',
-                mulai: '', // akan di-map ke 'tgl_awal_kerja' saat submit
-                selesai: '', // akan di-map ke 'tgl_akhir_kerja' saat submit
+                mulai: '',
+                selesai: '',
                 jenis_kerja: '',
                 pola_kerja: '',
                 hari_kerja: '',
-                status_kontrak: '', // akan di-map ke 'status' saat submit
+                status_kontrak: '',
             },
             listPekerjaan: [],
 
             formKeluarga: {
                 nama: '',
                 hubungan: '',
-                ttl: '', // format: "Jakarta, 01-01-2000" - akan di-split menjadi tempat_lahir dan tanggal_lahir
+                ttl: '',
                 no_hp: '',
             },
             listKeluarga: [],
@@ -1536,8 +1531,8 @@ export default {
                 gol_darah: '',
                 buta_warna: false,
                 riwayat_penyakit: '',
-                hasil_drug_test: '',
-                tanggal_drug_test: '',
+                tanggal_mcu: '',
+                kesimpulan_hasil_mcu: '',
                 darah: '',
                 urine: '',
                 f_hati: '',
@@ -1551,35 +1546,36 @@ export default {
             },
 
             formDokumen: {
-                // Boolean flags untuk indicate apakah dokumen sudah ada (untuk edit mode)
                 pas_foto: false,
                 ktp: false,
                 kk: false,
-                bpjs_tk: false,
-                vaksin: false,
-                sio_forklift: false,
+                lisensi: false,
                 form_bpjs_tk: false,
                 form_bpjs_kes: false,
                 paklaring: false,
-                sim_b1: false,
-                kartu_garda: false,
+                ijazah_terakhir: false,
+                skck: false,
             },
 
             dokumenMeta: [
                 { key: 'pas_foto', label: 'Pas Foto' },
                 { key: 'ktp', label: 'KTP' },
                 { key: 'kk', label: 'Kartu Keluarga' },
-                { key: 'bpjs_tk', label: 'BPJS Ketenagakerjaan' },
-                { key: 'vaksin', label: 'Sertifikat Vaksin' },
-                { key: 'sio_forklift', label: 'SIO Forklift' },
+                { key: 'lisensi', label: 'Lisensi' },
                 { key: 'form_bpjs_tk', label: 'Formulir BPJS TK' },
                 { key: 'form_bpjs_kes', label: 'Formulir BPJS Kesehatan' },
                 {
                     key: 'paklaring',
                     label: 'Surat Pengalaman Kerja / Paklaring',
                 },
-                { key: 'sim_b1', label: 'SIM B1' },
-                { key: 'kartu_garda', label: 'Kartu Garda Pratama' },
+                {
+                    key: 'ijazah_terakhir',
+                    label: 'Ijazah Terakhir',
+                },
+                {
+                    key: 'skck',
+                    label: 'SKCK',
+                },
             ],
 
             deleteExistingDokumen: {},
@@ -1608,6 +1604,7 @@ export default {
                         nama: data.nama ?? '',
                         nrp: data.nrp ?? '',
                         jk: data.jenis_kelamin ?? '',
+                        kk: data.no_kk ?? '',
                         tempat_lahir: data.tempat_lahir ?? '',
                         tanggal_lahir: data.tanggal_lahir ?? '',
                         perkawinan: data.status_perkawinan ?? '',
@@ -1615,11 +1612,13 @@ export default {
                         kewarganegaraan: data.kewarganegaraan ?? '',
                         status: data.status_active ?? '1',
 
-                        // Data personal (sekarang langsung di employees table)
+                        // Data dari employee_personals table
                         no_wa: data.no_wa ?? '',
                         bpjs_tk: data.bpjs_tk ?? '',
                         bpjs_kes: data.bpjs_kes ?? '',
+                        jenis_bpjs_tk: data.jenis_bpjs_tk ?? '',
                         nama_faskes: data.nama_faskes ?? '',
+                        status_bpjs_ks: data.status_bpjs_ks ?? '',
                         email: data.email ?? '',
                         no_skck: data.no_skck ?? '',
                         masa_berlaku_skck: data.masa_berlaku_skck ?? '',
@@ -1632,7 +1631,6 @@ export default {
              | FORM ALAMAT
              ===============================*/
                     Object.assign(this.formAlamat, {
-                        // Data alamat sekarang langsung di employees table
                         ktp: data.no_ktp ?? '',
                         phone: data.no_wa ?? '',
                         domisili: data.alamat_lengkap_domisili ?? '',
@@ -1691,9 +1689,9 @@ export default {
                             buta_warna: !!data.health.buta_warna,
                             riwayat_penyakit:
                                 data.health.riwayat_penyakit ?? '',
-                            hasil_drug_test: data.health.hasil_drug_test ?? '',
-                            tanggal_drug_test:
-                                data.health.tanggal_drug_test ?? '',
+                            tanggal_mcu: data.health.tanggal_mcu ?? '',
+                            kesimpulan_hasil_mcu:
+                                data.health.kesimpulan_hasil_mcu ?? '',
                             darah: data.health.darah ?? '',
                             urine: data.health.urine ?? '',
                             f_hati: data.health.f_hati ?? '',
@@ -1715,10 +1713,7 @@ export default {
                             pas_foto: !!data.documents.pas_foto,
                             ktp: !!data.documents.dokumen_ktp,
                             kk: !!data.documents.dokumen_kk,
-                            bpjs_tk:
-                                !!data.documents.dokumen_bpjs_ketenagakerjaan,
-                            vaksin: !!data.documents.dokumen_sertifikat_vaksin,
-                            sio_forklift: !!data.documents.dokumen_sio_forklift,
+                            lisensi: !!data.documents.dokumen_lisensi,
                             form_bpjs_tk:
                                 !!data.documents.dokumen_formulir_bpjs_tk,
                             form_bpjs_kes:
@@ -1726,9 +1721,9 @@ export default {
                                     .dokumen_formulir_bpjs_kesehatan,
                             paklaring:
                                 !!data.documents.dokumen_surat_pengalaman_kerja,
-                            sim_b1: !!data.documents.dokumen_sim_b1,
-                            kartu_garda:
-                                !!data.documents.dokumen_kartu_garda_pratama,
+                            ijazah_terakhir:
+                                !!data.documents.dokumen_ijazah_terakhir,
+                            skck: !!data.documents.dokumen_skck,
                         });
                     }
                 })
@@ -1837,6 +1832,7 @@ export default {
                 // 1. Data Employees (table employees)
                 formData.append('nama', this.formEmployee.nama);
                 formData.append('nrp', this.formEmployee.nrp);
+                formData.append('kk', this.formEmployee.kk);
                 formData.append('jenis_kelamin', this.formEmployee.jk);
                 formData.append(
                     'tempat_lahir',
@@ -1862,9 +1858,18 @@ export default {
                 formData.append('no_wa', this.formEmployee.no_wa || '');
                 formData.append('bpjs_tk', this.formEmployee.bpjs_tk || '');
                 formData.append('bpjs_kes', this.formEmployee.bpjs_kes || '');
+
+                formData.append(
+                    'jenis_bpjs_tk',
+                    this.formEmployee.jenis_bpjs_tk || '',
+                );
                 formData.append(
                     'nama_faskes',
                     this.formEmployee.nama_faskes || '',
+                );
+                formData.append(
+                    'status_bpjs_ks',
+                    this.formEmployee.status_bpjs_ks || '',
                 );
                 formData.append('email', this.formEmployee.email || '');
                 formData.append('no_skck', this.formEmployee.no_skck || '');
@@ -1887,10 +1892,10 @@ export default {
 
                 // 3. Data Address (table employee_addresses)
                 formData.append(
-                    'alamat_lengkap',
+                    'alamat_lengkap_domisili',
                     this.formAlamat.domisili || '',
                 );
-                formData.append('kota', this.formAlamat.kota || '');
+                formData.append('kota_domisili', this.formAlamat.kota || '');
                 formData.append('tipe', 'Domisili');
 
                 // 4. Data Pendidikan (table employee_educations) - JSON Array
@@ -1980,12 +1985,8 @@ export default {
                     this.formKesehatan.riwayat_penyakit || '',
                 );
                 formData.append(
-                    'hasil_drug_test',
-                    this.formKesehatan.hasil_drug_test || '',
-                );
-                formData.append(
-                    'tanggal_drug_test',
-                    this.formKesehatan.tanggal_drug_test || '',
+                    'tanggal_mcu',
+                    this.formKesehatan.tanggal_mcu || '',
                 );
                 formData.append('darah', this.formKesehatan.darah || '');
                 formData.append('urine', this.formKesehatan.urine || '');
@@ -2000,6 +2001,15 @@ export default {
                 formData.append('nadi', this.formKesehatan.nadi || '');
                 formData.append('od', this.formKesehatan.od || '');
                 formData.append('os', this.formKesehatan.os || '');
+
+                formData.append(
+                    'tanggal_mcu',
+                    this.formKesehatan.tanggal_mcu || '',
+                );
+                formData.append(
+                    'kesimpulan_hasil_mcu',
+                    this.formKesehatan.kesimpulan_hasil_mcu || '',
+                );
 
                 // 8. Upload Files (Dokumen)
                 for (const doc of this.dokumenMeta) {
@@ -2097,6 +2107,7 @@ export default {
                 nama: '',
                 nrp: '',
                 jk: '',
+                kk: '',
                 tempat_lahir: '',
                 tanggal_lahir: '',
                 perkawinan: '',
@@ -2106,7 +2117,9 @@ export default {
                 no_wa: '',
                 bpjs_tk: '',
                 bpjs_kes: '',
+                jenis_bpjs_tk: '',
                 nama_faskes: '',
+                status_bpjs_ks: '',
                 email: '',
                 no_skck: '',
                 masa_berlaku_skck: '',
@@ -2164,8 +2177,8 @@ export default {
                 gol_darah: '',
                 buta_warna: false,
                 riwayat_penyakit: '',
-                hasil_drug_test: '',
-                tanggal_drug_test: '',
+                tanggal_mcu: '',
+                kesimpulan_hasil_mcu: '',
                 darah: '',
                 urine: '',
                 f_hati: '',

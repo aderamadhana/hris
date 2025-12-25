@@ -161,12 +161,14 @@ class EmployeeController extends Controller
             'employee' => [
                 'id'        => $employee->id,
                 'nrp'       => $employee->nrp,
-                'nik'       => $employee->no_ktp,
-                'status'    => $employee->status_active,
+                'user_id'   => $employee->user_id,
+                'no_ktp'    => $employee->no_ktp,
+                'no_kk'     => $employee->no_kk,
+                'status_active' => $employee->status_active,
                 'nama'      => $employee->nama,
-                'jk'        => $employee->jenis_kelamin,
+                'jenis_kelamin' => $employee->jenis_kelamin,
                 'agama'     => $employee->agama,
-                'perkawinan'=> $employee->status_perkawinan,
+                'status_perkawinan' => $employee->status_perkawinan,
                 'kewarganegaraan' => $employee->kewarganegaraan,
                 'tempat_lahir' => $employee->tempat_lahir,
                 'tanggal_lahir'=> $employee->tanggal_lahir
@@ -182,9 +184,9 @@ class EmployeeController extends Controller
 
                 // BPJS
                 'bpjs_tk' => $employee->bpjs_tk,
-                'x' => $employee->x,
+                'jenis_bpjs_tk' => $employee->jenis_bpjs_tk,
                 'bpjs_kes' => $employee->bpjs_kes,
-                'x_ks' => $employee->x_ks,
+                'status_bpjs_ks' => $employee->status_bpjs_ks,
                 'nama_faskes' => $employee->nama_faskes,
 
                 // SKCK
@@ -199,6 +201,18 @@ class EmployeeController extends Controller
                 'masa_berlaku_lisensi' => $employee->masa_berlaku_lisensi
                     ? Carbon::parse($employee->masa_berlaku_lisensi)->format('d M Y')
                     : null,
+
+                // Alamat
+                'alamat_lengkap_ktp' => $employee->alamat_lengkap_ktp,
+                'desa_ktp' => $employee->desa_ktp,
+                'kecamatan_ktp' => $employee->kecamatan_ktp,
+                'kota_ktp' => $employee->kota_ktp,
+                'kode_pos_ktp' => $employee->kode_pos_ktp,
+                'alamat_lengkap_domisili' => $employee->alamat_lengkap_domisili,
+                'desa_domisili' => $employee->desa_domisili,
+                'kecamatan_domisili' => $employee->kecamatan_domisili,
+                'kota_domisili' => $employee->kota_domisili,
+                'kode_pos_domisili' => $employee->kode_pos_domisili,
 
                 // Bank
                 'no_rekening' => $employee->no_rekening,
@@ -221,23 +235,12 @@ class EmployeeController extends Controller
             ],
 
             /* ===============================
-            | KONTAK & ALAMAT
-            ===============================*/
-            'alamat' => [
-                'ktp'      => $employee->no_ktp,
-                'email'    => $employee->email,
-                'phone'    => $employee->no_hp,
-                'domisili' => $employee->alamat_lengkap_ktp,
-                'tinggal'  => $employee->alamat_lengkap_domisili,
-                'kota'     => $employee->kota_ktp,
-            ],
-
-            /* ===============================
             | TAB: PENDIDIKAN
             ===============================*/
             'pendidikan' => $employee->educations->map(fn ($p) => [
                 'jenjang'     => $p->jenjang,
                 'jurusan'     => $p->jurusan,
+                'institusi'   => $p->institusi,
                 'sekolah'     => $p->sekolah_asal,
                 'tahun_lulus' => $p->tahun_lulus,
             ]),
@@ -268,8 +271,14 @@ class EmployeeController extends Controller
             'keluarga' => $employee->families->map(fn ($f) => [
                 'nama'      => $f->nama,
                 'hubungan'  => $f->hubungan,
-                'ttl'       => $f->tempat_lahir . ', ' . $f->tanggal_lahir,
-                'no_hp'     => $f->no_hp,
+                'tempat_lahir' => $f->tempat_lahir,
+                'tanggal_lahir' => $f->tanggal_lahir,
+                'ttl'       => ($f->tempat_lahir && $f->tanggal_lahir) 
+                    ? $f->tempat_lahir . ', ' . Carbon::parse($f->tanggal_lahir)->format('d M Y')
+                    : ($f->tempat_lahir ?? '-'),
+                'pendidikan' => $f->pendidikan,
+                'pekerjaan' => $f->pekerjaan,
+                'tgl_perkawinan' => $f->tgl_perkawinan,
             ]),
 
             /* ===============================
@@ -280,6 +289,7 @@ class EmployeeController extends Controller
                 'tanggal_mcu' => $employee->health->tanggal_mcu
                     ? Carbon::parse($employee->health->tanggal_mcu)->format('d M Y')
                     : null,
+                'kesimpulan_hasil_mcu' => $employee->health->kesimpulan_hasil_mcu,
                 'tinggi_badan' => $employee->health->tinggi_badan,
                 'berat_badan'  => $employee->health->berat_badan,
                 'gol_darah'    => $employee->health->gol_darah,
@@ -314,11 +324,8 @@ class EmployeeController extends Controller
                 'kk' => $employee->documents->dokumen_kk
                     ? url(Storage::url($employee->documents->dokumen_kk))
                     : null,
-                'bpjs_tk' => $employee->documents->dokumen_bpjs_ketenagakerjaan
-                    ? url(Storage::url($employee->documents->dokumen_bpjs_ketenagakerjaan))
-                    : null,
-                'sio_forklift' => $employee->documents->dokumen_sio_forklift
-                    ? url(Storage::url($employee->documents->dokumen_sio_forklift))
+                'lisensi' => $employee->documents->dokumen_lisensi
+                    ? url(Storage::url($employee->documents->dokumen_lisensi))
                     : null,
                 'form_bpjs_tk' => $employee->documents->dokumen_formulir_bpjs_tk
                     ? url(Storage::url($employee->documents->dokumen_formulir_bpjs_tk))
@@ -329,11 +336,11 @@ class EmployeeController extends Controller
                 'paklaring' => $employee->documents->dokumen_surat_pengalaman_kerja
                     ? url(Storage::url($employee->documents->dokumen_surat_pengalaman_kerja))
                     : null,
-                'sim_b1' => $employee->documents->dokumen_sim_b1
-                    ? url(Storage::url($employee->documents->dokumen_sim_b1))
+                'ijazah_terakhir' => $employee->documents->dokumen_ijazah_terakhir
+                    ? url(Storage::url($employee->documents->dokumen_ijazah_terakhir))
                     : null,
-                'kartu_garda' => $employee->documents->dokumen_kartu_garda_pratama
-                    ? url(Storage::url($employee->documents->dokumen_kartu_garda_pratama))
+                'skck' => $employee->documents->dokumen_skck
+                    ? url(Storage::url($employee->documents->dokumen_skck))
                     : null,
             ] : null,
 
@@ -516,6 +523,7 @@ class EmployeeController extends Controller
                 // Data personal (dulunya di employee_personals)
                 'no_ktp' => $request->no_ktp,
                 'no_wa' => $request->no_wa,
+                'no_kk' => $request->kk,
                 'bpjs_tk' => $request->bpjs_tk,
                 'bpjs_kes' => $request->bpjs_kes,
                 'jenis_bpjs_tk' => $request->jenis_bpjs_tk,
@@ -662,7 +670,6 @@ class EmployeeController extends Controller
     public function show($id)
     {
         $employee = Employee::with([
-            'address',
             'educations',
             'employmentss',
             'families',
@@ -689,9 +696,48 @@ class EmployeeController extends Controller
         try {
             $employee = Employee::findOrFail($id);
 
-            // Update employee
+            // 1. Cek apakah perlu update user
+            $userId = $employee->user_id;
+            $shouldCreateUser = false;
+            
+            if ($request->pekerjaan) {
+                $pekerjaan = json_decode($request->pekerjaan, true);
+                
+                // Cek apakah ada no_kontrak dengan status aktif
+                foreach ($pekerjaan as $job) {
+                    if (!empty($job['no_kontrak']) && 
+                        !empty($job['status']) && 
+                        strtolower($job['status']) === 'aktif') {
+                        $shouldCreateUser = true;
+                        break;
+                    }
+                }
+            }
+
+            // Create/update user jika memenuhi syarat
+            if ($shouldCreateUser && $request->email) {
+                $existingUser = User::where('email', $request->email)->first();
+                
+                if (!$existingUser && !$userId) {
+                    // Create new user
+                    $user = User::create([
+                        'name' => $request->nama,
+                        'email' => $request->email,
+                        'password' => Hash::make($request->nrp),
+                        'role_id' => '2',
+                        'email_verified_at' => now(),
+                    ]);
+                    $userId = $user->id;
+                } elseif ($existingUser) {
+                    $userId = $existingUser->id;
+                }
+            }
+
+            // 2. Update Employee (semua data langsung di table employees)
             $employee->update([
+                // Data utama
                 'nrp' => $request->nrp,
+                'user_id' => $userId,
                 'nama' => $request->nama,
                 'jenis_kelamin' => $request->jenis_kelamin,
                 'tempat_lahir' => $request->tempat_lahir,
@@ -700,52 +746,47 @@ class EmployeeController extends Controller
                 'status_perkawinan' => $request->status_perkawinan,
                 'kewarganegaraan' => $request->kewarganegaraan,
                 'status_active' => $request->status_active ?? '1',
+                
+                // Data personal (dulunya di employee_personals)
+                'no_ktp' => $request->no_ktp,
+                'no_wa' => $request->no_wa,
+                'no_kk' => $request->kk,
+                'bpjs_tk' => $request->bpjs_tk,
+                'bpjs_kes' => $request->bpjs_kes,
+                'jenis_bpjs_tk' => $request->jenis_bpjs_tk,
+                'nama_faskes' => $request->nama_faskes,
+                'status_bpjs_ks' => $request->status_bpjs_ks,
+                'email' => $request->email,
+                'no_skck' => $request->no_skck,
+                'masa_berlaku_skck' => $request->masa_berlaku_skck,
+                'jenis_lisensi' => $request->jenis_lisensi,
+                'no_lisensi' => $request->no_lisensi,
+                'masa_berlaku_lisensi' => $request->masa_berlaku_lisensi,
+                
+                // Data alamat domisili (dulunya di employee_addresses)
+                'alamat_lengkap_domisili' => $request->alamat_lengkap_domisili,
+                'kota_domisili' => $request->kota_domisili,
             ]);
 
-            // Update personal data
-            $employee->personal()->updateOrCreate(
-                ['employee_id' => $employee->id],
-                [
-                    'no_ktp' => $request->no_ktp,
-                    'no_wa' => $request->no_wa,
-                    'bpjs_tk' => $request->bpjs_tk,
-                    'bpjs_kes' => $request->bpjs_kes,
-                    'nama_faskes' => $request->nama_faskes,
-                    'email' => $request->email,
-                    'no_skck' => $request->no_skck,
-                    'masa_berlaku_skck' => $request->masa_berlaku_skck,
-                    'jenis_lisensi' => $request->jenis_lisensi,
-                    'no_lisensi' => $request->no_lisensi,
-                    'masa_berlaku_lisensi' => $request->masa_berlaku_lisensi,
-                ]
-            );
-
-            // Update health record
-            $employee->health()->updateOrCreate(
-                ['employee_id' => $employee->id],
-                [
-                    'tinggi_badan' => $request->tinggi_badan,
-                    'berat_badan' => $request->berat_badan,
-                    'gol_darah' => $request->gol_darah,
-                    'buta_warna' => $request->buta_warna == '1',
-                    'riwayat_penyakit' => $request->riwayat_penyakit,
-                    // ... other health fields
-                ]
-            );
-
-            // Update educations - delete old and create new
+            // 3. Update Employee Education Records
+            $employee->educations()->delete();
             if ($request->pendidikan) {
-                $employee->educations()->delete();
                 $pendidikanList = json_decode($request->pendidikan, true);
                 
                 foreach ($pendidikanList as $edu) {
                     if (!empty($edu['jenjang']) || !empty($edu['institusi'])) {
-                        $employee->educations()->create($edu);
+                        EmployeeEducation::create([
+                            'employee_id' => $employee->id,
+                            'jenjang' => $edu['jenjang'] ?? null,
+                            'jurusan' => $edu['jurusan'] ?? null,
+                            'institusi' => $edu['institusi'] ?? null,
+                            'tahun_lulus' => $edu['tahun_lulus'] ?? null,
+                        ]);
                     }
                 }
             }
 
-            // 6. Create Employee Employment History
+            // 4. Update Employee Employment History
             EmployeeEmployment::where('employee_id', $employee->id)->delete();
             if ($request->pekerjaan) {
                 $pekerjaanList = json_decode($request->pekerjaan, true);
@@ -771,14 +812,13 @@ class EmployeeController extends Controller
                 }
             }
 
-            // 7. Create Employee Family Members
+            // 5. Update Employee Family Members
             EmployeeFamily::where('employee_id', $employee->id)->delete();
             if ($request->keluarga) {
                 $keluargaList = json_decode($request->keluarga, true);
                 
                 foreach ($keluargaList as $fam) {
                     if (!empty($fam['nama'])) {
-                        // Parse tanggal lahir dari format "01-01-2000" atau "2000-01-01"
                         $tanggalLahir = null;
                         if (!empty($fam['tanggal_lahir'])) {
                             $tanggalLahir = $this->parseDateString($fam['tanggal_lahir']);
@@ -794,9 +834,35 @@ class EmployeeController extends Controller
                     }
                 }
             }
-            
+
+            // 6. Update Employee Health Record
+            $employee->health()->updateOrCreate(
+                ['employee_id' => $employee->id],
+                [
+                    'tinggi_badan' => $request->tinggi_badan,
+                    'berat_badan' => $request->berat_badan,
+                    'gol_darah' => $request->gol_darah,
+                    'buta_warna' => $request->buta_warna == '1',
+                    'riwayat_penyakit' => $request->riwayat_penyakit,
+                    'hasil_drug_test' => $request->hasil_drug_test,
+                    'tanggal_drug_test' => $request->tanggal_drug_test,
+                    'darah' => $request->darah,
+                    'urine' => $request->urine,
+                    'f_hati' => $request->f_hati,
+                    'gula_darah' => $request->gula_darah,
+                    'ginjal' => $request->ginjal,
+                    'thorax' => $request->thorax,
+                    'tensi' => $request->tensi,
+                    'nadi' => $request->nadi,
+                    'od' => $request->od,
+                    'os' => $request->os,
+                    'tanggal_mcu' => $request->tanggal_mcu,
+                    'kesimpulan_hasil_mcu' => $request->kesimpulan_hasil_mcu,
+                ]
+            );
+
+            // 7. Handle Document Uploads
             $this->handleDocumentUploads($request, $employee->id);
-            // Similar logic for pekerjaan and keluarga...
 
             DB::commit();
 

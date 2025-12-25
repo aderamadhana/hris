@@ -825,8 +825,6 @@
                                                 <div class="job-meta">
                                                     No. Kontrak:
                                                     {{ job.no_kontrak || '-' }}
-                                                    | Cost Center:
-                                                    {{ job.cost_center || '-' }}
                                                 </div>
                                             </div>
 
@@ -986,9 +984,6 @@
 
                                     <div class="family-detail">
                                         <span>TTL: {{ f.ttl || '-' }}</span>
-                                        <span
-                                            >No. HP: {{ f.no_hp || '-' }}</span
-                                        >
                                     </div>
 
                                     <button
@@ -1088,22 +1083,6 @@
                                     </h4>
 
                                     <div class="detail-grid two-col">
-                                        <div
-                                            class="form-group"
-                                            style="grid-column: 1 / -1"
-                                        >
-                                            <label class="field-label"
-                                                >Riwayat Penyakit</label
-                                            >
-                                            <textarea
-                                                v-model="
-                                                    formKesehatan.riwayat_penyakit
-                                                "
-                                                class="form-input"
-                                                placeholder="Contoh: Asma sejak kecil, alergi obat tertentu, dll."
-                                            ></textarea>
-                                        </div>
-
                                         <div class="form-group">
                                             <label class="field-label"
                                                 >Tanggal Pemeriksaan Medical
@@ -1128,6 +1107,21 @@
                                             <textarea
                                                 v-model="
                                                     formKesehatan.kesimpulan_hasil_mcu
+                                                "
+                                                class="form-input"
+                                                placeholder="Contoh: Asma sejak kecil, alergi obat tertentu, dll."
+                                            ></textarea>
+                                        </div>
+                                        <div
+                                            class="form-group"
+                                            style="grid-column: 1 / -1"
+                                        >
+                                            <label class="field-label"
+                                                >Riwayat Penyakit</label
+                                            >
+                                            <textarea
+                                                v-model="
+                                                    formKesehatan.riwayat_penyakit
                                                 "
                                                 class="form-input"
                                                 placeholder="Contoh: Asma sejak kecil, alergi obat tertentu, dll."
@@ -1737,6 +1731,7 @@ export default {
                 // 1. Data Employees (table employees)
                 formData.append('nama', this.formEmployee.nama);
                 formData.append('nrp', this.formEmployee.nrp);
+                formData.append('kk', this.formEmployee.kk);
                 formData.append('jenis_kelamin', this.formEmployee.jk);
                 formData.append(
                     'tempat_lahir',

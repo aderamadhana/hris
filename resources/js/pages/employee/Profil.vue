@@ -24,13 +24,13 @@
                                 <span
                                     class="tag tag-status"
                                     :class="
-                                        employee.status == 1
+                                        employee.status_active == 1
                                             ? 'is-active'
                                             : 'is-inactive'
                                     "
                                 >
                                     {{
-                                        employee.status == 1
+                                        employee.status_active == 1
                                             ? 'Aktif'
                                             : 'Tidak Aktif'
                                     }}
@@ -41,27 +41,39 @@
                             </div>
 
                             <!-- DATA UTAMA -->
+                            <h4 class="section-subtitle">Data Utama</h4>
                             <div class="detail-grid two-col">
                                 <div class="field highlight">
                                     <div class="field-label">Nama Lengkap</div>
                                     <div class="field-value">
-                                        {{ employee.nama }}
+                                        {{ employee.nama || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">NRP</div>
+                                    <div class="field-value">
+                                        {{ employee.nrp || '-' }}
                                     </div>
                                 </div>
 
                                 <div class="field">
                                     <div class="field-label">Jenis Kelamin</div>
                                     <div class="field-value">
-                                        {{ employee.jk }}
+                                        {{ employee.jenis_kelamin || '-' }}
                                     </div>
                                 </div>
 
                                 <div class="field">
-                                    <div class="field-label">
-                                        Tempat, Tanggal Lahir
-                                    </div>
+                                    <div class="field-label">Tempat Lahir</div>
                                     <div class="field-value">
-                                        {{ employee.tempat_lahir }},
+                                        {{ employee.tempat_lahir || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">Tanggal Lahir</div>
+                                    <div class="field-value">
                                         {{ employee.tanggal_lahir || '-' }}
                                     </div>
                                 </div>
@@ -71,14 +83,14 @@
                                         Status Perkawinan
                                     </div>
                                     <div class="field-value">
-                                        {{ employee.perkawinan }}
+                                        {{ employee.status_perkawinan || '-' }}
                                     </div>
                                 </div>
 
                                 <div class="field">
                                     <div class="field-label">Agama</div>
                                     <div class="field-value">
-                                        {{ employee.agama }}
+                                        {{ employee.agama || '-' }}
                                     </div>
                                 </div>
 
@@ -87,43 +99,30 @@
                                         Kewarganegaraan
                                     </div>
                                     <div class="field-value">
-                                        {{ employee.kewarganegaraan }}
+                                        {{ employee.kewarganegaraan || '-' }}
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- KONTAK -->
+                            <!-- KONTAK & IDENTITAS -->
+                            <h4 class="section-subtitle">Kontak & Identitas</h4>
                             <div class="detail-grid two-col secondary">
                                 <div class="field">
                                     <div class="field-label">No. KTP</div>
                                     <div class="field-value">
-                                        {{ alamat.ktp || '-' }}
+                                        {{ employee.no_ktp || '-' }}
                                     </div>
                                 </div>
 
                                 <div class="field">
-                                    <div class="field-label">No. HP</div>
+                                    <div class="field-label">
+                                        No. Kartu Keluarga
+                                    </div>
                                     <div class="field-value">
-                                        {{ alamat.phone || '-' }}
+                                        {{ employee.no_kk || '-' }}
                                     </div>
                                 </div>
 
-                                <div class="field">
-                                    <div class="field-label">Email</div>
-                                    <div class="field-value">
-                                        {{ alamat.email || '-' }}
-                                    </div>
-                                </div>
-
-                                <div class="field">
-                                    <div class="field-label">Domisili</div>
-                                    <div class="field-value">
-                                        {{ alamat.domisili }},
-                                        {{ alamat.kota }}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="detail-grid two-col secondary">
                                 <div class="field">
                                     <div class="field-label">No. WhatsApp</div>
                                     <div class="field-value">
@@ -138,6 +137,29 @@
                                     </div>
                                 </div>
 
+                                <div class="field">
+                                    <div class="field-label">
+                                        Alamat Domisili
+                                    </div>
+                                    <div class="field-value">
+                                        {{
+                                            employee.alamat_lengkap_domisili ||
+                                            '-'
+                                        }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">Kota Domisili</div>
+                                    <div class="field-value">
+                                        {{ employee.kota_domisili || '-' }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BPJS & LISENSI -->
+                            <h4 class="section-subtitle">BPJS & Lisensi</h4>
+                            <div class="detail-grid two-col secondary">
                                 <div class="field">
                                     <div class="field-label">
                                         BPJS Ketenagakerjaan
@@ -157,14 +179,34 @@
                                 </div>
 
                                 <div class="field">
-                                    <div class="field-label">Faskes</div>
+                                    <div class="field-label">
+                                        Jenis Kepesertaan BPJS TK
+                                    </div>
+                                    <div class="field-value">
+                                        {{ employee.jenis_bpjs_tk || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">
+                                        Lokasi Kepesertaan BPJS KS
+                                    </div>
                                     <div class="field-value">
                                         {{ employee.nama_faskes || '-' }}
                                     </div>
                                 </div>
 
                                 <div class="field">
-                                    <div class="field-label">No SKCK</div>
+                                    <div class="field-label">
+                                        Status Kepesertaan BPJS KS
+                                    </div>
+                                    <div class="field-value">
+                                        {{ employee.status_bpjs_ks || '-' }}
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <div class="field-label">No. SKCK</div>
                                     <div class="field-value">
                                         {{ employee.no_skck || '-' }}
                                     </div>
@@ -187,7 +229,7 @@
                                 </div>
 
                                 <div class="field">
-                                    <div class="field-label">No Lisensi</div>
+                                    <div class="field-label">No. Lisensi</div>
                                     <div class="field-value">
                                         {{ employee.no_lisensi || '-' }}
                                     </div>
@@ -270,8 +312,6 @@
                                                 <div class="job-meta">
                                                     No. Kontrak:
                                                     {{ job.no_kontrak || '-' }}
-                                                    | Cost Center:
-                                                    {{ job.cost_center || '-' }}
                                                 </div>
                                             </div>
                                             <div class="job-period">
@@ -342,10 +382,6 @@
                                                     ?.replace(',', '')
                                                     .trim() || '-'
                                             }}
-                                        </span>
-                                        <span>
-                                            No. HP:
-                                            {{ f.no_hp || '-' }}
                                         </span>
                                     </div>
                                 </div>
@@ -761,7 +797,6 @@ export default {
                 .get(`/employee/get-data/${id}`)
                 .then((res) => {
                     this.employee = res.data.employee || {};
-                    this.alamat = res.data.alamat || {};
                     this.document = res.data.document || {};
                     this.pendidikan = res.data.pendidikan || [];
                     this.pekerjaan = res.data.pekerjaan || [];
