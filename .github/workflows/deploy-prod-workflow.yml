@@ -26,7 +26,7 @@ jobs:
       # =============================
       - name: Deploy application
         run: |
-          set -e
+          set -euo pipefail
 
           # Validasi working directory
           if [ ! -d "$WORKING_DIR" ]; then
@@ -38,7 +38,7 @@ jobs:
           cd "$WORKING_DIR"
 
           echo "🔐 Ubah ownership sementara untuk deployment..."
-          sudo chown -R $(whoami):$(whoami) .
+          sudo chown -R "$(whoami)":"$(whoami)" .
 
           echo "🔄 Sync source code..."
           rsync -avz --delete "${GITHUB_WORKSPACE}/app/" app/
@@ -51,7 +51,7 @@ jobs:
 
           echo "🧹 Bersihkan cache dan vendor lama..."
           rm -rf vendor/
-          rm -rf bootstrap/cache/*.php
+          rm -rf bootstrap/cache/*.php || true
 
           echo "📦 Install PHP dependencies (production only)..."
           composer install \
@@ -67,29 +67,40 @@ jobs:
 
           echo "🔐 Set permission akhir (Laravel-safe)..."
 
-          # Pastikan folder runtime ada
-          sudo mkdir -p storage/logs bootstrap/cache
+          # Pastikan folder runtime ada (Laravel butuh ini writable)
+          sudo mkdir -p \
+            storage/logs \
+            storage/framework/cache \
+            storage/framework/sessions \
+            storage/framework/views \
+            bootstrap/cache
+
+          # Pastikan file log ada
           sudo touch storage/logs/laravel.log || true
 
-          # Ownership: hanya folder runtime yang perlu writable oleh www-data
+          # Ownership runtime folder untuk web user
           sudo chown -R www-data:www-data storage bootstrap/cache
 
-          # Permission: directory 775, file 664 untuk runtime folder
-          sudo find storage -type d -exec chmod 775 {} \;
-          sudo find bootstrap/cache -type d -exec chmod 775 {} \;
-          sudo find storage -type f -exec chmod 664 {} \;
-          sudo find bootstrap/cache -type f -exec chmod 664 {} \;
+          # Permission aman: rw untuk owner+group, others read/execute seperlunya
+          sudo chmod -R ug+rwX storage bootstrap/cache
+
+          # Setgid agar file/dir baru mewarisi group (mengurangi masalah permission)
+          sudo find storage bootstrap/cache -type d -exec chmod g+s {} \;
 
           # Public read-only standar
           sudo chown -R www-data:www-data public
           sudo find public -type d -exec chmod 755 {} \;
           sudo find public -type f -exec chmod 644 {} \;
 
-          echo "⚡ Optimize Laravel..."
-          php artisan optimize:clear
-          php artisan optimize
+          echo "⚡ Optimize Laravel (jalankan sebagai www-data agar tidak gagal log/cache)..."
+          sudo -u www-data php artisan optimize:clear
+          sudo -u www-data php artisan optimize
+
+          # Pastikan lagi setelah artisan (kadang ada file baru)
+          sudo chown -R www-data:www-data storage bootstrap/cache
+          sudo chmod -R ug+rwX storage bootstrap/cache
 
           echo "🔄 Restart queue worker..."
-          sudo supervisorctl restart laravel-queue:*
+          sudo supervisorctl restart laravel-queue:* || true
 
           echo "✅ Deploy selesai!"
