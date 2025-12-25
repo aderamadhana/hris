@@ -751,72 +751,85 @@ body {
 
 /* TABEL */
 .table-card {
-    margin-top: 12px;
-    background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
-    border-radius: 18px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
-    overflow: hidden;
+  margin-top: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 18px;
+  border: 1.5px solid #cbd5e1;                 /* lebih hidup */
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  padding: 22px 20px;
 }
 
-/* Bootstrap-like table responsive wrapper */
+/* wrapper scroll + outline frame */
 .table-responsive-custom {
   width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  -webkit-overflow-scrolling: touch; /* smoother on iOS */
+  -webkit-overflow-scrolling: touch;
+
+  border: 1.5px solid #cbd5e1;                 /* outline */
+  border-radius: 14px;
+  background: #fff;
 }
 
-/* keep table from shrinking columns too much */
+/* table di dalam wrapper */
 .table-responsive-custom > table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;                    /* supaya radius wrapper enak */
+  border-spacing: 0;
 }
 
-/* optional: force horizontal scroll earlier by giving a min width */
+/* optional: force horizontal scroll earlier */
 @media (max-width: 768px) {
   .table-responsive-custom > table {
-    min-width: 720px; /* adjust based on your columns */
+    min-width: 720px;
   }
 }
 
 .table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 16px;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 16px;
 }
 
 .table thead {
-    background: #f3f4f6;
+  background: #f1f5f9;                          /* lebih solid */
 }
 
 .table thead th {
-    padding: 14px 18px;
-    font-weight: 600;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #6b7280;
-    border-bottom: 1px solid #e5e7eb;
+  padding: 14px 18px;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+
+  border-bottom: 1.5px solid #cbd5e1;           /* lebih tegas */
 }
 
-/* body tabel */
+/* body */
 .table tbody td {
-    padding: 12px 18px;
-    border-bottom: 1px solid #edf0f3;
-    color: #111827;
-    font-size: 16px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #e2e8f0;             /* lebih jelas dari #edf0f3 */
+  color: #0f172a;
+  font-size: 15px;
 }
 
-/* zebra + hover */
+/* zebra + hover (lebih halus) */
 .table tbody tr:nth-child(even) {
-    background: #f9fafb;
+  background: #f8fafc;
 }
 
 .table tbody tr:hover {
-    background: #eff6ff;
+  background: #eaf2ff;
 }
+
+/* hilangkan border bawah di row terakhir */
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 
 .empty-row {
     text-align: center;
@@ -2609,37 +2622,137 @@ textarea.form-input {
 }
 
 
-.filter-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    /* padding: 12px 16px; */
+:root{
+  --surface:#ffffff;
+  --surface-2:#f8fafc;
+  --border:#cbd5e1;     /* lebih gelap dari e5e7eb */
+  --border-2:#94a3b8;   /* hover */
+  --text:#0f172a;
+  --muted:#64748b;
+  --brand:#2563eb;
+  --ring:rgba(37,99,235,.18);
+  --shadow:0 6px 18px rgba(15,23,42,.06);
 }
 
-.filter-left {
-    flex: 1;
+/* BAR */
+.filter-bar{
+  display:flex;
+  align-items:flex-end;          /* sejajar bawah */
+  justify-content:flex-start;    /* jangan space-between */
+  gap:14px;
+
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:linear-gradient(180deg,var(--surface),var(--surface-2));
+  box-shadow:var(--shadow);
+  min-height:56px;
+  margin-bottom: 15px;
 }
 
-.filter-right {
-    width: 180px;
+.filter-bar:focus-within{
+  border-color:rgba(37,99,235,.35);
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
 }
 
-.filter-input {
-    width: 100%;
-    height: 38px;
-    padding: 0 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 14px;
-    background-color: #fff;
+/* GROUP (label + input) */
+.filter-right{
+  width:220px;
+  min-width:200px;
 }
 
-.filter-input:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+.filter-right label{
+  display:block;
+  margin:0 0 6px;
+  font-size:13px;
+  font-weight:600;
+  color:#334155;
 }
+
+/* INPUT / SELECT */
+.filter-input{
+  width:100%;
+  height:42px;
+  padding:0 14px;
+
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface);
+  color:var(--text);
+  font-size:14px;
+
+  transition:border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.filter-input:hover{
+  border-color:var(--border-2);
+}
+
+.filter-input:focus-visible{
+  outline:none;
+  border-color:var(--brand);
+  box-shadow:0 0 0 5px var(--ring);
+}
+
+/* SELECT ARROW */
+select.filter-input{
+  appearance:none;
+  padding-right:42px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #64748b 50%),
+    linear-gradient(135deg, #64748b 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 12px) 50%;
+  background-size:6px 6px, 6px 6px;
+  background-repeat:no-repeat;
+}
+
+/* BUTTON: dorong ke kanan tanpa bikin jarak antar kolom jadi jauh */
+.filter-bar > button,
+.filter-bar .p-button,
+.filter-bar .btn,
+.filter-bar .filter-btn{
+  margin-left:auto;
+  height:42px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:0 14px;
+  border-radius:12px;
+}
+
+/* ICON (kalau kamu pakai SVG di tombol) */
+.filter-icon{
+  width:16px;
+  height:16px;
+  display:block;
+  fill:currentColor;
+}
+
+/* RESPONSIVE */
+@media (max-width:760px){
+  .filter-bar{
+    flex-wrap:wrap;
+    align-items:stretch;
+  }
+
+  .filter-right{
+    flex:1;
+    min-width:220px;
+    width:auto;
+  }
+
+  .filter-bar > button,
+  .filter-bar .p-button,
+  .filter-bar .btn,
+  .filter-bar .filter-btn{
+    margin-left:0;
+    width:100%;
+    justify-content:center;
+  }
+}
+
 
 .status-pill {
     padding: 4px 12px;
@@ -2662,3 +2775,199 @@ textarea.form-input {
     background: #dbeafe;
     color: #1e40af;
 }
+
+/* ===== Select2 match .filter-input (di filter bar) ===== */
+.filter-bar .select2-container{
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+.filter-bar .select2-container--default .select2-selection--single{
+  height: 42px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+  display: flex;
+  align-items: center;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.filter-bar .select2-container--default .select2-selection--single:hover{
+  border-color: #94a3b8;
+  box-shadow: 0 2px 0 rgba(15, 23, 42, 0.06);
+}
+
+.filter-bar .select2-container--default.select2-container--open .select2-selection--single{
+  border-color: #2563eb;
+  box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.22);
+}
+
+.filter-bar .select2-container--default .select2-selection--single .select2-selection__rendered{
+  padding-left: 14px;
+  padding-right: 42px; /* ruang untuk arrow */
+  line-height: 42px;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.filter-bar .select2-container--default .select2-selection--single .select2-selection__placeholder{
+  color: #64748b;
+}
+
+.filter-bar .select2-container--default .select2-selection--single .select2-selection__arrow{
+  height: 42px;
+  width: 36px;
+  right: 8px;
+}
+
+.filter-bar .select2-container--default .select2-selection--single .select2-selection__arrow b{
+  border-color: #475569 transparent transparent transparent;
+  border-width: 5px 5px 0 5px;
+  margin-left: -5px;
+  margin-top: -2px;
+}
+
+/* Dropdown panel */
+.filter-bar .select2-dropdown{
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+}
+
+/* Search box di dropdown */
+.filter-bar .select2-search--dropdown{
+  padding: 10px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.filter-bar .select2-search--dropdown .select2-search__field{
+  width: 100% !important;
+  height: 40px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0 12px;
+  outline: none;
+  font-size: 14px;
+}
+
+.filter-bar .select2-search--dropdown .select2-search__field:focus{
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
+}
+
+/* Options */
+.filter-bar .select2-results__option{
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.filter-bar .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable{
+  background: #eaf2ff;
+  color: #0f172a;
+}
+
+.filter-bar .select2-container--default .select2-results__option--selected{
+  background: #eff6ff;
+  color: #0f172a;
+}
+
+.education-list{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding-left:18px;
+}
+
+.education-list::before{
+  content:"";
+  position:absolute;
+  left:8px;
+  top:6px;
+  bottom:6px;
+  width:2px;
+  background: linear-gradient(to bottom, rgba(99,102,241,.9), rgba(34,211,238,.9));
+  border-radius:99px;
+}
+
+.edu-item{
+  position:relative;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  border-radius:16px;
+  padding:14px 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.06);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.edu-item::before{
+  content:"";
+  position:absolute;
+  left:-18px;
+  top:18px;
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  background:#6366f1;
+  border:3px solid #fff;
+  box-shadow: 0 6px 14px rgba(99,102,241,.35);
+}
+
+.edu-item:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(0,0,0,.10);
+  border-color:#c7d2fe;
+}
+
+.edu-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+
+.edu-degree{
+  font-weight:850;
+  font-size:14px;
+  color:#111827;
+}
+
+.edu-school{
+  margin-top:6px;
+  font-size:13px;
+  color:#4b5563;
+}
+
+.edu-year{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:12.5px;
+  color:#6b7280;
+  white-space:nowrap;
+}
+
+.btn-delete{
+  border:0;
+  background:transparent;
+  color:#ef4444;
+  font-weight:800;
+  padding:6px 8px;
+  border-radius:10px;
+  cursor:pointer;
+  opacity:.75;
+  transition: opacity .14s ease, background .14s ease;
+}
+
+.edu-item:hover .btn-delete{opacity:1;}
+.btn-delete:hover{background: rgba(239,68,68,.10);}
+
+@media (max-width:520px){
+  .edu-header{flex-direction:column;}
+  .edu-year{justify-content:flex-start;}
+}
+
+

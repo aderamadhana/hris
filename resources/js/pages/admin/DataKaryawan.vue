@@ -50,9 +50,10 @@
                     <label>
                         Tampil
                         <select v-model.number="perPage">
-                            <option :value="5">5</option>
                             <option :value="10">10</option>
                             <option :value="25">25</option>
+                            <option :value="50">50</option>
+                            <option :value="100">100</option>
                         </select>
                         data
                     </label>
@@ -72,6 +73,54 @@
 
             <!-- TABEL DALAM CARD -->
             <div class="table-card">
+                <div class="filter-bar">
+                    <div class="filter-right">
+                        <label for="">Filter Perusahaan</label>
+                        <Select2
+                            v-model="filtered_perusahaan"
+                            :settings="{ width: '100%' }"
+                        >
+                            <option value="">Semua Perusahaan</option>
+                            <option
+                                v-for="value in data_filtered_perusahaan"
+                                :value="value"
+                            >
+                                {{ value }}
+                            </option>
+                        </Select2>
+                    </div>
+                    <div class="filter-right">
+                        <label for="">Filter Divisi / Departemen</label>
+                        <Select2
+                            v-model="filtered_jabatan"
+                            :settings="{ width: '100%' }"
+                        >
+                            <option value="">Semua Divisi / Departemen</option>
+                            <option
+                                v-for="value in data_filtered_jabatan"
+                                :value="value"
+                            >
+                                {{ value }}
+                            </option>
+                        </Select2>
+                    </div>
+                    <div class="filter-right">
+                        <Button
+                            variant="secondary"
+                            class="filter-btn"
+                            @click="filteredData"
+                        >
+                            <svg
+                                class="filter-icon"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
+                                <path d="M3 5h18l-7 8v5l-4 2v-7L3 5z"></path>
+                            </svg>
+                            <span>Filter</span>
+                        </Button>
+                    </div>
+                </div>
                 <div class="table-responsive-custom">
                     <table class="table">
                         <thead>
@@ -80,7 +129,9 @@
                                 <th class="col-name">Nama</th>
                                 <th class="col-nik">NIK</th>
                                 <th class="col-perusahaan">Perusahaan</th>
-                                <th class="col-position">Jabatan</th>
+                                <th class="col-position">
+                                    Divisi / Departemen
+                                </th>
                                 <th class="col-status">Awal Kontrak</th>
                                 <th class="col-status">Akhir Kontrak</th>
                                 <th class="col-action">Detail</th>
@@ -235,6 +286,7 @@
 <script>
 import Button from '@/components/Button.vue';
 import DropdownButton from '@/components/DropdownButton.vue';
+import Select2 from '@/components/Select2.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
 import { router } from '@inertiajs/vue3';
@@ -249,6 +301,7 @@ export default {
         DropdownButton,
         ImportGaji,
         ImportKaryawan,
+        Select2,
     },
     data() {
         return {
@@ -264,6 +317,12 @@ export default {
 
             showImportGajiModal: false,
             showImportKaryawanModal: false,
+
+            data_filtered_perusahaan: [],
+            data_filtered_jabatan: [],
+
+            filtered_jabatan: '',
+            filtered_perusahaan: '',
         };
     },
 
@@ -319,6 +378,7 @@ export default {
     },
     mounted() {
         this.fetchEmployees();
+        this.getFilteredPerusahaanDanJabatan();
     },
     search: {
         handler() {
@@ -337,6 +397,10 @@ export default {
         showSuccess() {
             this.triggerAlertHtml('success', '<b>Berhasil</b>', 3000);
         },
+        filteredData() {
+            this.fetchEmployees();
+        },
+
         fiturBelumTersedia() {
             triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
         },
@@ -350,6 +414,8 @@ export default {
                         per_page: this.perPage,
                         search: this.search,
                         status_active: 1,
+                        filtered_jabatan: this.filtered_jabatan,
+                        filtered_perusahaan: this.filtered_perusahaan,
                     },
                 });
 
@@ -358,6 +424,27 @@ export default {
                 this.perPage = res.data.meta.per_page;
                 this.totalItems = res.data.meta.total;
                 this.totalPages = res.data.meta.last_page;
+            } catch (err) {
+                console.error(err);
+                triggerAlert('error', 'Gagal memuat data karyawan.');
+            } finally {
+                this.loadingUsers = false;
+            }
+        },
+
+        async getFilteredPerusahaanDanJabatan() {
+            this.loadingUsers = true;
+
+            try {
+                const res = await axios.get(
+                    '/referensi/get-filter_perusahaan_dan_jabatan',
+                    {
+                        params: {},
+                    },
+                );
+
+                this.data_filtered_perusahaan = res.data.perusahaan;
+                this.data_filtered_jabatan = res.data.position;
             } catch (err) {
                 console.error(err);
                 triggerAlert('error', 'Gagal memuat data karyawan.');
@@ -415,6 +502,12 @@ export default {
             try {
                 const response = await axios.get('/export/karyawan', {
                     responseType: 'blob',
+                    params: {
+                        search: this.search,
+                        status_active: 1,
+                        filtered_jabatan: this.filtered_jabatan,
+                        filtered_perusahaan: this.filtered_perusahaan,
+                    },
                 });
 
                 const blob = new Blob([response.data], {

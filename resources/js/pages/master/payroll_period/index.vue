@@ -40,17 +40,15 @@
                 </div>
             </div>
             <div class="card">
-                <div class="card-header">
-                    <div class="filter-bar">
-                        <div class="filter-right">
-                            <label for="">Filter Status</label>
-                            <select v-model="status" class="filter-input">
-                                <option value="">Semua Status</option>
-                                <option value="open">Terbuka</option>
-                                <option value="closed">Ditutup</option>
-                                <option value="processed">Diproses</option>
-                            </select>
-                        </div>
+                <div class="filter-bar">
+                    <div class="filter-right">
+                        <label for="">Filter Status</label>
+                        <select v-model="status" class="filter-input">
+                            <option value="">Semua Status</option>
+                            <option value="open">Terbuka</option>
+                            <option value="closed">Ditutup</option>
+                            <option value="processed">Diproses</option>
+                        </select>
                     </div>
                 </div>
 

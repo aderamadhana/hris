@@ -24,3 +24,13 @@ declare module 'vue' {
         $headManager: ReturnType<typeof createHeadManager>;
     }
 }
+
+export {}
+
+declare global {
+  interface Window {
+    $: any
+    jQuery: any
+  }
+}
+

@@ -34,6 +34,8 @@ return new class extends Migration
             $table->string('no_kk', 25)->nullable();
             $table->string('no_wa', 100)->nullable();
             $table->string('bpjs_tk', 100)->nullable();
+            $table->string('jenis_bpjs_tk', 100)->nullable();
+            $table->string('status_bpjs_ks', 100)->nullable();
             $table->string('x', 100)->nullable();
             $table->string('bpjs_kes', 100)->nullable();
             $table->string('x_ks', 100)->nullable();
@@ -78,6 +80,7 @@ return new class extends Migration
             $table->foreignId('employee_id')->constrained()->cascadeOnDelete();
 
             $table->date('tanggal_mcu')->nullable();
+            $table->string('kesimpulan_hasil_mcu')->nullable();
 
             $table->integer('tinggi_badan')->nullable(); // cm
             $table->integer('berat_badan')->nullable(); // kg
@@ -137,15 +140,14 @@ return new class extends Migration
 
             $table->string('pas_foto')->nullable();
             $table->string('dokumen_kk')->nullable();
-            $table->string('dokumen_sertifikat_vaksin')->nullable();
-            $table->string('dokumen_formulir_bpjs_tk')->nullable();
             $table->string('dokumen_surat_pengalaman_kerja')->nullable();
-            $table->string('dokumen_kartu_garda_pratama')->nullable();
             $table->string('dokumen_ktp')->nullable();
             $table->string('dokumen_bpjs_ketenagakerjaan')->nullable();
             $table->string('dokumen_sio_forklift')->nullable();
             $table->string('dokumen_formulir_bpjs_kesehatan')->nullable();
-            $table->string('dokumen_sim_b1')->nullable();
+            $table->string('dokumen_ijazah_terakhir')->nullable();
+            $table->string('dokumen_skck')->nullable();
+            $table->string('dokumen_lisensi')->nullable();
 
             $table->timestamps();
         });

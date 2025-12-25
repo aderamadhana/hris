@@ -171,6 +171,7 @@ Route::middleware('auth')->group(function () {
 
 Route::prefix('referensi')->group(function () {
     Route::get('/get-payroll_periods', [ReferensiController::class, 'getPayrollPeriod']);
+    Route::get('/get-filter_perusahaan_dan_jabatan', [ReferensiController::class, 'getFilterPerusahaanDanJabatan']);
     Route::get('/get-payroll-periods-by-employee-id/{id}', [ReferensiController::class, 'getPayrollPeriodByEmployeeId']);
 });
 

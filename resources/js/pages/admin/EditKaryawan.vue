@@ -37,6 +37,7 @@
                                                 type="text"
                                                 v-model="formEmployee.nama"
                                                 class="form-input"
+                                                placeholder="Contoh: Budi Santoso"
                                                 required
                                             />
                                         </div>
@@ -50,6 +51,8 @@
                                                 type="text"
                                                 v-model="formEmployee.nrp"
                                                 class="form-input"
+                                                placeholder="Contoh: 123456"
+                                                inputmode="numeric"
                                                 required
                                             />
                                         </div>
@@ -64,7 +67,9 @@
                                                 class="form-input"
                                                 required
                                             >
-                                                <option value="">Pilih</option>
+                                                <option value="" disabled>
+                                                    Pilih jenis kelamin
+                                                </option>
                                                 <option value="Laki-laki">
                                                     Laki-laki
                                                 </option>
@@ -84,6 +89,7 @@
                                                     formEmployee.tempat_lahir
                                                 "
                                                 class="form-input"
+                                                placeholder="Contoh: Jakarta"
                                             />
                                         </div>
 
@@ -97,6 +103,7 @@
                                                     formEmployee.tanggal_lahir
                                                 "
                                                 class="form-input"
+                                                placeholder="Pilih tanggal lahir"
                                             />
                                         </div>
 
@@ -110,7 +117,9 @@
                                                 "
                                                 class="form-input"
                                             >
-                                                <option value="">Pilih</option>
+                                                <option value="" disabled>
+                                                    Pilih status perkawinan
+                                                </option>
                                                 <option value="Belum Kawin">
                                                     Belum Kawin
                                                 </option>
@@ -131,7 +140,9 @@
                                                 v-model="formEmployee.agama"
                                                 class="form-input"
                                             >
-                                                <option value="">Pilih</option>
+                                                <option value="" disabled>
+                                                    Pilih agama
+                                                </option>
                                                 <option value="Islam">
                                                     Islam
                                                 </option>
@@ -163,6 +174,7 @@
                                                     formEmployee.kewarganegaraan
                                                 "
                                                 class="form-input"
+                                                placeholder="Contoh: Indonesia"
                                             />
                                         </div>
                                     </div>
@@ -176,30 +188,36 @@
 
                                     <div class="detail-grid two-col">
                                         <div class="form-group">
-                                            <label class="field-label"
-                                                >No. KTP
-                                                <span class="required"
-                                                    >*</span
-                                                ></label
-                                            >
+                                            <label class="field-label">
+                                                No. KTP
+                                                <span class="required">*</span>
+                                            </label>
                                             <input
                                                 type="text"
                                                 v-model="formAlamat.ktp"
                                                 class="form-input"
+                                                placeholder="Contoh: 3174xxxxxxxxxxxx (16 digit)"
+                                                inputmode="numeric"
+                                                maxlength="16"
+                                                autocomplete="off"
                                                 required
                                             />
                                         </div>
-
-                                        <!-- <div class="form-group">
-                                            <label class="field-label"
-                                                >No. HP</label
-                                            >
+                                        <div class="form-group">
+                                            <label class="field-label">
+                                                No. KK
+                                            </label>
                                             <input
-                                                type="tel"
-                                                v-model="formAlamat.phone"
+                                                type="text"
+                                                v-model="formEmployee.kk"
                                                 class="form-input"
+                                                placeholder="Contoh: 3174xxxxxxxxxxxx (16 digit)"
+                                                inputmode="numeric"
+                                                maxlength="16"
+                                                autocomplete="off"
+                                                required
                                             />
-                                        </div> -->
+                                        </div>
 
                                         <div class="form-group">
                                             <label class="field-label"
@@ -209,6 +227,9 @@
                                                 type="tel"
                                                 v-model="formEmployee.no_wa"
                                                 class="form-input"
+                                                placeholder="Contoh: 08xxxxxxxxxx / +62xxxxxxxxxx"
+                                                inputmode="tel"
+                                                autocomplete="tel"
                                             />
                                         </div>
 
@@ -220,6 +241,8 @@
                                                 type="email"
                                                 v-model="formEmployee.email"
                                                 class="form-input"
+                                                placeholder="Contoh: nama@domain.com"
+                                                autocomplete="email"
                                             />
                                         </div>
 
@@ -231,6 +254,8 @@
                                                 type="text"
                                                 v-model="formAlamat.domisili"
                                                 class="form-input"
+                                                placeholder="Contoh: Jl. Sudirman No. 10, RT/RW, Kelurahan"
+                                                autocomplete="street-address"
                                             />
                                         </div>
 
@@ -242,6 +267,8 @@
                                                 type="text"
                                                 v-model="formAlamat.kota"
                                                 class="form-input"
+                                                placeholder="Contoh: Jakarta Selatan"
+                                                autocomplete="address-level2"
                                             />
                                         </div>
                                     </div>
@@ -262,6 +289,9 @@
                                                 type="text"
                                                 v-model="formEmployee.bpjs_tk"
                                                 class="form-input"
+                                                placeholder="Nomor BPJS TK (jika ada)"
+                                                inputmode="numeric"
+                                                autocomplete="off"
                                             />
                                         </div>
 
@@ -273,12 +303,42 @@
                                                 type="text"
                                                 v-model="formEmployee.bpjs_kes"
                                                 class="form-input"
+                                                placeholder="Nomor BPJS Kesehatan (jika ada)"
+                                                inputmode="numeric"
+                                                autocomplete="off"
                                             />
                                         </div>
 
                                         <div class="form-group">
                                             <label class="field-label"
-                                                >Faskes</label
+                                                >Jenis Kepesertaan BPJS
+                                                TK</label
+                                            >
+                                            <select
+                                                v-model="
+                                                    formEmployee.jenis_bpjs_tk
+                                                "
+                                                class="form-input"
+                                            >
+                                                <option value="" disabled>
+                                                    Pilih jenis kepesertaan
+                                                </option>
+                                                <option value="PU">
+                                                    Penerima Upah (PU)
+                                                </option>
+                                                <option value="BPU">
+                                                    Bukan Penerima Upah (BPU)
+                                                </option>
+                                                <option value="JAKON">
+                                                    Jasa Konstruksi
+                                                </option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="field-label"
+                                                >Lokasi Kepesertaan BPJS
+                                                KS</label
                                             >
                                             <input
                                                 type="text"
@@ -286,7 +346,35 @@
                                                     formEmployee.nama_faskes
                                                 "
                                                 class="form-input"
+                                                placeholder="Contoh: Jakarta Selatan"
+                                                autocomplete="off"
                                             />
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="field-label"
+                                                >Status Kepesertaan BPJS
+                                                KS</label
+                                            >
+                                            <select
+                                                v-model="
+                                                    formEmployee.status_bpjs_ks
+                                                "
+                                                class="form-input"
+                                            >
+                                                <option value="" disabled>
+                                                    Pilih status kepesertaan
+                                                </option>
+                                                <option value="aktif">
+                                                    Aktif
+                                                </option>
+                                                <option value="nonaktif">
+                                                    Nonaktif
+                                                </option>
+                                                <option value="belum_terdaftar">
+                                                    Belum Terdaftar
+                                                </option>
+                                            </select>
                                         </div>
 
                                         <div class="form-group">
@@ -297,6 +385,8 @@
                                                 type="text"
                                                 v-model="formEmployee.no_skck"
                                                 class="form-input"
+                                                placeholder="Contoh: SKCK/123/ABC/2025"
+                                                autocomplete="off"
                                             />
                                         </div>
 
@@ -317,7 +407,6 @@
                                             <label class="field-label"
                                                 >Jenis Lisensi</label
                                             >
-
                                             <select
                                                 v-model="
                                                     formEmployee.jenis_lisensi
@@ -325,20 +414,22 @@
                                                 class="form-input"
                                             >
                                                 <option disabled value="">
-                                                    -- Pilih Jenis Lisensi --
+                                                    Pilih jenis lisensi
                                                 </option>
-                                                <option value="A">A</option>
-                                                <option value="B1">B1</option>
-                                                <option value="B2">B2</option>
-                                                <option value="C">C</option>
-                                                <option value="SIM A">
-                                                    SIM A
+                                                <option value="SIM A / B1 / B2">
+                                                    SIM A / B1 / B2
                                                 </option>
-                                                <option value="SIM B1">
-                                                    SIM B1
+                                                <option value="Forklift I / II">
+                                                    Forklift I / II
                                                 </option>
-                                                <option value="SIM B2">
-                                                    SIM B2
+                                                <option value="AK3U">
+                                                    AK3U
+                                                </option>
+                                                <option value="Loader">
+                                                    Loader
+                                                </option>
+                                                <option value="Balakar">
+                                                    Balakar
                                                 </option>
                                             </select>
                                         </div>
@@ -353,6 +444,8 @@
                                                     formEmployee.no_lisensi
                                                 "
                                                 class="form-input"
+                                                placeholder="Nomor lisensi / sertifikat"
+                                                autocomplete="off"
                                             />
                                         </div>
 
@@ -407,7 +500,7 @@
                                             class="form-input"
                                         >
                                             <option disabled value="">
-                                                -- Pilih Jenjang Pendidikan --
+                                                Pilih jenjang pendidikan
                                             </option>
                                             <option value="TK">TK</option>
                                             <option value="SD">SD</option>
@@ -427,6 +520,7 @@
                                             </option>
                                         </select>
                                     </div>
+
                                     <div class="form-group">
                                         <label class="field-label"
                                             >Jurusan</label
@@ -435,8 +529,10 @@
                                             type="text"
                                             v-model="formPendidikan.jurusan"
                                             class="form-input"
+                                            placeholder="Contoh: Teknik Informatika"
                                         />
                                     </div>
+
                                     <div class="form-group">
                                         <label class="field-label"
                                             >Sekolah</label
@@ -445,8 +541,10 @@
                                             type="text"
                                             v-model="formPendidikan.sekolah"
                                             class="form-input"
+                                            placeholder="Contoh: SMK Negeri 1 Jakarta"
                                         />
                                     </div>
+
                                     <div class="form-group">
                                         <label class="field-label"
                                             >Tahun Lulus</label
@@ -455,6 +553,7 @@
                                             type="number"
                                             v-model="formPendidikan.tahun_lulus"
                                             class="form-input"
+                                            placeholder="Contoh: 2020"
                                             min="1900"
                                             max="2100"
                                         />
@@ -532,8 +631,10 @@
                                             type="text"
                                             v-model="formPekerjaan.jabatan"
                                             class="form-input"
+                                            placeholder="Contoh: Operational"
                                         />
                                     </div>
+
                                     <div class="form-group">
                                         <label class="field-label"
                                             >Perusahaan</label
@@ -542,18 +643,22 @@
                                             type="text"
                                             v-model="formPekerjaan.perusahaan"
                                             class="form-input"
+                                            placeholder="Contoh: PT Maju Jaya Sejahtera"
                                         />
                                     </div>
+
                                     <div class="form-group">
                                         <label class="field-label"
-                                            >Bagian</label
+                                            >Divisi / Departemen</label
                                         >
                                         <input
                                             type="text"
                                             v-model="formPekerjaan.bagian"
                                             class="form-input"
+                                            placeholder="Contoh: Operasional / HR / Finance"
                                         />
                                     </div>
+
                                     <div class="form-group">
                                         <label class="field-label"
                                             >No. Kontrak</label
@@ -562,24 +667,14 @@
                                             type="text"
                                             v-model="formPekerjaan.no_kontrak"
                                             class="form-input"
+                                            placeholder="Contoh: PKWT/001/2025"
                                         />
                                     </div>
 
-                                    <div class="form-group">
-                                        <label class="field-label"
-                                            >Cost Center</label
-                                        >
-                                        <input
-                                            type="text"
-                                            v-model="formPekerjaan.cost_center"
-                                            class="form-input"
-                                        />
-                                    </div>
                                     <div class="form-group">
                                         <label class="field-label"
                                             >Jenis Kontrak</label
                                         >
-
                                         <select
                                             v-model="
                                                 formPekerjaan.jenis_kontrak
@@ -587,7 +682,7 @@
                                             class="form-input"
                                         >
                                             <option disabled value="">
-                                                -- Pilih Jenis Kontrak --
+                                                Pilih jenis kontrak
                                             </option>
                                             <option value="PKWT">
                                                 PKWT (Kontrak)
@@ -618,6 +713,7 @@
                                             class="form-input"
                                         />
                                     </div>
+
                                     <div class="form-group">
                                         <label class="field-label"
                                             >Selesai</label
@@ -637,8 +733,10 @@
                                             type="text"
                                             v-model="formPekerjaan.jenis_kerja"
                                             class="form-input"
+                                            placeholder="Contoh: Full-time / Part-time"
                                         />
                                     </div>
+
                                     <div class="form-group">
                                         <label class="field-label"
                                             >Pola Kerja</label
@@ -647,6 +745,7 @@
                                             type="text"
                                             v-model="formPekerjaan.pola_kerja"
                                             class="form-input"
+                                            placeholder="Contoh: WFO / WFH / Hybrid"
                                         />
                                     </div>
 
@@ -658,13 +757,14 @@
                                             type="text"
                                             v-model="formPekerjaan.hari_kerja"
                                             class="form-input"
+                                            placeholder="Contoh: Senin–Jumat"
                                         />
                                     </div>
+
                                     <div class="form-group">
                                         <label class="field-label"
                                             >Status Kontrak</label
                                         >
-
                                         <select
                                             v-model="
                                                 formPekerjaan.status_kontrak
@@ -672,7 +772,7 @@
                                             class="form-input"
                                         >
                                             <option disabled value="">
-                                                -- Pilih Status Kontrak --
+                                                Pilih status kontrak
                                             </option>
                                             <option value="Aktif">Aktif</option>
                                             <option value="Tidak Aktif">
@@ -720,8 +820,7 @@
                                                 </div>
                                                 <div class="job-company">
                                                     {{ job.perusahaan || '-' }}
-                                                    –
-                                                    {{ job.bagian || '-' }}
+                                                    – {{ job.bagian || '-' }}
                                                 </div>
                                                 <div class="job-meta">
                                                     No. Kontrak:
@@ -730,6 +829,7 @@
                                                     {{ job.cost_center || '-' }}
                                                 </div>
                                             </div>
+
                                             <div class="job-period">
                                                 {{ job.mulai || '-' }} –
                                                 {{ job.selesai || 'Sekarang' }}
@@ -792,19 +892,20 @@
                                             type="text"
                                             v-model="formKeluarga.nama"
                                             class="form-input"
+                                            placeholder="Contoh: Siti Aminah"
                                         />
                                     </div>
+
                                     <div class="form-group">
                                         <label class="field-label"
                                             >Hubungan</label
                                         >
-
                                         <select
                                             v-model="formKeluarga.hubungan"
                                             class="form-input"
                                         >
                                             <option disabled value="">
-                                                -- Pilih Hubungan Keluarga --
+                                                Pilih hubungan keluarga
                                             </option>
                                             <option value="Ayah">Ayah</option>
                                             <option value="Ibu">Ibu</option>
@@ -839,16 +940,11 @@
                                             placeholder="Contoh: Jakarta, 01-01-2000"
                                         />
                                     </div>
+
                                     <!-- <div class="form-group">
-                                        <label class="field-label"
-                                            >No. HP</label
-                                        >
-                                        <input
-                                            type="tel"
-                                            v-model="formKeluarga.no_hp"
-                                            class="form-input"
-                                        />
-                                    </div> -->
+          <label class="field-label">No. HP</label>
+          <input type="tel" v-model="formKeluarga.no_hp" class="form-input" placeholder="Contoh: 08xxxxxxxxxx" />
+        </div> -->
                                 </div>
 
                                 <div class="form-actions">
@@ -921,6 +1017,7 @@
                                     <h4 class="form-section-title">
                                         Data Fisik
                                     </h4>
+
                                     <div class="detail-grid two-col">
                                         <div class="form-group">
                                             <label class="field-label"
@@ -932,6 +1029,7 @@
                                                     formKesehatan.tinggi_badan
                                                 "
                                                 class="form-input"
+                                                placeholder="Contoh: 170"
                                             />
                                         </div>
 
@@ -945,6 +1043,7 @@
                                                     formKesehatan.berat_badan
                                                 "
                                                 class="form-input"
+                                                placeholder="Contoh: 65"
                                             />
                                         </div>
 
@@ -958,6 +1057,7 @@
                                                     formKesehatan.gol_darah
                                                 "
                                                 class="form-input"
+                                                placeholder="Contoh: A / B / AB / O"
                                             />
                                         </div>
 
@@ -986,6 +1086,7 @@
                                     <h4 class="form-section-title">
                                         Riwayat & Screening
                                     </h4>
+
                                     <div class="detail-grid two-col">
                                         <div
                                             class="form-group"
@@ -999,33 +1100,38 @@
                                                     formKesehatan.riwayat_penyakit
                                                 "
                                                 class="form-input"
+                                                placeholder="Contoh: Asma sejak kecil, alergi obat tertentu, dll."
                                             ></textarea>
                                         </div>
 
                                         <div class="form-group">
                                             <label class="field-label"
-                                                >Hasil Drug Test</label
-                                            >
+                                                >Tanggal Pemeriksaan Medical
+                                                Check Up
+                                            </label>
                                             <input
-                                                type="text"
+                                                type="date"
                                                 v-model="
-                                                    formKesehatan.hasil_drug_test
+                                                    formKesehatan.tanggal_mcu
                                                 "
                                                 class="form-input"
                                             />
                                         </div>
-
-                                        <div class="form-group">
+                                        <div
+                                            class="form-group"
+                                            style="grid-column: 1 / -1"
+                                        >
                                             <label class="field-label"
-                                                >Tanggal Drug Test</label
+                                                >Kesimpulan Hasil Medical Check
+                                                Up</label
                                             >
-                                            <input
-                                                type="date"
+                                            <textarea
                                                 v-model="
-                                                    formKesehatan.tanggal_drug_test
+                                                    formKesehatan.kesimpulan_hasil_mcu
                                                 "
                                                 class="form-input"
-                                            />
+                                                placeholder="Contoh: Asma sejak kecil, alergi obat tertentu, dll."
+                                            ></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -1034,6 +1140,7 @@
                                     <h4 class="form-section-title">
                                         Hasil Lab & MCU
                                     </h4>
+
                                     <div class="detail-grid two-col">
                                         <div class="form-group">
                                             <label class="field-label"
@@ -1043,8 +1150,10 @@
                                                 type="text"
                                                 v-model="formKesehatan.darah"
                                                 class="form-input"
+                                                placeholder="Contoh: Normal"
                                             />
                                         </div>
+
                                         <div class="form-group">
                                             <label class="field-label"
                                                 >Urine</label
@@ -1053,8 +1162,10 @@
                                                 type="text"
                                                 v-model="formKesehatan.urine"
                                                 class="form-input"
+                                                placeholder="Contoh: Normal"
                                             />
                                         </div>
+
                                         <div class="form-group">
                                             <label class="field-label"
                                                 >Fungsi Hati</label
@@ -1063,8 +1174,10 @@
                                                 type="text"
                                                 v-model="formKesehatan.f_hati"
                                                 class="form-input"
+                                                placeholder="Contoh: Normal"
                                             />
                                         </div>
+
                                         <div class="form-group">
                                             <label class="field-label"
                                                 >Gula Darah</label
@@ -1075,8 +1188,10 @@
                                                     formKesehatan.gula_darah
                                                 "
                                                 class="form-input"
+                                                placeholder="Contoh: Normal"
                                             />
                                         </div>
+
                                         <div class="form-group">
                                             <label class="field-label"
                                                 >Ginjal</label
@@ -1085,8 +1200,10 @@
                                                 type="text"
                                                 v-model="formKesehatan.ginjal"
                                                 class="form-input"
+                                                placeholder="Contoh: Normal"
                                             />
                                         </div>
+
                                         <div class="form-group">
                                             <label class="field-label"
                                                 >Thorax</label
@@ -1095,6 +1212,7 @@
                                                 type="text"
                                                 v-model="formKesehatan.thorax"
                                                 class="form-input"
+                                                placeholder="Contoh: Normal"
                                             />
                                         </div>
                                     </div>
@@ -1104,6 +1222,7 @@
                                     <h4 class="form-section-title">
                                         Tanda Vital & Mata
                                     </h4>
+
                                     <div class="detail-grid two-col">
                                         <div class="form-group">
                                             <label class="field-label"
@@ -1113,8 +1232,10 @@
                                                 type="text"
                                                 v-model="formKesehatan.tensi"
                                                 class="form-input"
+                                                placeholder="Contoh: 120/80"
                                             />
                                         </div>
+
                                         <div class="form-group">
                                             <label class="field-label"
                                                 >Nadi</label
@@ -1123,8 +1244,10 @@
                                                 type="text"
                                                 v-model="formKesehatan.nadi"
                                                 class="form-input"
+                                                placeholder="Contoh: 80 bpm"
                                             />
                                         </div>
+
                                         <div class="form-group">
                                             <label class="field-label"
                                                 >Mata OD</label
@@ -1133,8 +1256,10 @@
                                                 type="text"
                                                 v-model="formKesehatan.od"
                                                 class="form-input"
+                                                placeholder="Contoh: 6/6"
                                             />
                                         </div>
+
                                         <div class="form-group">
                                             <label class="field-label"
                                                 >Mata OS</label
@@ -1143,6 +1268,7 @@
                                                 type="text"
                                                 v-model="formKesehatan.os"
                                                 class="form-input"
+                                                placeholder="Contoh: 6/6"
                                             />
                                         </div>
                                     </div>
@@ -1351,7 +1477,7 @@ export default {
                 kewarganegaraan: '',
                 status: '1',
 
-                // Data dari employee_personals table
+                // Data personal (sekarang langsung di employees table, bukan employee_personals)
                 no_wa: '',
                 bpjs_tk: '',
                 bpjs_kes: '',
@@ -1365,16 +1491,17 @@ export default {
             },
 
             formAlamat: {
-                ktp: '',
-                phone: '',
-                domisili: '',
-                kota: '',
+                // Data alamat (sekarang langsung di employees table, bukan employee_addresses)
+                ktp: '', // no_ktp di employees table
+                phone: '', // no_wa di employees table (duplikat dari formEmployee.no_wa)
+                domisili: '', // alamat_lengkap_domisili di employees table
+                kota: '', // kota_domisili di employees table
             },
 
             formPendidikan: {
                 jenjang: '',
                 jurusan: '',
-                sekolah: '',
+                sekolah: '', // akan di-map ke 'institusi' saat submit
                 tahun_lulus: '',
             },
             listPendidikan: [],
@@ -1382,23 +1509,23 @@ export default {
             formPekerjaan: {
                 jabatan: '',
                 perusahaan: '',
-                bagian: '',
+                bagian: '', // akan di-map ke 'penempatan' saat submit
                 no_kontrak: '',
                 cost_center: '',
                 jenis_kontrak: '',
-                mulai: '',
-                selesai: '',
+                mulai: '', // akan di-map ke 'tgl_awal_kerja' saat submit
+                selesai: '', // akan di-map ke 'tgl_akhir_kerja' saat submit
                 jenis_kerja: '',
                 pola_kerja: '',
                 hari_kerja: '',
-                status_kontrak: '',
+                status_kontrak: '', // akan di-map ke 'status' saat submit
             },
             listPekerjaan: [],
 
             formKeluarga: {
                 nama: '',
                 hubungan: '',
-                ttl: '',
+                ttl: '', // format: "Jakarta, 01-01-2000" - akan di-split menjadi tempat_lahir dan tanggal_lahir
                 no_hp: '',
             },
             listKeluarga: [],
@@ -1424,6 +1551,7 @@ export default {
             },
 
             formDokumen: {
+                // Boolean flags untuk indicate apakah dokumen sudah ada (untuk edit mode)
                 pas_foto: false,
                 ktp: false,
                 kk: false,
@@ -1453,6 +1581,7 @@ export default {
                 { key: 'sim_b1', label: 'SIM B1' },
                 { key: 'kartu_garda', label: 'Kartu Garda Pratama' },
             ],
+
             deleteExistingDokumen: {},
             dokumenToDelete: [],
         };
@@ -1469,7 +1598,7 @@ export default {
     methods: {
         // ====== HYDRATE (DETAIL -> FORM) ======
         async getDataKaryawan() {
-            axios
+            await axios
                 .get(`/employee/${this.employee_id}`)
                 .then(({ data }) => {
                     /* ===============================
@@ -1486,28 +1615,28 @@ export default {
                         kewarganegaraan: data.kewarganegaraan ?? '',
                         status: data.status_active ?? '1',
 
-                        no_wa: data.personal?.no_wa ?? '',
-                        bpjs_tk: data.personal?.bpjs_tk ?? '',
-                        bpjs_kes: data.personal?.bpjs_kes ?? '',
-                        nama_faskes: data.personal?.nama_faskes ?? '',
-                        email: data.personal?.email ?? '',
-                        no_skck: data.personal?.no_skck ?? '',
-                        masa_berlaku_skck:
-                            data.personal?.masa_berlaku_skck ?? '',
-                        jenis_lisensi: data.personal?.jenis_lisensi ?? '',
-                        no_lisensi: data.personal?.no_lisensi ?? '',
-                        masa_berlaku_lisensi:
-                            data.personal?.masa_berlaku_lisensi ?? '',
+                        // Data personal (sekarang langsung di employees table)
+                        no_wa: data.no_wa ?? '',
+                        bpjs_tk: data.bpjs_tk ?? '',
+                        bpjs_kes: data.bpjs_kes ?? '',
+                        nama_faskes: data.nama_faskes ?? '',
+                        email: data.email ?? '',
+                        no_skck: data.no_skck ?? '',
+                        masa_berlaku_skck: data.masa_berlaku_skck ?? '',
+                        jenis_lisensi: data.jenis_lisensi ?? '',
+                        no_lisensi: data.no_lisensi ?? '',
+                        masa_berlaku_lisensi: data.masa_berlaku_lisensi ?? '',
                     });
 
                     /* ===============================
              | FORM ALAMAT
              ===============================*/
                     Object.assign(this.formAlamat, {
-                        ktp: data.personal?.no_ktp ?? '',
-                        phone: data.personal?.no_hp ?? '',
-                        domisili: data.address?.alamat_lengkap ?? '',
-                        kota: data.address?.kota ?? '',
+                        // Data alamat sekarang langsung di employees table
+                        ktp: data.no_ktp ?? '',
+                        phone: data.no_wa ?? '',
+                        domisili: data.alamat_lengkap_domisili ?? '',
+                        kota: data.kota_domisili ?? '',
                     });
 
                     /* ===============================
@@ -1516,7 +1645,7 @@ export default {
                     this.listPendidikan = (data.educations ?? []).map((p) => ({
                         jenjang: p.jenjang ?? '',
                         jurusan: p.jurusan ?? '',
-                        sekolah: p.sekolah_asal ?? '',
+                        sekolah: p.institusi ?? p.sekolah_asal ?? '',
                         tahun_lulus: p.tahun_lulus ?? '',
                     }));
 
@@ -1535,7 +1664,7 @@ export default {
                         jenis_kerja: j.jenis_kerja ?? '',
                         pola_kerja: j.pola_kerja ?? '',
                         hari_kerja: j.hari_kerja ?? '',
-                        status_kontrak: j.keterangan_status ?? j.status ?? '',
+                        status_kontrak: j.status ?? j.keterangan_status ?? '',
                     }));
 
                     /* ===============================
@@ -1607,7 +1736,6 @@ export default {
                     this.loading = false;
                 });
         },
-
         // ====== SUBMIT PER TAB (optional) ======
         async handleSubmitKaryawan() {
             try {

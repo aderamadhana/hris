@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\{
     PayrollPeriod,
-    PayrollSummary
+    PayrollSummary,
+    EmployeeEmployment
 };
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -94,6 +95,20 @@ class ReferensiController extends Controller
             'payroll_periods' => $payroll_periods,
         ]);
 
+    }
+
+    public function getFilterPerusahaanDanJabatan(Request $request){
+        $perusahaan = EmployeeEmployment::distinct()
+            ->pluck('perusahaan');
+
+        $penempatan = EmployeeEmployment::distinct()
+            ->pluck('penempatan');
+
+            
+        return response()->json([
+            'perusahaan' => $perusahaan,
+            'position' => $penempatan,
+        ]);
     }
 
 }

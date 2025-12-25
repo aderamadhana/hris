@@ -40,6 +40,8 @@ class EmployeeController extends Controller
 
         $search = trim($request->query('search'));
         $status_active = trim($request->query('status_active'));
+        $filtered_jabatan = trim($request->query('filtered_jabatan'));
+        $filtered_perusahaan = trim($request->query('filtered_perusahaan'));
         $id_dummy = [1,2];
 
         $employees = Employee::with(['employments'])
@@ -53,9 +55,20 @@ class EmployeeController extends Controller
                     });
                 });
             })
+            // FILTER jabatan + perusahaan (di employee_employments)
+            ->when($filtered_jabatan || $filtered_perusahaan, function ($query) use ($filtered_jabatan, $filtered_perusahaan) {
+                $query->whereHas('employments', function ($qe) use ($filtered_jabatan, $filtered_perusahaan) {
+                    $qe->when($filtered_jabatan, function ($q) use ($filtered_jabatan) {
+                        $q->where('penempatan', $filtered_jabatan);
+                    })
+                    ->when($filtered_perusahaan, function ($q) use ($filtered_perusahaan) {
+                        $q->where('perusahaan', $filtered_perusahaan);
+                    });
+                });
+            })
             ->whereNotIn('id', $id_dummy)
             ->where('status_active', $status_active)
-            ->orderBy('nama')
+            ->orderBy('id', 'desc')
             ->paginate($perPage);
 
         $data = $employees->getCollection()->map(function ($e) {
@@ -304,9 +317,6 @@ class EmployeeController extends Controller
                 'bpjs_tk' => $employee->documents->dokumen_bpjs_ketenagakerjaan
                     ? url(Storage::url($employee->documents->dokumen_bpjs_ketenagakerjaan))
                     : null,
-                'vaksin' => $employee->documents->dokumen_sertifikat_vaksin
-                    ? url(Storage::url($employee->documents->dokumen_sertifikat_vaksin))
-                    : null,
                 'sio_forklift' => $employee->documents->dokumen_sio_forklift
                     ? url(Storage::url($employee->documents->dokumen_sio_forklift))
                     : null,
@@ -447,32 +457,20 @@ class EmployeeController extends Controller
             'nrp' => 'required|string|max:30|unique:employees,nrp',
             'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
             'email' => 'nullable|email|max:100',
-            'no_ktp' => 'required|string|max:25',
+            'no_ktp' => 'required|string|max:25|unique:employees,no_ktp',
         ]);
 
         DB::beginTransaction();
 
         try {
-            // 1. Create Employee (Main Table)
-            $employee = Employee::create([
-                'nrp' => $request->nrp,
-                'nama' => $request->nama,
-                'jenis_kelamin' => $request->jenis_kelamin,
-                'tempat_lahir' => $request->tempat_lahir,
-                'tanggal_lahir' => $request->tanggal_lahir,
-                'agama' => $request->agama,
-                'status_perkawinan' => $request->status_perkawinan,
-                'kewarganegaraan' => $request->kewarganegaraan,
-                'status_active' => $request->status_active ?? '1',
-            ]);
-
-            // 2. Create User if no_kontrak is provided AND status kontrak is 'aktif'
+            // 1. Cek apakah perlu create user
             $userId = null;
+            $shouldCreateUser = false;
+            
             if ($request->pekerjaan) {
                 $pekerjaan = json_decode($request->pekerjaan, true);
                 
                 // Cek apakah ada no_kontrak dengan status aktif
-                $shouldCreateUser = false;
                 foreach ($pekerjaan as $job) {
                     if (!empty($job['no_kontrak']) && 
                         !empty($job['status']) && 
@@ -481,63 +479,61 @@ class EmployeeController extends Controller
                         break;
                     }
                 }
+            }
 
-                // Create user jika memenuhi syarat: ada no_kontrak, status aktif, dan email tersedia
-                if ($shouldCreateUser && $request->email) {
-                    // Cek apakah email sudah terdaftar
-                    $existingUser = User::where('email', $request->email)->first();
-                    
-                    if (!$existingUser) {
-                        $user = User::create([
-                            'name' => $request->nama,
-                            'email' => $request->email,
-                            'password' => Hash::make($request->nrp), // Default password = NRP
-                            'role_id' => '2', // Default role
-                            'email_verified_at' => now(),
-                        ]);
-                        
-                        $userId = $user->id;
-                        
-                        // Update employee dengan user_id
-                        $employee->update(['user_id' => $userId]);
-                    } else {
-                        // Jika user sudah ada, link ke employee
-                        $userId = $existingUser->id;
-                        $employee->update(['user_id' => $userId]);
-                    }
+            // Create user jika memenuhi syarat
+            if ($shouldCreateUser && $request->email) {
+                $existingUser = User::where('email', $request->email)->first();
+                
+                if (!$existingUser) {
+                    $user = User::create([
+                        'name' => $request->nama,
+                        'email' => $request->email,
+                        'password' => Hash::make($request->nrp),
+                        'role_id' => '2',
+                        'email_verified_at' => now(),
+                    ]);
+                    $userId = $user->id;
+                } else {
+                    $userId = $existingUser->id;
                 }
             }
 
-            // 3. Create Employee Personal Data
-            EmployeePersonal::create([
-                'employee_id' => $employee->id,
+            // 2. Create Employee (semua data langsung di table employees)
+            $employee = Employee::create([
+                // Data utama
+                'nrp' => $request->nrp,
+                'user_id' => $userId,
+                'nama' => $request->nama,
+                'jenis_kelamin' => $request->jenis_kelamin,
+                'tempat_lahir' => $request->tempat_lahir,
+                'tanggal_lahir' => $request->tanggal_lahir,
+                'agama' => $request->agama,
+                'status_perkawinan' => $request->status_perkawinan,
+                'kewarganegaraan' => $request->kewarganegaraan,
+                'status_active' => $request->status_active ?? '1',
+                
+                // Data personal (dulunya di employee_personals)
                 'no_ktp' => $request->no_ktp,
                 'no_wa' => $request->no_wa,
                 'bpjs_tk' => $request->bpjs_tk,
                 'bpjs_kes' => $request->bpjs_kes,
+                'jenis_bpjs_tk' => $request->jenis_bpjs_tk,
                 'nama_faskes' => $request->nama_faskes,
+                'status_bpjs_ks' => $request->status_bpjs_ks,
                 'email' => $request->email,
                 'no_skck' => $request->no_skck,
                 'masa_berlaku_skck' => $request->masa_berlaku_skck,
                 'jenis_lisensi' => $request->jenis_lisensi,
                 'no_lisensi' => $request->no_lisensi,
                 'masa_berlaku_lisensi' => $request->masa_berlaku_lisensi,
-                'agama' => $request->agama,
-                'status_perkawinan' => $request->status_perkawinan,
-                'kewarganegaraan' => $request->kewarganegaraan,
+                
+                // Data alamat domisili (dulunya di employee_addresses)
+                'alamat_lengkap_domisili' => $request->alamat_lengkap_domisili,
+                'kota_domisili' => $request->kota_domisili,
             ]);
 
-            // 4. Create Employee Address
-            if ($request->alamat_lengkap) {
-                EmployeeAddress::create([
-                    'employee_id' => $employee->id,
-                    'alamat_lengkap' => $request->alamat_lengkap,
-                    'kota' => $request->kota,
-                    'tipe' => $request->tipe ?? 'Domisili',
-                ]);
-            }
-
-            // 5. Create Employee Education Records
+            // 3. Create Employee Education Records
             if ($request->pendidikan) {
                 $pendidikanList = json_decode($request->pendidikan, true);
                 
@@ -554,7 +550,7 @@ class EmployeeController extends Controller
                 }
             }
 
-            // 6. Create Employee Employment History
+            // 4. Create Employee Employment History
             if ($request->pekerjaan) {
                 $pekerjaanList = json_decode($request->pekerjaan, true);
                 
@@ -579,13 +575,12 @@ class EmployeeController extends Controller
                 }
             }
 
-            // 7. Create Employee Family Members
+            // 5. Create Employee Family Members
             if ($request->keluarga) {
                 $keluargaList = json_decode($request->keluarga, true);
                 
                 foreach ($keluargaList as $fam) {
                     if (!empty($fam['nama'])) {
-                        // Parse tanggal lahir dari format "01-01-2000" atau "2000-01-01"
                         $tanggalLahir = null;
                         if (!empty($fam['tanggal_lahir'])) {
                             $tanggalLahir = $this->parseDateString($fam['tanggal_lahir']);
@@ -602,7 +597,7 @@ class EmployeeController extends Controller
                 }
             }
 
-            // 8. Create Employee Health Record
+            // 6. Create Employee Health Record
             EmployeeHealth::create([
                 'employee_id' => $employee->id,
                 'tinggi_badan' => $request->tinggi_badan,
@@ -622,9 +617,11 @@ class EmployeeController extends Controller
                 'nadi' => $request->nadi,
                 'od' => $request->od,
                 'os' => $request->os,
+                'tanggal_mcu' => $request->tanggal_mcu,
+                'kesimpulan_hasil_mcu' => $request->kesimpulan_hasil_mcu,
             ]);
 
-            // 9. Handle Document Uploads
+            // 7. Handle Document Uploads
             $this->handleDocumentUploads($request, $employee->id);
 
             DB::commit();
@@ -853,15 +850,13 @@ class EmployeeController extends Controller
         $map = [
             'dokumen_pas_foto'      => 'pas_foto',
             'dokumen_kk'            => 'dokumen_kk',
-            'dokumen_vaksin'        => 'dokumen_sertifikat_vaksin',
-            'dokumen_bpjs_tk'       => 'dokumen_formulir_bpjs_tk',
+            'dokumen_ijazah_terakhir'        => 'dokumen_ijazah_terakhir',
+            'dokumen_skck'       => 'dokumen_skck',
             'dokumen_paklaring'     => 'dokumen_surat_pengalaman_kerja',
-            'dokumen_kartu_garda'   => 'dokumen_kartu_garda_pratama',
             'dokumen_ktp'           => 'dokumen_ktp',
             'dokumen_form_bpjs_tk'  => 'dokumen_bpjs_ketenagakerjaan',
-            'dokumen_sio_forklift'  => 'dokumen_sio_forklift',
             'dokumen_form_bpjs_kes' => 'dokumen_formulir_bpjs_kesehatan',
-            'dokumen_sim_b1'        => 'dokumen_sim_b1',
+            'dokumen_lisensi'        => 'dokumen_lisensi',
         ];
 
         // pastikan ada row
@@ -961,8 +956,13 @@ class EmployeeController extends Controller
     }
 
     public function downloadEmployees(Request $request){
+        $search = $request->input('search');
+        $statusActive = (int) $request->input('status_active', 1);
+        $filteredJabatan = $request->input('filtered_jabatan');
+        $filteredPerusahaan = $request->input('filtered_perusahaan');
+
         return Excel::download(
-            new EmployeesExport,
+            new EmployeesExport($search, $statusActive, $filteredJabatan, $filteredPerusahaan),
             'karyawan.xlsx'
         );
     }

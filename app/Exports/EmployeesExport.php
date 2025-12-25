@@ -15,18 +15,41 @@ class EmployeesExport extends StringValueBinder
     implements FromQuery, WithHeadings, WithMapping, WithCustomValueBinder, ShouldAutoSize
 {
     private int $rowNumber = 0;
+    public function __construct(
+        protected ?string $search,
+        protected int $statusActive,
+        protected ?string $filteredJabatan,
+        protected ?string $filteredPerusahaan,
+    ) {}
+    
     public function query()
     {
         return Employee::query()
-            ->with([
-                'personal',
-                'address',
-                'educations',
-                'families',
-                'health',
-                'documents',
-                'employments',
-            ])->whereNotIn('id', [1, 2]);
+            ->with('employments')
+            ->when($this->search, function ($query) {
+                $search = $this->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('nrp', 'like', "%{$search}%")
+                      ->orWhere('nama', 'like', "%{$search}%")
+                      ->orWhere('no_ktp', 'like', "%{$search}%")
+                      ->orWhereHas('employments', function ($qe) use ($search) {
+                          $qe->where('jabatan', 'like', "%{$search}%");
+                      });
+                });
+            })
+            ->when($this->filteredJabatan || $this->filteredPerusahaan, function ($query) {
+                $query->whereHas('employments', function ($qe) {
+                    $qe->when($this->filteredJabatan, function ($q) {
+                        $q->where('penempatan', $this->filteredJabatan);
+                    })
+                    ->when($this->filteredPerusahaan, function ($q) {
+                        $q->where('perusahaan', $this->filteredPerusahaan);
+                    });
+                });
+            })
+            ->where('status_active', $this->statusActive)
+            ->whereNotIn('id', [1,2])
+            ->orderBy('nama');
     }
 
     public function map($employee): array
