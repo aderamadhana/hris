@@ -405,7 +405,7 @@ class EmployeesImport implements
         
         // Family Members
         if (!empty($namaAyah)) {
-            EmployeeFamilyMember::updateOrCreate(
+            EmployeeFamily::updateOrCreate(
                 [
                     'employee_id' => $employee->id,
                     'hubungan' => 'Ayah',
@@ -417,7 +417,7 @@ class EmployeesImport implements
         }
         
         if (!empty($namaIbu)) {
-            EmployeeFamilyMember::updateOrCreate(
+            EmployeeFamily::updateOrCreate(
                 [
                     'employee_id' => $employee->id,
                     'hubungan' => 'Ibu',
@@ -430,7 +430,7 @@ class EmployeesImport implements
         
         if (!empty($namaPasangan)) {
             $hubunganPasangan = strtolower($jenisKelamin) === 'laki-laki' ? 'Istri' : 'Suami';
-            EmployeeFamilyMember::updateOrCreate(
+            EmployeeFamily::updateOrCreate(
                 [
                     'employee_id' => $employee->id,
                     'hubungan' => $hubunganPasangan,
@@ -449,7 +449,7 @@ class EmployeesImport implements
         $anakList = [$anak1, $anak2, $anak3];
         foreach ($anakList as $index => $anak) {
             if (!empty($anak)) {
-                EmployeeFamilyMember::updateOrCreate(
+                EmployeeFamily::updateOrCreate(
                     [
                         'employee_id' => $employee->id,
                         'hubungan' => 'Anak',

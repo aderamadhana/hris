@@ -98,10 +98,10 @@ class ReferensiController extends Controller
     }
 
     public function getFilterPerusahaanDanJabatan(Request $request){
-        $perusahaan = EmployeeEmployment::distinct()
+        $perusahaan = EmployeeEmployment::whereNotIn('employee_id', [1,2])->distinct()
             ->pluck('perusahaan');
 
-        $penempatan = EmployeeEmployment::distinct()
+        $penempatan = EmployeeEmployment::whereNotIn('employee_id', [1,2])->distinct()
             ->pluck('penempatan');
 
             
