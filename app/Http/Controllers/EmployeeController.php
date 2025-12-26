@@ -66,7 +66,7 @@ class EmployeeController extends Controller
                 $query->whereHas('employments', function ($qe) use ($filtered_jabatan, $filtered_perusahaan) {
                     $qe->when($filtered_jabatan, function ($q) use ($filtered_jabatan) {
                         // ✅ FIX: jabatan harus filter kolom jabatan, bukan penempatan
-                        $q->where('jabatan', $filtered_jabatan);
+                        $q->where('penempatan', $filtered_jabatan);
                     })
                     ->when($filtered_perusahaan, function ($q) use ($filtered_perusahaan) {
                         $q->where('perusahaan', $filtered_perusahaan);

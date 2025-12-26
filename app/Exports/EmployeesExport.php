@@ -42,7 +42,7 @@ class EmployeesExport extends StringValueBinder
                 $query->whereHas('employments', function ($qe) {
                     $qe->when($this->filteredJabatan, function ($q) {
                         // ✅ FIX: filteredJabatan harus ke kolom jabatan
-                        $q->where('jabatan', $this->filteredJabatan);
+                        $q->where('penempatan', $this->filteredJabatan);
                     })
                     ->when($this->filteredPerusahaan, function ($q) {
                         $q->where('perusahaan', $this->filteredPerusahaan);
