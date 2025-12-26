@@ -12,6 +12,7 @@ use App\Models\{
     Employee,
     EmployeeEmployment,
     // EmployeePersonal,
+    SalaryConfiguration,
     AdditionalEarning,
     OvertimeSummary,
     AttendanceSummary,
@@ -157,12 +158,15 @@ class PayrollController extends Controller
             $period = PayrollPeriod::findOrFail($payrollPeriodId);
             $employement = EmployeeEmployment::where('employee_id', $employee->id)->first();
 
+            // ✅ Salary Configuration (rate/konfigurasi) - ambil yang berlaku untuk periode
+            $salaryConfig = SalaryConfiguration::where('employee_id', $employee->id)
+                ->where('effective_date', '<=', $period->start_date)
+                ->orderByDesc('effective_date')
+                ->first();
+
             // Get all related data
             $earnings = Earning::where('employee_id', $employee->id)
                 ->where('payroll_period_id', $period->id)
-                ->first();
-
-            $personal = EmployeePersonal::where('employee_id', $employee->id)
                 ->first();
 
             $deductions = Deduction::where('employee_id', $employee->id)
@@ -189,9 +193,14 @@ class PayrollController extends Controller
                 ->where('payroll_period_id', $period->id)
                 ->first();
 
-            // PENDAPATAN UTAMA (Earnings)
+            /*
+            |--------------------------------------------------------------------------
+            | PENDAPATAN UTAMA (Earnings)
+            |--------------------------------------------------------------------------
+            | ✅ Gaji Pokok ambil dari salary_configurations, bukan earnings
+            */
             $earningItems = collect([
-                ['label' => 'Gaji Pokok', 'amount' => $earnings?->gaji_pokok],
+                ['label' => 'Gaji Pokok', 'amount' => $salaryConfig?->gaji_pokok], // ✅ FIX
                 ['label' => 'Gaji HK', 'amount' => $earnings?->gaji_hk],
                 ['label' => 'Gaji HL', 'amount' => $earnings?->gaji_hl],
                 ['label' => 'Gaji HR', 'amount' => $earnings?->gaji_hr],
@@ -213,7 +222,11 @@ class PayrollController extends Controller
                 'amount' => (int) ($i['amount'] ?? 0),
             ])->filter(fn ($i) => $i['amount'] !== 0)->values();
 
-            // TUNJANGAN (Allowances)
+            /*
+            |--------------------------------------------------------------------------
+            | TUNJANGAN (Allowances)
+            |--------------------------------------------------------------------------
+            */
             $allowanceItems = collect([
                 ['label' => 'Tunjangan Umum', 'amount' => $allowances?->tunj],
                 ['label' => 'Tunjangan Sewa Motor', 'amount' => $allowances?->tunj_sewa_motor],
@@ -236,7 +249,11 @@ class PayrollController extends Controller
                 'amount' => (int) ($i['amount'] ?? 0),
             ])->filter(fn ($i) => $i['amount'] !== 0)->values();
 
-            // PENDAPATAN TAMBAHAN (Additional Earnings)
+            /*
+            |--------------------------------------------------------------------------
+            | PENDAPATAN TAMBAHAN (Additional Earnings)
+            |--------------------------------------------------------------------------
+            */
             $additionalEarningItems = collect([
                 ['label' => 'Anjem', 'amount' => $additionalEarnings?->anjem_jml],
                 ['label' => 'Borongan', 'amount' => $additionalEarnings?->borongan_jml],
@@ -272,7 +289,11 @@ class PayrollController extends Controller
                 'amount' => (int) ($i['amount'] ?? 0),
             ])->filter(fn ($i) => $i['amount'] !== 0)->values();
 
-            // POTONGAN (Deductions)
+            /*
+            |--------------------------------------------------------------------------
+            | POTONGAN (Deductions)
+            |--------------------------------------------------------------------------
+            */
             $deductionItems = collect([
                 ['label' => 'BPJS Ketenagakerjaan', 'amount' => $deductions?->pot_bpjs_tk],
                 ['label' => 'BPJS Kesehatan', 'amount' => $deductions?->pot_bpjs_kes],
@@ -308,7 +329,11 @@ class PayrollController extends Controller
                 'amount' => (int) ($i['amount'] ?? 0),
             ])->filter(fn ($i) => $i['amount'] !== 0)->values();
 
-            // TOTAL PERHITUNGAN
+            /*
+            |--------------------------------------------------------------------------
+            | TOTAL PERHITUNGAN
+            |--------------------------------------------------------------------------
+            */
             $totalEarnings = $earningItems->sum('amount');
             $totalAllowances = $allowanceItems->sum('amount');
             $totalAdditionalEarnings = $additionalEarningItems->sum('amount');
@@ -317,36 +342,91 @@ class PayrollController extends Controller
             $takeHomePay = $totalIncome - $totalDeductions;
             $grandTotal = $payrollSummary?->grand_total ?? $takeHomePay;
 
+            /*
+            |--------------------------------------------------------------------------
+            | ✅ tambahan untuk PDF view:
+            | - salary_configuration (rate)
+            | - additional_earnings_info (anjem_jam/hari, borongan_kg)
+            | - attendance tambahan (tidak masuk upah)
+            |--------------------------------------------------------------------------
+            */
+            $salaryConfigurationInfo = $salaryConfig ? [
+                'effective_date' => optional($salaryConfig->effective_date)?->format('Y-m-d'),
+                'gaji_hk_rate' => $salaryConfig->gaji_hk,
+                'gaji_pokok_rate' => $salaryConfig->gaji_pokok,
+                'gaji_per_hari_rate' => $salaryConfig->gaji_per_hari,
+                'gaji_train_hk_rate' => $salaryConfig->gaji_train_hk,
+                'gaji_train_upah_per_jam_rate' => $salaryConfig->gaji_train_upah_per_jam,
+                'lembur_per_hari_rate' => $salaryConfig->lembur_per_hari,
+                'lembur_per_jam_rate' => $salaryConfig->lembur_per_jam,
+            ] : null;
+
+            $additionalEarningsInfo = $additionalEarnings ? [
+                'anjem_jam' => $additionalEarnings->anjem_jam,
+                'anjem_hari' => $additionalEarnings->anjem_hari,
+                'borongan_kg' => $additionalEarnings->borongan_kg,
+            ] : null;
+
             // Prepare data for PDF
             $data = [
                 'company_name' => $employement?->perusahaan ?? 'N/A',
-                'period_name' => $period->judul_periode ?? 'N/A',
+                'period_name' => $period->judul_periode ?? ($period->name ?? 'N/A'),
                 'period_range' => $period->start_date->format('d M Y') . ' – ' . $period->end_date->format('d M Y'),
                 'employee' => [
                     'nama' => $employee->nama,
-                    'nik' => $personal->no_ktp ?? $employee->nik,
+                    'nik' => $employee->nrp ?? $employee->no_ktp ?? $employee->nik, // ✅ FIX
                     'jabatan' => $employement->jabatan ?? 'N/A',
                     'divisi' => $employement->penempatan ?? 'N/A',
-                    'no_rek' => $employee->no_rek ?? 'N/A',
+                    'no_rek' => $employee->no_rekening ?? $employee->no_rek ?? 'N/A', // ✅ FIX
                 ],
                 'payment' => [
                     'tanggal_bayar' => optional($period->paid_at)?->format('d M Y') ?? '-',
                     'status' => $period->paid_at ? 'Dibayar' : 'Belum Dibayar',
                 ],
+
+                // ✅ tambahan data baru untuk ditampilkan di blade
+                'salary_configuration' => $salaryConfigurationInfo,
+                'additional_earnings_info' => $additionalEarningsInfo,
+
                 'earnings' => $earningItems,
                 'allowances' => $allowanceItems,
                 'additional_earnings' => $additionalEarningItems,
                 'deductions' => $deductionItems,
+
                 'attendance' => $attendanceSummary ? [
                     'hadir' => $attendanceSummary->hadir,
-                    'mangkir' => $attendanceSummary->mangkir_hari,
-                    'terlambat' => $attendanceSummary->terlambat_hari,
-                    'cuti' => $attendanceSummary->cuti_dibayar,
+                    'jam_kerja' => $attendanceSummary->jam_kerja,
+                    'jam_hk' => $attendanceSummary->jam_hk,
+                    'jam_hl' => $attendanceSummary->jam_hl,
+                    'jam_hr' => $attendanceSummary->jam_hr,
+                    'jumlah_hl' => $attendanceSummary->jml_hl,
+                    'jumlah_hr' => $attendanceSummary->jml_hr,
+                    'mangkir_hari' => $attendanceSummary->mangkir_hari,
+                    'tidak_masuk_hari' => $attendanceSummary->pot_tdk_masuk_hari,
+                    'tidak_masuk_upah' => $attendanceSummary->pot_tdk_masuk_upah, // ✅ ADD
+                    'terlambat_hari' => $attendanceSummary->terlambat_hari,
+                    'terlambat_menit' => $attendanceSummary->terlambat_menit,
+                    'terlambat_jam' => $attendanceSummary->terlambat_jam,
+                    'ijin_pulang' => $attendanceSummary->ijin_pulang,
+                    'cuti_dibayar' => $attendanceSummary->cuti_dibayar,
                 ] : null,
+
                 'overtime' => $overtimeSummary ? [
+                    'overtime_jam' => $overtimeSummary->overtime_jam,
                     'total_jam' => $overtimeSummary->lembur_jam,
                     'total_hari' => $overtimeSummary->lembur_hari,
+                    'lembur_jam_biasa' => $overtimeSummary->lembur_jam_biasa,
+                    'lembur_jam_khusus' => $overtimeSummary->lembur_jam_khusus,
+                    'lembur_minggu_2' => $overtimeSummary->lembur_minggu_2,
+                    'lembur_minggu_3' => $overtimeSummary->lembur_minggu_3,
+                    'lembur_minggu_4' => $overtimeSummary->lembur_minggu_4,
+                    'lembur_minggu_5' => $overtimeSummary->lembur_minggu_5,
+                    'lembur_minggu_6' => $overtimeSummary->lembur_minggu_6,
+                    'lembur_minggu_7' => $overtimeSummary->lembur_minggu_7,
+                    'lembur_libur' => $overtimeSummary->lembur_libur,
+                    'lembur_2' => $overtimeSummary->lembur_2,
                 ] : null,
+
                 'total_earnings' => $totalEarnings,
                 'total_allowances' => $totalAllowances,
                 'total_additional_earnings' => $totalAdditionalEarnings,
@@ -356,12 +436,13 @@ class PayrollController extends Controller
                 'grand_total' => $grandTotal,
             ];
 
-            // Generate exportPayslipPdf
+            // Generate PDF
+            // return view('payroll.payslip-pdf', $data);
             $pdf = \PDF::loadView('payroll.payslip-pdf', $data);
             $pdf->setPaper('a4', 'portrait');
-            
-            $filename = 'Slip-Gaji-' . $employee->nama . '-' . $period->name . '.pdf';
-            
+
+            $filename = 'Slip-Gaji-' . $employee->nama . '-' . ($period->name ?? $period->judul_periode ?? $period->id) . '.pdf';
+
             return $pdf->download($filename);
 
         } catch (\Throwable $th) {
@@ -377,4 +458,5 @@ class PayrollController extends Controller
             ], 500);
         }
     }
+
 }

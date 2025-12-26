@@ -20,6 +20,7 @@ class EmployeesExport extends StringValueBinder
         protected int $statusActive,
         protected ?string $filteredJabatan,
         protected ?string $filteredPerusahaan,
+        protected ?string $contractExpiring,
     ) {}
     
     public function query()
@@ -30,25 +31,43 @@ class EmployeesExport extends StringValueBinder
                 $search = $this->search;
                 $query->where(function ($q) use ($search) {
                     $q->where('nrp', 'like', "%{$search}%")
-                      ->orWhere('nama', 'like', "%{$search}%")
-                      ->orWhere('no_ktp', 'like', "%{$search}%")
-                      ->orWhereHas('employments', function ($qe) use ($search) {
-                          $qe->where('jabatan', 'like', "%{$search}%");
-                      });
+                        ->orWhere('nama', 'like', "%{$search}%")
+                        ->orWhere('no_ktp', 'like', "%{$search}%")
+                        ->orWhereHas('employments', function ($qe) use ($search) {
+                            $qe->where('jabatan', 'like', "%{$search}%");
+                        });
                 });
             })
             ->when($this->filteredJabatan || $this->filteredPerusahaan, function ($query) {
                 $query->whereHas('employments', function ($qe) {
                     $qe->when($this->filteredJabatan, function ($q) {
-                        $q->where('penempatan', $this->filteredJabatan);
+                        // ✅ FIX: filteredJabatan harus ke kolom jabatan
+                        $q->where('jabatan', $this->filteredJabatan);
                     })
                     ->when($this->filteredPerusahaan, function ($q) {
                         $q->where('perusahaan', $this->filteredPerusahaan);
                     });
                 });
             })
+
+            // ✅ FILTER kontrak habis dalam X hari ke depan
+            ->when($this->contractExpiring, function ($query) {
+                $days = (int) $this->contractExpiring;
+                if (!in_array($days, [7, 30], true)) {
+                    return;
+                }
+
+                $start = now()->startOfDay();
+                $end   = now()->addDays($days)->endOfDay();
+
+                $query->whereHas('employments', function ($qe) use ($start, $end) {
+                    $qe->whereNotNull('tgl_akhir_kerja')
+                        ->whereBetween('tgl_akhir_kerja', [$start, $end]);
+                });
+            })
+
             ->where('status_active', $this->statusActive)
-            ->whereNotIn('id', [1,2])
+            ->whereNotIn('id', [1, 2])
             ->orderBy('nama');
     }
 
@@ -114,7 +133,7 @@ class EmployeesExport extends StringValueBinder
             (string) $employee->user_id,
             (string) $employee->nama,
             (string) $employee->jenis_kelamin,
-            (string) optional($employee->personal)->no_ktp,
+            (string) $employee->no_ktp,
             (string) $employee->tempat_lahir,
             $fd($employee->tanggal_lahir),
 

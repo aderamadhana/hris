@@ -4,7 +4,7 @@
         <div class="header-left">
             <div class="logo-image-sidebar">
                 <img
-                    src="/assets/images/logo.png"
+                    src="/assets/images/logo_baru.png"
                     alt="HRIS Logo"
                     loading="lazy"
                 />

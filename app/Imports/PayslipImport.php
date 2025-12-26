@@ -210,9 +210,9 @@ class PayslipImport implements
             );
         }
 
-        // 2. Attendance Summary (sebagian numeric, jam_kerja biarkan raw)
+        // 2. Attendance Summary (sebagian numeric, jam_kerja bisa integer atau format lain)
         $attendanceData = [
-            'jam_kerja' => $row['jam_kerja'] ?? null, // bisa format non-numeric
+            'jam_kerja' => $row['jam_kerja'] ?? null, // integer
             'jam_hk' => $row['jam_hk'] ?? null,
             'jam_hl' => $row['jam_hl'] ?? null,
             'jam_hr' => $row['jam_hr'] ?? null,
@@ -229,8 +229,10 @@ class PayslipImport implements
             'cuti_dibayar' => $row['cuti_dibayar'] ?? null,
         ];
 
+        // jam_kerja, jml_hl, jml_hr, hadir, mangkir_hari, pot_tdk_masuk_hari, terlambat_hari, terlambat_menit, ijin_pulang, cuti_dibayar = integer
+        // jam_hk, jam_hl, jam_hr, terlambat_jam, pot_tdk_masuk_upah = decimal
         $attendanceData = $this->sanitizeNumericArray($attendanceData, [
-            'jam_hk', 'jam_hl', 'jam_hr', 'jml_hl', 'jml_hr', 'hadir', 'mangkir_hari',
+            'jam_kerja', 'jam_hk', 'jam_hl', 'jam_hr', 'jml_hl', 'jml_hr', 'hadir', 'mangkir_hari',
             'pot_tdk_masuk_hari', 'pot_tdk_masuk_upah', 'terlambat_hari', 'terlambat_menit',
             'terlambat_jam', 'ijin_pulang', 'cuti_dibayar',
         ]);

@@ -8,7 +8,7 @@
             <div class="auth-left">
                 <div class="brand-center">
                     <img
-                        src="/assets/images/logo.png"
+                        src="/assets/images/logo_baru.png"
                         alt="PT Mitra Wira Mas"
                         class="brand-logo-login"
                     />

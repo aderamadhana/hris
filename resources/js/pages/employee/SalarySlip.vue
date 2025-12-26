@@ -82,6 +82,7 @@
                         <!-- Pendapatan -->
                         <div class="slip-card">
                             <h3 class="card-title earnings">Pendapatan</h3>
+
                             <table v-if="!slip" class="amount-table">
                                 <tbody>
                                     <tr>
@@ -91,6 +92,7 @@
                                     </tr>
                                 </tbody>
                             </table>
+
                             <!-- Earnings (Gaji & Lembur) -->
                             <div
                                 v-else-if="slip.earnings?.length"
@@ -195,6 +197,7 @@
                                     </tr>
                                 </tbody>
                             </table>
+
                             <div
                                 class="total deductions-total"
                                 v-if="slip.deductions?.length"
@@ -208,6 +211,12 @@
                     </div>
                 </div>
 
+                <!-- Empty State -->
+                <div v-else class="empty-state">
+                    <div class="empty-icon">📄</div>
+                    <h3>Slip Gaji Tidak Tersedia</h3>
+                    <p>Data slip gaji tidak ditemukan untuk periode ini.</p>
+                </div>
                 <!-- TAKE HOME PAY -->
                 <div class="slip-card netpay-card">
                     <div>
@@ -218,6 +227,205 @@
                     </div>
                     <div class="netpay-amount">
                         {{ formatCurrency(slip.take_home_pay || 0) }}
+                    </div>
+                </div>
+
+                <!-- KONFIGURASI GAJI (RATE) -->
+                <div v-if="slip.salary_configuration" class="info-grid">
+                    <div class="slip-card info-card">
+                        <h3 class="card-title">Konfigurasi Gaji</h3>
+                        <table class="info-table">
+                            <tbody>
+                                <tr
+                                    v-if="
+                                        slip.salary_configuration.effective_date
+                                    "
+                                >
+                                    <td>Effective Date</td>
+                                    <td>
+                                        {{
+                                            slip.salary_configuration
+                                                .effective_date
+                                        }}
+                                    </td>
+                                </tr>
+                                <tr
+                                    v-if="
+                                        slip.salary_configuration
+                                            .gaji_pokok_rate
+                                    "
+                                >
+                                    <td>Gaji Pokok</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.salary_configuration
+                                                    .gaji_pokok_rate,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                                <tr
+                                    v-if="
+                                        slip.salary_configuration
+                                            .gaji_per_hari_rate
+                                    "
+                                >
+                                    <td>Gaji Per Hari</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.salary_configuration
+                                                    .gaji_per_hari_rate,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                                <tr
+                                    v-if="
+                                        slip.salary_configuration.gaji_hk_rate
+                                    "
+                                >
+                                    <td>Gaji HK</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.salary_configuration
+                                                    .gaji_hk_rate,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                                <tr
+                                    v-if="
+                                        slip.salary_configuration
+                                            .gaji_train_hk_rate
+                                    "
+                                >
+                                    <td>Gaji Training HK</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.salary_configuration
+                                                    .gaji_train_hk_rate,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                                <tr
+                                    v-if="
+                                        slip.salary_configuration
+                                            .gaji_train_upah_per_jam_rate
+                                    "
+                                >
+                                    <td>Gaji Training / Jam</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.salary_configuration
+                                                    .gaji_train_upah_per_jam_rate,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                                <tr
+                                    v-if="
+                                        slip.salary_configuration
+                                            .lembur_per_hari_rate
+                                    "
+                                >
+                                    <td>Lembur / Hari</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.salary_configuration
+                                                    .lembur_per_hari_rate,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                                <tr
+                                    v-if="
+                                        slip.salary_configuration
+                                            .lembur_per_jam_rate
+                                    "
+                                >
+                                    <td>Lembur / Jam</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.salary_configuration
+                                                    .lembur_per_jam_rate,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- DETAIL ANJEM & BORONGAN -->
+                <div
+                    v-if="
+                        slip.additional_earnings_info &&
+                        (slip.additional_earnings_info.anjem_hari != null ||
+                            slip.additional_earnings_info.anjem_jam != null ||
+                            slip.additional_earnings_info.borongan_kg != null)
+                    "
+                    class="info-grid"
+                >
+                    <div class="slip-card info-card">
+                        <h3 class="card-title">Detail Anjem & Borongan</h3>
+                        <table class="info-table">
+                            <tbody>
+                                <tr
+                                    v-if="
+                                        slip.additional_earnings_info
+                                            .anjem_hari != null
+                                    "
+                                >
+                                    <td>Anjem (Hari)</td>
+                                    <td>
+                                        {{
+                                            slip.additional_earnings_info
+                                                .anjem_hari
+                                        }}
+                                        hari
+                                    </td>
+                                </tr>
+                                <tr
+                                    v-if="
+                                        slip.additional_earnings_info
+                                            .anjem_jam != null
+                                    "
+                                >
+                                    <td>Anjem (Jam)</td>
+                                    <td>
+                                        {{
+                                            slip.additional_earnings_info
+                                                .anjem_jam
+                                        }}
+                                        jam
+                                    </td>
+                                </tr>
+                                <tr
+                                    v-if="
+                                        slip.additional_earnings_info
+                                            .borongan_kg != null
+                                    "
+                                >
+                                    <td>Borongan (Kg)</td>
+                                    <td>
+                                        {{
+                                            slip.additional_earnings_info
+                                                .borongan_kg
+                                        }}
+                                        kg
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -232,22 +440,66 @@
                                     <td>Hadir</td>
                                     <td>{{ slip.attendance.hadir }} hari</td>
                                 </tr>
+
                                 <tr v-if="slip.attendance.jam_kerja">
                                     <td>Jam Kerja</td>
                                     <td>{{ slip.attendance.jam_kerja }} jam</td>
                                 </tr>
+
+                                <tr v-if="slip.attendance.jam_hk">
+                                    <td>Jam HK</td>
+                                    <td>{{ slip.attendance.jam_hk }} jam</td>
+                                </tr>
+                                <tr v-if="slip.attendance.jam_hl">
+                                    <td>Jam HL</td>
+                                    <td>{{ slip.attendance.jam_hl }} jam</td>
+                                </tr>
+                                <tr v-if="slip.attendance.jam_hr">
+                                    <td>Jam HR</td>
+                                    <td>{{ slip.attendance.jam_hr }} jam</td>
+                                </tr>
+
                                 <tr v-if="slip.attendance.jumlah_hl">
                                     <td>Hari Libur</td>
                                     <td>
                                         {{ slip.attendance.jumlah_hl }} hari
                                     </td>
                                 </tr>
+
+                                <tr v-if="slip.attendance.jumlah_hr">
+                                    <td>Hari Raya</td>
+                                    <td>
+                                        {{ slip.attendance.jumlah_hr }} hari
+                                    </td>
+                                </tr>
+
                                 <tr v-if="slip.attendance.mangkir_hari">
                                     <td>Mangkir</td>
                                     <td class="warning">
                                         {{ slip.attendance.mangkir_hari }} hari
                                     </td>
                                 </tr>
+
+                                <tr v-if="slip.attendance.tidak_masuk_hari">
+                                    <td>Tidak Masuk</td>
+                                    <td class="warning">
+                                        {{ slip.attendance.tidak_masuk_hari }}
+                                        hari
+                                    </td>
+                                </tr>
+
+                                <tr v-if="slip.attendance.tidak_masuk_upah">
+                                    <td>Pot. Tidak Masuk (Upah)</td>
+                                    <td class="warning">
+                                        {{
+                                            formatCurrency(
+                                                slip.attendance
+                                                    .tidak_masuk_upah,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+
                                 <tr v-if="slip.attendance.terlambat_hari">
                                     <td>Terlambat</td>
                                     <td class="warning">
@@ -258,10 +510,18 @@
                                         menit)
                                     </td>
                                 </tr>
+
                                 <tr v-if="slip.attendance.cuti_dibayar">
                                     <td>Cuti Dibayar</td>
                                     <td>
                                         {{ slip.attendance.cuti_dibayar }} hari
+                                    </td>
+                                </tr>
+
+                                <tr v-if="slip.attendance.ijin_pulang">
+                                    <td>Ijin Pulang</td>
+                                    <td>
+                                        {{ slip.attendance.ijin_pulang }} kali
                                     </td>
                                 </tr>
                             </tbody>
@@ -306,16 +566,88 @@
                                         }}
                                     </td>
                                 </tr>
+
+                                <tr v-if="slip.overtime.overtime_jam">
+                                    <td>Overtime (Jam)</td>
+                                    <td>
+                                        {{ slip.overtime.overtime_jam }} jam
+                                    </td>
+                                </tr>
+
+                                <tr v-if="slip.overtime.lembur_minggu_2">
+                                    <td>Lembur Minggu 2</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.overtime.lembur_minggu_2,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                                <tr v-if="slip.overtime.lembur_minggu_3">
+                                    <td>Lembur Minggu 3</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.overtime.lembur_minggu_3,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                                <tr v-if="slip.overtime.lembur_minggu_4">
+                                    <td>Lembur Minggu 4</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.overtime.lembur_minggu_4,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                                <tr v-if="slip.overtime.lembur_minggu_5">
+                                    <td>Lembur Minggu 5</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.overtime.lembur_minggu_5,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                                <tr v-if="slip.overtime.lembur_minggu_6">
+                                    <td>Lembur Minggu 6</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.overtime.lembur_minggu_6,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+                                <tr v-if="slip.overtime.lembur_minggu_7">
+                                    <td>Lembur Minggu 7</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.overtime.lembur_minggu_7,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+
+                                <tr v-if="slip.overtime.lembur_2">
+                                    <td>Lembur 2</td>
+                                    <td>
+                                        {{
+                                            formatCurrency(
+                                                slip.overtime.lembur_2,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
-                </div>
-
-                <!-- Empty State -->
-                <div v-else class="empty-state">
-                    <div class="empty-icon">📄</div>
-                    <h3>Slip Gaji Tidak Tersedia</h3>
-                    <p>Data slip gaji tidak ditemukan untuk periode ini.</p>
                 </div>
             </div>
         </section>

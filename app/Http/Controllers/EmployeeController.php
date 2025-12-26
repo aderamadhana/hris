@@ -42,36 +42,62 @@ class EmployeeController extends Controller
         $status_active = trim($request->query('status_active'));
         $filtered_jabatan = trim($request->query('filtered_jabatan'));
         $filtered_perusahaan = trim($request->query('filtered_perusahaan'));
-        $id_dummy = [1,2];
+
+        // ✅ new: 7 / 30 (hari)
+        $contractExpiring = $request->query('contract_expiring'); // '7' | '30' | null
+        $contractExpiring = in_array((string) $contractExpiring, ['7', '30'], true) ? (int) $contractExpiring : null;
+
+        $id_dummy = [1, 2];
 
         $employees = Employee::with(['employments'])
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('nrp', 'like', "%{$search}%")
-                    ->orWhere('nama', 'like', "%{$search}%")
-                    ->orWhere('no_ktp', 'like', "%{$search}%")
-                    ->orWhereHas('employments', function ($qe) use ($search) {
-                        $qe->where('jabatan', 'like', "%{$search}%");
-                    });
+                        ->orWhere('nama', 'like', "%{$search}%")
+                        ->orWhere('no_ktp', 'like', "%{$search}%")
+                        ->orWhereHas('employments', function ($qe) use ($search) {
+                            $qe->where('jabatan', 'like', "%{$search}%");
+                        });
                 });
             })
-            // FILTER jabatan + perusahaan (di employee_employments)
+
+            // ✅ FILTER jabatan + perusahaan (di employee_employments)
             ->when($filtered_jabatan || $filtered_perusahaan, function ($query) use ($filtered_jabatan, $filtered_perusahaan) {
                 $query->whereHas('employments', function ($qe) use ($filtered_jabatan, $filtered_perusahaan) {
                     $qe->when($filtered_jabatan, function ($q) use ($filtered_jabatan) {
-                        $q->where('penempatan', $filtered_jabatan);
+                        // ✅ FIX: jabatan harus filter kolom jabatan, bukan penempatan
+                        $q->where('jabatan', $filtered_jabatan);
                     })
                     ->when($filtered_perusahaan, function ($q) use ($filtered_perusahaan) {
                         $q->where('perusahaan', $filtered_perusahaan);
                     });
                 });
             })
+
+            // ✅ FILTER kontrak habis dalam 7 / 30 hari ke depan
+            ->when($contractExpiring, function ($query) use ($contractExpiring) {
+                $start = now()->startOfDay();
+                $end   = now()->addDays($contractExpiring)->endOfDay();
+
+                $query->whereHas('employments', function ($qe) use ($start, $end) {
+                    $qe->whereNotNull('tgl_akhir_kerja')
+                        ->whereBetween('tgl_akhir_kerja', [$start, $end]);
+                });
+            })
+
             ->whereNotIn('id', $id_dummy)
-            ->where('status_active', $status_active)
+            ->when($status_active !== '', function ($query) use ($status_active) {
+                // biar kalau status_active kosong tidak memaksa where('status_active','')
+                $query->where('status_active', $status_active);
+            })
             ->orderBy('id', 'desc')
             ->paginate($perPage);
 
         $data = $employees->getCollection()->map(function ($e) {
+            // kalau employments itu hasMany, optional($e->employments) bakal aneh.
+            // asumsi kamu memang punya accessor/relationship single. Kalau hasMany, ambil ->first().
+            $emp = is_iterable($e->employments) ? $e->employments->first() : $e->employments;
+
             return [
                 'id' => $e->id,
                 'name' => $e->nama,
@@ -82,17 +108,18 @@ class EmployeeController extends Controller
                     ? \Carbon\Carbon::parse($e->tanggal_lahir)->format('d/m/Y')
                     : '-',
 
-                'perusahaan' => optional($e->employments)->perusahaan ?? '-',
-                'department' => optional($e->employments)->jabatan ?? '-',
-                'position' => optional($e->employments)->penempatan ?? '-',
+                'perusahaan' => optional($emp)->perusahaan ?? '-',
+                'department' => optional($emp)->jabatan ?? '-',
+                'position' => optional($emp)->penempatan ?? '-',
 
-                'awal_kontrak' => optional($e->employments)->tgl_awal_kerja
-                    ? \Carbon\Carbon::parse($e->employments->tgl_awal_kerja)->format('d/m/Y')
+                'awal_kontrak' => optional($emp)->tgl_awal_kerja
+                    ? \Carbon\Carbon::parse($emp->tgl_awal_kerja)->format('d/m/Y')
                     : '-',
 
-                'akhir_kontrak' => optional($e->employments)->tgl_akhir_kerja
-                    ? \Carbon\Carbon::parse($e->employments->tgl_akhir_kerja)->format('d/m/Y')
+                'akhir_kontrak' => optional($emp)->tgl_akhir_kerja
+                    ? \Carbon\Carbon::parse($emp->tgl_akhir_kerja)->format('d/m/Y')
                     : '-',
+
                 'status' => $e->status_active ? 'Aktif' : 'Nonaktif',
             ];
         });
@@ -107,6 +134,7 @@ class EmployeeController extends Controller
             ]
         ]);
     }
+
 
 
     public function profil($id)
@@ -1040,9 +1068,12 @@ class EmployeeController extends Controller
         $statusActive = (int) $request->input('status_active', 1);
         $filteredJabatan = $request->input('filtered_jabatan');
         $filteredPerusahaan = $request->input('filtered_perusahaan');
+        // ✅ new: 7 / 30 (hari)
+        $contractExpiring = $request->query('contract_expiring'); // '7' | '30' | null
+        $contractExpiring = in_array((string) $contractExpiring, ['7', '30'], true) ? (int) $contractExpiring : null;
 
         return Excel::download(
-            new EmployeesExport($search, $statusActive, $filteredJabatan, $filteredPerusahaan),
+            new EmployeesExport($search, $statusActive, $filteredJabatan, $filteredPerusahaan, $contractExpiring),
             'karyawan.xlsx'
         );
     }

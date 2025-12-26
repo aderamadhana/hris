@@ -73,7 +73,7 @@
         <div class="modal-footer">
             <Button
                 variant="secondary"
-                @click="closeModalImportGaji"
+                @click="$emit('closeModal')"
                 :disabled="importProcessingGaji"
             >
                 Batal

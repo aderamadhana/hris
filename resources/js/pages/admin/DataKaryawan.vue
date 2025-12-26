@@ -23,7 +23,11 @@
                             🧾 Upload Slip Gaji Karyawan
                         </a>
                     </DropdownButton>
-                    <Button variant="success" @click="downloadKaryawan">
+                    <Button
+                        variant="success"
+                        :loading="isDownloading"
+                        @click="downloadKaryawan"
+                    >
                         ⬇️ Download Karyawan
                     </Button>
                     <Button variant="primary" @click="tambahKaryawan">
@@ -102,6 +106,17 @@
                             >
                                 {{ value }}
                             </option>
+                        </Select2>
+                    </div>
+                    <div class="filter-right">
+                        <label for="">Filter Kontrak Hampir Habis</label>
+                        <Select2
+                            v-model="contractExpiring"
+                            :settings="{ width: '100%' }"
+                        >
+                            <option value="">-- Pilih --</option>
+                            <option value="7">7 Hari</option>
+                            <option value="30">30 Hari</option>
                         </Select2>
                     </div>
                     <div class="filter-right">
@@ -323,6 +338,9 @@ export default {
 
             filtered_jabatan: '',
             filtered_perusahaan: '',
+            contractExpiring: null,
+
+            isDownloading: false,
         };
     },
 
@@ -416,6 +434,9 @@ export default {
                         status_active: 1,
                         filtered_jabatan: this.filtered_jabatan,
                         filtered_perusahaan: this.filtered_perusahaan,
+
+                        // ✅ baru: 7 / 30 / null
+                        contract_expiring: this.contractExpiring || null,
                     },
                 });
 
@@ -500,6 +521,7 @@ export default {
         },
         async downloadKaryawan() {
             try {
+                this.isDownloading = true;
                 const response = await axios.get('/export/karyawan', {
                     responseType: 'blob',
                     params: {
@@ -507,6 +529,7 @@ export default {
                         status_active: 1,
                         filtered_jabatan: this.filtered_jabatan,
                         filtered_perusahaan: this.filtered_perusahaan,
+                        contract_expiring: this.contractExpiring || null,
                     },
                 });
 
@@ -525,8 +548,10 @@ export default {
 
                 link.remove();
                 window.URL.revokeObjectURL(url);
+                this.isDownloading = false;
             } catch (error) {
                 console.error('Download gagal', error);
+                this.isDownloading = false;
             }
         },
     },

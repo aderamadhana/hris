@@ -179,11 +179,11 @@
 </head>
 <body>
     <!-- HEADER -->
-    <div class="header">
+    <div class="header" style="width:100%;">
         <img
-            src="{{ public_path('assets/images/logo.png') }}"
+            src="{{ public_path('assets/images/logo_print.png') }}"
             alt="Logo"
-            style="height: 60px; margin-bottom: 10px;"
+            style="display:block; width:100%; max-width:none; height:auto; margin:0 0 10px 0;"
         >
         <h2>Slip Gaji Karyawan</h2>
         <div style="margin-top: 8px; font-size: 11px;">
@@ -191,6 +191,7 @@
             {{ $period_range }}
         </div>
     </div>
+
 
     <!-- INFORMASI KARYAWAN -->
     <div class="info-section">
@@ -220,69 +221,170 @@
                 <div class="info-separator">:</div>
                 <div class="info-value">{{ $employee['divisi'] }}</div>
             </div>
-            <!-- <div class="info-row">
+            {{-- <div class="info-row">
                 <div class="info-label">No. Rekening</div>
                 <div class="info-separator">:</div>
                 <div class="info-value">{{ $employee['no_rek'] }}</div>
-            </div> -->
+            </div> --}}
         </div>
     </div>
 
+    <!-- KONFIGURASI GAJI (RATE) -->
+    @if(!empty($salary_configuration) && (
+        !is_null($salary_configuration['gaji_pokok_rate'] ?? null) ||
+        !is_null($salary_configuration['gaji_per_hari_rate'] ?? null) ||
+        !is_null($salary_configuration['gaji_hk_rate'] ?? null) ||
+        !is_null($salary_configuration['gaji_train_hk_rate'] ?? null) ||
+        !is_null($salary_configuration['gaji_train_upah_per_jam_rate'] ?? null) ||
+        !is_null($salary_configuration['lembur_per_hari_rate'] ?? null) ||
+        !is_null($salary_configuration['lembur_per_jam_rate'] ?? null)
+    ))
+        <div class="section-title" style="margin-top: 12px;">KONFIGURASI GAJI (RATE)</div>
+        <div class="table-container">
+            <table>
+                @if(!empty($salary_configuration['effective_date']))
+                    <tr>
+                        <td class="item-label">Effective Date</td>
+                        <td class="item-amount">{{ $salary_configuration['effective_date'] }}</td>
+                    </tr>
+                @endif
+
+                @if(!is_null($salary_configuration['gaji_pokok_rate'] ?? null))
+                    <tr>
+                        <td class="item-label">Gaji Pokok</td>
+                        <td class="item-amount">Rp {{ number_format($salary_configuration['gaji_pokok_rate'], 0, ',', '.') }}</td>
+                    </tr>
+                @endif
+                @if(!is_null($salary_configuration['gaji_per_hari_rate'] ?? null))
+                    <tr>
+                        <td class="item-label">Gaji Per Hari</td>
+                        <td class="item-amount">Rp {{ number_format($salary_configuration['gaji_per_hari_rate'], 0, ',', '.') }}</td>
+                    </tr>
+                @endif
+                @if(!is_null($salary_configuration['gaji_hk_rate'] ?? null))
+                    <tr>
+                        <td class="item-label">Gaji HK</td>
+                        <td class="item-amount">Rp {{ number_format($salary_configuration['gaji_hk_rate'], 0, ',', '.') }}</td>
+                    </tr>
+                @endif
+                @if(!is_null($salary_configuration['gaji_train_hk_rate'] ?? null))
+                    <tr>
+                        <td class="item-label">Gaji Training HK</td>
+                        <td class="item-amount">Rp {{ number_format($salary_configuration['gaji_train_hk_rate'], 0, ',', '.') }}</td>
+                    </tr>
+                @endif
+                @if(!is_null($salary_configuration['gaji_train_upah_per_jam_rate'] ?? null))
+                    <tr>
+                        <td class="item-label">Gaji Training / Jam</td>
+                        <td class="item-amount">Rp {{ number_format($salary_configuration['gaji_train_upah_per_jam_rate'], 0, ',', '.') }}</td>
+                    </tr>
+                @endif
+                @if(!is_null($salary_configuration['lembur_per_hari_rate'] ?? null))
+                    <tr>
+                        <td class="item-label">Lembur / Hari</td>
+                        <td class="item-amount">Rp {{ number_format($salary_configuration['lembur_per_hari_rate'], 0, ',', '.') }}</td>
+                    </tr>
+                @endif
+                @if(!is_null($salary_configuration['lembur_per_jam_rate'] ?? null))
+                    <tr>
+                        <td class="item-label">Lembur / Jam</td>
+                        <td class="item-amount">Rp {{ number_format($salary_configuration['lembur_per_jam_rate'], 0, ',', '.') }}</td>
+                    </tr>
+                @endif
+            </table>
+        </div>
+    @endif
+
     <!-- PENDAPATAN UTAMA -->
     @if($earnings->count() > 0)
-    <div class="section-title">PENDAPATAN UTAMA</div>
-    <div class="table-container">
-        <table>
-            @foreach($earnings as $item)
-            <tr>
-                <td class="item-label">{{ $item['label'] }}</td>
-                <td class="item-amount">Rp {{ number_format($item['amount'], 0, ',', '.') }}</td>
-            </tr>
-            @endforeach
-            <tr class="subtotal-row">
-                <td>SUBTOTAL PENDAPATAN UTAMA</td>
-                <td class="item-amount">Rp {{ number_format($total_earnings, 0, ',', '.') }}</td>
-            </tr>
-        </table>
-    </div>
+        <div class="section-title">PENDAPATAN UTAMA</div>
+        <div class="table-container">
+            <table>
+                @foreach($earnings as $item)
+                    <tr>
+                        <td class="item-label">{{ $item['label'] }}</td>
+                        <td class="item-amount">Rp {{ number_format($item['amount'], 0, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+                <tr class="subtotal-row">
+                    <td>SUBTOTAL PENDAPATAN UTAMA</td>
+                    <td class="item-amount">Rp {{ number_format($total_earnings, 0, ',', '.') }}</td>
+                </tr>
+            </table>
+        </div>
     @endif
 
     <!-- TUNJANGAN -->
     @if($allowances->count() > 0)
-    <div class="section-title">TUNJANGAN</div>
-    <div class="table-container">
-        <table>
-            @foreach($allowances as $item)
-            <tr>
-                <td class="item-label">{{ $item['label'] }}</td>
-                <td class="item-amount">Rp {{ number_format($item['amount'], 0, ',', '.') }}</td>
-            </tr>
-            @endforeach
-            <tr class="subtotal-row">
-                <td>SUBTOTAL TUNJANGAN</td>
-                <td class="item-amount">Rp {{ number_format($total_allowances, 0, ',', '.') }}</td>
-            </tr>
-        </table>
-    </div>
+        <div class="section-title">TUNJANGAN</div>
+        <div class="table-container">
+            <table>
+                @foreach($allowances as $item)
+                    <tr>
+                        <td class="item-label">{{ $item['label'] }}</td>
+                        <td class="item-amount">Rp {{ number_format($item['amount'], 0, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+                <tr class="subtotal-row">
+                    <td>SUBTOTAL TUNJANGAN</td>
+                    <td class="item-amount">Rp {{ number_format($total_allowances, 0, ',', '.') }}</td>
+                </tr>
+            </table>
+        </div>
     @endif
 
     <!-- PENDAPATAN TAMBAHAN -->
     @if($additional_earnings->count() > 0)
-    <div class="section-title">PENDAPATAN TAMBAHAN</div>
-    <div class="table-container">
-        <table>
-            @foreach($additional_earnings as $item)
-            <tr>
-                <td class="item-label">{{ $item['label'] }}</td>
-                <td class="item-amount">Rp {{ number_format($item['amount'], 0, ',', '.') }}</td>
-            </tr>
-            @endforeach
-            <tr class="subtotal-row">
-                <td>SUBTOTAL PENDAPATAN TAMBAHAN</td>
-                <td class="item-amount">Rp {{ number_format($total_additional_earnings, 0, ',', '.') }}</td>
-            </tr>
-        </table>
-    </div>
+        <div class="section-title">PENDAPATAN TAMBAHAN</div>
+        <div class="table-container">
+            <table>
+                @foreach($additional_earnings as $item)
+                    <tr>
+                        <td class="item-label">{{ $item['label'] }}</td>
+                        <td class="item-amount">Rp {{ number_format($item['amount'], 0, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+                <tr class="subtotal-row">
+                    <td>SUBTOTAL PENDAPATAN TAMBAHAN</td>
+                    <td class="item-amount">Rp {{ number_format($total_additional_earnings, 0, ',', '.') }}</td>
+                </tr>
+            </table>
+        </div>
+    @endif
+
+    <!-- DETAIL ANJEM & BORONGAN (JIKA ADA NILAI) -->
+    @php
+        $showAdditionalInfo =
+            !empty($additional_earnings_info) && (
+                !is_null($additional_earnings_info['anjem_hari'] ?? null) ||
+                !is_null($additional_earnings_info['anjem_jam'] ?? null) ||
+                !is_null($additional_earnings_info['borongan_kg'] ?? null)
+            );
+    @endphp
+    @if($showAdditionalInfo)
+        <div class="section-title" style="margin-top: 12px;">DETAIL ANJEM & BORONGAN</div>
+        <div class="table-container">
+            <table>
+                @if(!is_null($additional_earnings_info['anjem_hari'] ?? null))
+                    <tr>
+                        <td class="item-label">Anjem (Hari)</td>
+                        <td class="item-amount">{{ $additional_earnings_info['anjem_hari'] }} hari</td>
+                    </tr>
+                @endif
+                @if(!is_null($additional_earnings_info['anjem_jam'] ?? null))
+                    <tr>
+                        <td class="item-label">Anjem (Jam)</td>
+                        <td class="item-amount">{{ $additional_earnings_info['anjem_jam'] }} jam</td>
+                    </tr>
+                @endif
+                @if(!is_null($additional_earnings_info['borongan_kg'] ?? null))
+                    <tr>
+                        <td class="item-label">Borongan (Kg)</td>
+                        <td class="item-amount">{{ $additional_earnings_info['borongan_kg'] }} kg</td>
+                    </tr>
+                @endif
+            </table>
+        </div>
     @endif
 
     <!-- TOTAL PENDAPATAN -->
@@ -297,21 +399,21 @@
 
     <!-- POTONGAN -->
     @if($deductions->count() > 0)
-    <div class="section-title" style="margin-top: 20px;">POTONGAN</div>
-    <div class="table-container">
-        <table>
-            @foreach($deductions as $item)
-            <tr>
-                <td class="item-label">{{ $item['label'] }}</td>
-                <td class="item-amount">Rp {{ number_format($item['amount'], 0, ',', '.') }}</td>
-            </tr>
-            @endforeach
-            <tr class="subtotal-row">
-                <td>TOTAL POTONGAN</td>
-                <td class="item-amount">Rp {{ number_format($total_deductions, 0, ',', '.') }}</td>
-            </tr>
-        </table>
-    </div>
+        <div class="section-title" style="margin-top: 20px;">POTONGAN</div>
+        <div class="table-container">
+            <table>
+                @foreach($deductions as $item)
+                    <tr>
+                        <td class="item-label">{{ $item['label'] }}</td>
+                        <td class="item-amount">Rp {{ number_format($item['amount'], 0, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+                <tr class="subtotal-row">
+                    <td>TOTAL POTONGAN</td>
+                    <td class="item-amount">Rp {{ number_format($total_deductions, 0, ',', '.') }}</td>
+                </tr>
+            </table>
+        </div>
     @endif
 
     <!-- TAKE HOME PAY -->
@@ -322,54 +424,273 @@
 
     <!-- INFORMASI KEHADIRAN & LEMBUR -->
     @if($attendance || $overtime)
-    <div class="section-title" style="margin-top: 20px;">INFORMASI TAMBAHAN</div>
-    <div class="two-column">
-        @if($attendance)
-        <div class="column">
-            <strong>Kehadiran:</strong>
-            <div class="info-grid" style="margin-top: 5px;">
-                <div class="info-row">
-                    <div class="info-label" style="width: 50%;">Hadir</div>
-                    <div class="info-separator">:</div>
-                    <div class="info-value">{{ $attendance['hadir'] }} hari</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Mangkir</div>
-                    <div class="info-separator">:</div>
-                    <div class="info-value">{{ $attendance['mangkir'] }} hari</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Terlambat</div>
-                    <div class="info-separator">:</div>
-                    <div class="info-value">{{ $attendance['terlambat'] }} hari</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Cuti</div>
-                    <div class="info-separator">:</div>
-                    <div class="info-value">{{ $attendance['cuti'] }} hari</div>
-                </div>
-            </div>
-        </div>
-        @endif
+        <div class="section-title" style="margin-top: 20px;">INFORMASI TAMBAHAN</div>
+        <div class="two-column">
+            @if($attendance)
+                <div class="column">
+                    <strong>Kehadiran:</strong>
+                    <div class="info-grid" style="margin-top: 5px;">
+                        @php
+                            $hadir = $attendance['hadir'] ?? null;
 
-        @if($overtime)
-        <div class="column">
-            <strong>Lembur:</strong>
-            <div class="info-grid" style="margin-top: 5px;">
-                <div class="info-row">
-                    <div class="info-label" style="width: 50%;">Total Hari</div>
-                    <div class="info-separator">:</div>
-                    <div class="info-value">{{ $overtime['total_hari'] }} hari</div>
+                            // support key lama & baru
+                            $mangkir = $attendance['mangkir'] ?? ($attendance['mangkir_hari'] ?? null);
+                            $terlambat = $attendance['terlambat'] ?? ($attendance['terlambat_hari'] ?? null);
+                            $cuti = $attendance['cuti'] ?? ($attendance['cuti_dibayar'] ?? null);
+
+                            $tidakMasukHari = $attendance['tidak_masuk_hari'] ?? null;
+                            $tidakMasukUpah = $attendance['tidak_masuk_upah'] ?? null;
+
+                            $terlambatMenit = $attendance['terlambat_menit'] ?? null;
+                            $terlambatJam = $attendance['terlambat_jam'] ?? null;
+
+                            $jamKerja = $attendance['jam_kerja'] ?? null;
+                            $jamHk = $attendance['jam_hk'] ?? null;
+                            $jamHl = $attendance['jam_hl'] ?? null;
+                            $jamHr = $attendance['jam_hr'] ?? null;
+
+                            $jumlahHl = $attendance['jumlah_hl'] ?? null;
+                            $jumlahHr = $attendance['jumlah_hr'] ?? null;
+
+                            $ijinPulang = $attendance['ijin_pulang'] ?? null;
+                        @endphp
+
+                        @if(!is_null($hadir))
+                            <div class="info-row">
+                                <div class="info-label" style="width: 50%;">Hadir</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $hadir }} hari</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($jamKerja))
+                            <div class="info-row">
+                                <div class="info-label">Jam Kerja</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $jamKerja }} jam</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($jamHk))
+                            <div class="info-row">
+                                <div class="info-label">Jam HK</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $jamHk }} jam</div>
+                            </div>
+                        @endif
+                        @if(!is_null($jamHl))
+                            <div class="info-row">
+                                <div class="info-label">Jam HL</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $jamHl }} jam</div>
+                            </div>
+                        @endif
+                        @if(!is_null($jamHr))
+                            <div class="info-row">
+                                <div class="info-label">Jam HR</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $jamHr }} jam</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($jumlahHl))
+                            <div class="info-row">
+                                <div class="info-label">Hari Libur</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $jumlahHl }} hari</div>
+                            </div>
+                        @endif
+                        @if(!is_null($jumlahHr))
+                            <div class="info-row">
+                                <div class="info-label">Hari Raya</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $jumlahHr }} hari</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($mangkir))
+                            <div class="info-row">
+                                <div class="info-label">Mangkir</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $mangkir }} hari</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($tidakMasukHari))
+                            <div class="info-row">
+                                <div class="info-label">Tidak Masuk</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $tidakMasukHari }} hari</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($tidakMasukUpah))
+                            <div class="info-row">
+                                <div class="info-label">Pot. Tidak Masuk (Upah)</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">Rp {{ number_format($tidakMasukUpah, 0, ',', '.') }}</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($terlambat))
+                            <div class="info-row">
+                                <div class="info-label">Terlambat</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">
+                                    {{ $terlambat }} hari
+                                    @if(!is_null($terlambatMenit))
+                                        ({{ $terlambatMenit }} menit)
+                                    @endif
+                                    @if(!is_null($terlambatJam))
+                                        ({{ $terlambatJam }} jam)
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($ijinPulang))
+                            <div class="info-row">
+                                <div class="info-label">Ijin Pulang</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $ijinPulang }}</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($cuti))
+                            <div class="info-row">
+                                <div class="info-label">Cuti</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $cuti }} hari</div>
+                            </div>
+                        @endif
+                    </div>
                 </div>
-                <div class="info-row">
-                    <div class="info-label">Total Jam</div>
-                    <div class="info-separator">:</div>
-                    <div class="info-value">{{ $overtime['total_jam'] }} jam</div>
+            @endif
+
+            @if($overtime)
+                <div class="column">
+                    <strong>Lembur:</strong>
+                    <div class="info-grid" style="margin-top: 5px;">
+                        @php
+                            $totalHari = $overtime['total_hari'] ?? ($overtime['lembur_hari'] ?? null);
+                            $totalJam  = $overtime['total_jam'] ?? ($overtime['lembur_jam'] ?? null);
+
+                            $overtimeJam = $overtime['overtime_jam'] ?? null;
+                            $jamBiasa = $overtime['lembur_jam_biasa'] ?? null;
+                            $jamKhusus = $overtime['lembur_jam_khusus'] ?? null;
+
+                            $lemburLibur = $overtime['lembur_libur'] ?? null;
+
+                            $m2 = $overtime['lembur_minggu_2'] ?? null;
+                            $m3 = $overtime['lembur_minggu_3'] ?? null;
+                            $m4 = $overtime['lembur_minggu_4'] ?? null;
+                            $m5 = $overtime['lembur_minggu_5'] ?? null;
+                            $m6 = $overtime['lembur_minggu_6'] ?? null;
+                            $m7 = $overtime['lembur_minggu_7'] ?? null;
+                            $lembur2 = $overtime['lembur_2'] ?? null;
+                        @endphp
+
+                        @if(!is_null($totalHari))
+                            <div class="info-row">
+                                <div class="info-label" style="width: 50%;">Total Hari</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $totalHari }} hari</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($totalJam))
+                            <div class="info-row">
+                                <div class="info-label">Total Jam</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $totalJam }} jam</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($overtimeJam))
+                            <div class="info-row">
+                                <div class="info-label">Overtime (Jam)</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $overtimeJam }} jam</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($jamBiasa))
+                            <div class="info-row">
+                                <div class="info-label">Lembur Biasa</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $jamBiasa }} jam</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($jamKhusus))
+                            <div class="info-row">
+                                <div class="info-label">Lembur Khusus</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">{{ $jamKhusus }} jam</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($lemburLibur))
+                            <div class="info-row">
+                                <div class="info-label">Lembur Hari Libur</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">Rp {{ number_format($lemburLibur, 0, ',', '.') }}</div>
+                            </div>
+                        @endif
+
+                        @if(!is_null($m2))
+                            <div class="info-row">
+                                <div class="info-label">Lembur Minggu 2</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">Rp {{ number_format($m2, 0, ',', '.') }}</div>
+                            </div>
+                        @endif
+                        @if(!is_null($m3))
+                            <div class="info-row">
+                                <div class="info-label">Lembur Minggu 3</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">Rp {{ number_format($m3, 0, ',', '.') }}</div>
+                            </div>
+                        @endif
+                        @if(!is_null($m4))
+                            <div class="info-row">
+                                <div class="info-label">Lembur Minggu 4</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">Rp {{ number_format($m4, 0, ',', '.') }}</div>
+                            </div>
+                        @endif
+                        @if(!is_null($m5))
+                            <div class="info-row">
+                                <div class="info-label">Lembur Minggu 5</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">Rp {{ number_format($m5, 0, ',', '.') }}</div>
+                            </div>
+                        @endif
+                        @if(!is_null($m6))
+                            <div class="info-row">
+                                <div class="info-label">Lembur Minggu 6</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">Rp {{ number_format($m6, 0, ',', '.') }}</div>
+                            </div>
+                        @endif
+                        @if(!is_null($m7))
+                            <div class="info-row">
+                                <div class="info-label">Lembur Minggu 7</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">Rp {{ number_format($m7, 0, ',', '.') }}</div>
+                            </div>
+                        @endif
+                        @if(!is_null($lembur2))
+                            <div class="info-row">
+                                <div class="info-label">Lembur 2</div>
+                                <div class="info-separator">:</div>
+                                <div class="info-value">Rp {{ number_format($lembur2, 0, ',', '.') }}</div>
+                            </div>
+                        @endif
+                    </div>
                 </div>
-            </div>
+            @endif
         </div>
-        @endif
-    </div>
     @endif
 
     <!-- FOOTER -->
@@ -379,4 +700,5 @@
         <p style="margin-top: 8px;">Dicetak pada: {{ date('d F Y H:i') }} WIB</p>
     </div>
 </body>
+
 </html>

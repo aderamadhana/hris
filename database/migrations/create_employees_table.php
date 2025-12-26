@@ -252,7 +252,7 @@ return new class extends Migration
             $table->integer('ijin_pulang')->nullable();
             $table->integer('cuti_dibayar')->nullable();
             $table->timestamps();
-            
+
             $table->unique(['employee_id', 'payroll_period_id']);
             $table->index('payroll_period_id');
         });
@@ -275,7 +275,7 @@ return new class extends Migration
             $table->decimal('lembur_libur', 15, 2)->nullable();
             $table->decimal('lembur_2', 15, 2)->nullable();
             $table->timestamps();
-            
+
             $table->unique(['employee_id', 'payroll_period_id']);
             $table->index('payroll_period_id');
         });
@@ -301,7 +301,7 @@ return new class extends Migration
             $table->decimal('overtime', 15, 2)->nullable();
             $table->decimal('fee_lembur', 15, 2)->nullable();
             $table->timestamps();
-            
+
             $table->unique(['employee_id', 'payroll_period_id']);
             $table->index('payroll_period_id');
         });
@@ -327,7 +327,7 @@ return new class extends Migration
             $table->decimal('tunj_jabatan', 15, 2)->nullable();
             $table->decimal('tunj_bag', 15, 2)->nullable();
             $table->timestamps();
-            
+
             $table->unique(['employee_id', 'payroll_period_id']);
             $table->index('payroll_period_id');
         });
@@ -369,7 +369,7 @@ return new class extends Migration
             $table->decimal('pembulatan', 15, 2)->nullable();
             $table->decimal('lain_lain', 15, 2)->nullable();
             $table->timestamps();
-            
+
             $table->unique(['employee_id', 'payroll_period_id']);
             $table->index('payroll_period_id');
         });
@@ -408,7 +408,7 @@ return new class extends Migration
             $table->decimal('terlambat_jml', 15, 2)->nullable();
             $table->decimal('koreksi_gaji_minus', 15, 2)->nullable();
             $table->timestamps();
-            
+
             $table->unique(['employee_id', 'payroll_period_id']);
             $table->index('payroll_period_id');
         });
@@ -421,7 +421,7 @@ return new class extends Migration
             $table->decimal('grand_total', 15, 2);
             $table->text('exactsumef2ef10485761rincian_46ab761trainingn24')->nullable();
             $table->timestamps();
-            
+
             $table->unique(['employee_id', 'payroll_period_id']);
             $table->index('payroll_period_id');
             $table->index('grand_total');
