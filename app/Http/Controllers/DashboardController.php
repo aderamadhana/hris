@@ -106,21 +106,29 @@ class DashboardController extends Controller
     /**
      * Hitung kontrak yang hampir habis dalam X hari ke depan
      */
-    private function getKontrakHampirHabis($days)
+    private function getKontrakHampirHabis(int $days): int
     {
-        $id_dummy = [1,2];
-        $dateLimit = Carbon::now()->addDays($days);
-        
-        return EmployeeEmployment::where('status', 'Aktif')
-            ->whereNotNull('tgl_akhir_kerja')
-            ->where('tgl_akhir_kerja', '<=', $dateLimit)
-            ->where('tgl_akhir_kerja', '>=', Carbon::now())
-            ->where(function($query) {
-                $query->where('jenis_kontrak', 'PKWT')
-                      ->orWhereNull('jenis_kontrak');
+        $id_dummy = [1, 2];
+        $baseQuery = Employee::query()
+            ->whereNotIn('id', $id_dummy)
+            ->where('status_active', 1);
+
+        // total karyawan tanpa filter lain
+        $totalAllActive = (clone $baseQuery)->count();
+
+        // total karyawan kontrak hampir habis (7/30) tanpa filter lain
+        $totalContractExpiring = null;
+        $start = now()->startOfDay();
+        $end   = now()->addDays($days)->endOfDay();
+
+        $totalContractExpiring = (clone $baseQuery)
+            ->whereHas('employments', function ($qe) use ($start, $end) {
+                $qe->whereNotNull('tgl_akhir_kerja')
+                ->whereBetween('tgl_akhir_kerja', [$start, $end]);
             })
-            ->whereNotIn('employee_id', $id_dummy)
             ->count();
+
+        return $totalContractExpiring;
     }
 
     /**

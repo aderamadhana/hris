@@ -40,11 +40,15 @@
             <div class="overview-row">
                 <div class="overview-card primary">
                     <div class="overview-label">Total Karyawan</div>
-                    <div class="overview-value">{{ totalItems }}</div>
+                    <div class="overview-value">{{ totalAllKaryawan }}</div>
                 </div>
                 <div class="overview-card neutral">
-                    <div class="overview-label">Kontrak Hampir Habis</div>
-                    <div class="overview-value">0</div>
+                    <div class="overview-label">
+                        Kontrak Hampir Habis ({{ defaultExpiringDays }} hari)
+                    </div>
+                    <div class="overview-value">
+                        {{ totalKontrakHampirHabis }}
+                    </div>
                 </div>
             </div>
 
@@ -341,6 +345,9 @@ export default {
             contractExpiring: null,
 
             isDownloading: false,
+            totalAllKaryawan: 0,
+            totalKontrakHampirHabis: 0,
+            defaultExpiringDays: 7,
         };
     },
 
@@ -445,6 +452,17 @@ export default {
                 this.perPage = res.data.meta.per_page;
                 this.totalItems = res.data.meta.total;
                 this.totalPages = res.data.meta.last_page;
+                this.totalAllKaryawan = res.data.total_all_active;
+                this.totalKontrakHampirHabis =
+                    res.data.total_contract_expiring == null
+                        ? 0
+                        : res.data.total_contract_expiring;
+                this.defaultExpiringDays =
+                    res.data.contract_expiring_days == null
+                        ? 0
+                        : res.data.contract_expiring_days;
+
+                console.log(this.defaultExpiringDays);
             } catch (err) {
                 console.error(err);
                 triggerAlert('error', 'Gagal memuat data karyawan.');

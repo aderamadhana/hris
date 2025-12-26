@@ -124,6 +124,31 @@ class EmployeeController extends Controller
             ];
         });
 
+        $baseQuery = Employee::query()
+            ->whereNotIn('id', $id_dummy)
+            ->where('status_active', $status_active);
+
+        // total karyawan tanpa filter lain
+        $totalAllActive = (clone $baseQuery)->count();
+
+        // total karyawan kontrak hampir habis (7/30) tanpa filter lain
+        $totalContractExpiring = null;
+        if($contractExpiring == null){
+            $contractExpiring = 7;
+        }
+
+        if ($contractExpiring) {
+            $start = now()->startOfDay();
+            $end   = now()->addDays($contractExpiring)->endOfDay();
+
+            $totalContractExpiring = (clone $baseQuery)
+                ->whereHas('employments', function ($qe) use ($start, $end) {
+                    $qe->whereNotNull('tgl_akhir_kerja')
+                    ->whereBetween('tgl_akhir_kerja', [$start, $end]);
+                })
+                ->count();
+        }
+
         return response()->json([
             'data' => $data,
             'meta' => [
@@ -131,7 +156,11 @@ class EmployeeController extends Controller
                 'per_page' => $employees->perPage(),
                 'current_page' => $employees->currentPage(),
                 'last_page' => $employees->lastPage(),
-            ]
+            ],
+            // ✅ tambahan
+            'total_all_active' => $totalAllActive,
+            'total_contract_expiring' => $totalContractExpiring, // null kalau contract_expiring tidak dikirim
+            'contract_expiring_days' => $contractExpiring,        // 7/30/null (biar FE jelas)
         ]);
     }
 

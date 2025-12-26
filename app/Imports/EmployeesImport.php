@@ -128,7 +128,7 @@ class EmployeesImport implements
         $statusKary = trim($row['status_kary'] ?? '');
         $statusNikah = trim($row['status_perkawinan'] ?? '');
         $kewarganegaraan = trim($row['kewarganegaraan'] ?? '');
-        $jenisKelamin = trim($row['jk'] ?? '');
+        $jenisKelamin = trim($row['jk'] ?? null);
         $bagian = trim($row['penempatan_bagian'] ?? '');
         $areaKerja = ''; // tidak ada di data JSON
         
