@@ -181,7 +181,7 @@
     <!-- HEADER -->
     <div class="header" style="width:100%;">
         <img
-            src="{{ public_path('assets/images/logo_print.png') }}"
+            src="{{ public_path('assets/images/logo_print_baru.png') }}"
             alt="Logo"
             style="display:block; width:100%; max-width:none; height:auto; margin:0 0 10px 0;"
         >
