@@ -11,7 +11,7 @@ window.$ = window.jQuery = jQuery
 import 'select2/dist/css/select2.min.css'
 import 'select2'
 
-const appName = 'PT. Mitra Wira Mas HRIS';
+const appName = 'HRIS System';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

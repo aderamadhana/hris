@@ -18,7 +18,7 @@
             <!-- RIGHT: login -->
             <div class="auth-right">
                 <div class="login-card">
-                    <h2>Login ke Aplikasi</h2>
+                    <h2>Masuk ke akun Anda</h2>
                     <p class="subtitle">
                         Gunakan NIK dan kata sandi yang sudah didaftarkan.
                     </p>

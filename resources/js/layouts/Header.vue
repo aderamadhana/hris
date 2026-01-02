@@ -3,11 +3,12 @@
         <!-- LEFT: LOGO / BRAND + CABANG -->
         <div class="header-left">
             <div class="logo-image-sidebar">
-                <img
+                <!-- <img
                     src="/assets/images/logo_baru.png"
                     alt="HRIS Logo"
                     loading="lazy"
-                />
+                /> -->
+                <strong>Human Resource Information System</strong>
             </div>
 
             <!-- SWITCH CABANG -->
