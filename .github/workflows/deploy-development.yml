@@ -1,0 +1,71 @@
+name: Deploy to Development Server
+
+on:
+  push:
+    branches:
+      - development
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H 202.155.157.251 >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          ssh root@202.155.157.251 << 'ENDSSH'
+            cd /var/www/hris.aderamadhana.com
+            
+            # Pull latest code
+            git pull origin development
+            
+            # Install/update composer dependencies
+            composer install --no-dev --optimize-autoloader
+            
+            # Install/update npm dependencies
+            npm ci
+            
+            # Build assets
+            npm run build
+            
+            # Run migrations
+            php artisan migrate --force
+            
+            # Clear and cache config
+            php artisan config:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            
+            # Set permissions
+            chown -R www-data:www-data /var/www/hris.aderamadhana.com
+            chmod -R 755 /var/www/hris.aderamadhana.com/storage
+            chmod -R 755 /var/www/hris.aderamadhana.com/bootstrap/cache
+            
+            # Restart services (sesuaikan dengan web server Anda)
+            # systemctl restart php8.2-fpm  # Uncomment jika pakai PHP-FPM
+            # systemctl reload nginx         # Uncomment jika pakai Nginx
+            # systemctl restart apache2      # Uncomment jika pakai Apache
+            
+            echo "Deployment completed successfully!"
+          ENDSSH
+
+      - name: Deployment Status
+        if: success()
+        run: echo "✅ Deployment to development server successful!"
+
+      - name: Deployment Failed
+        if: failure()
+        run: echo "❌ Deployment failed. Please check the logs."
