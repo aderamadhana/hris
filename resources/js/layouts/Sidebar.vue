@@ -8,74 +8,102 @@ const page = usePage();
         <div class="brand">
             <div class="brand-logo">M</div>
             <span class="brand-text">TAB</span>
-
-            <!-- <div class="logo-image-sidebar">
-                <img
-                    src="assets/images/logo_kecil.png"
-                    alt="HRIS Logo"
-                    loading="lazy"
-                />
-            </div> -->
         </div>
 
+        <!-- ADMIN -->
         <nav class="sidebar-nav" v-if="user.role_id == 1">
             <Link
                 href="/dashboard"
                 class="sidebar-item"
                 :class="{ active: page.url === '/dashboard' }"
             >
-                <span class="icon">🏠</span>
+                <font-awesome-icon icon="house" class="icon" />
                 <span class="label">Dashboard</span>
             </Link>
 
-            <Link
-                href="/karyawan/all-karyawan"
-                class="sidebar-item"
-                :class="{
-                    active: page.url.startsWith('/karyawan/all-karyawan'),
-                }"
-            >
-                <span class="icon">🧑‍💼</span>
-                <span class="label">Data Karyawan</span>
-            </Link>
+            <!-- DATA (collapsible) -->
+            <div class="sidebar-group" :class="{ open: dataMenuOpen }">
+                <button
+                    type="button"
+                    class="sidebar-item sidebar-item--toggle"
+                    :class="{ active: isDataActive }"
+                    @click="toggleDataMenu"
+                >
+                    <font-awesome-icon icon="folder-open" class="icon" />
+                    <span class="label">Data</span>
+                    <span class="caret" :class="{ open: dataMenuOpen }">▾</span>
+                </button>
 
-            <Link
-                href="/pelamar/all-pelamar"
-                class="sidebar-item"
-                :class="{
-                    active: page.url.startsWith('/pelamar/all-pelamar'),
-                }"
-            >
-                <span class="icon">📝</span>
-                <span class="label">Data Pelamar</span>
-            </Link>
-            <Link
-                @click="fiturBelumTersedia()"
-                class="sidebar-item"
-                :class="{ active: page.url.startsWith('/admin/master-client') }"
-            >
-                <span class="icon">🏢</span>
-                <span class="label">Master Client</span>
-            </Link>
+                <div v-show="dataMenuOpen" class="sidebar-submenu">
+                    <Link
+                        href="/karyawan/all-karyawan"
+                        class="sidebar-subitem"
+                        :class="{
+                            active: page.url.startsWith(
+                                '/karyawan/all-karyawan',
+                            ),
+                        }"
+                    >
+                        <span>Karyawan</span>
+                    </Link>
 
-            <Link
-                href="/master/payroll-period/all-data"
-                class="sidebar-item"
-                :class="{
-                    active: page.url.startsWith('/master/payroll-period'),
-                }"
-            >
-                <span class="icon">📅</span>
-                <span class="label">Master Periode Gaji</span>
-            </Link>
+                    <Link
+                        href="/pelamar/all-pelamar"
+                        class="sidebar-subitem"
+                        :class="{
+                            active: page.url.startsWith('/pelamar/all-pelamar'),
+                        }"
+                    >
+                        <span>Pelamar</span>
+                    </Link>
+                </div>
+            </div>
+
+            <!-- MASTER (collapsible) -->
+            <div class="sidebar-group" :class="{ open: masterOpen }">
+                <button
+                    type="button"
+                    class="sidebar-item sidebar-item--toggle"
+                    :class="{ active: isMasterActive }"
+                    @click="toggleMaster"
+                >
+                    <font-awesome-icon icon="layer-group" class="icon" />
+                    <span class="label">Master</span>
+                    <span class="caret" :class="{ open: masterOpen }">▾</span>
+                </button>
+
+                <div v-show="masterOpen" class="sidebar-submenu">
+                    <Link
+                        href="#"
+                        class="sidebar-subitem"
+                        @click.prevent="fiturBelumTersedia()"
+                    >
+                        <span>Client</span>
+                    </Link>
+
+                    <Link
+                        href="/master/payroll-period/all-data"
+                        class="sidebar-subitem"
+                        :class="{
+                            active: page.url.startsWith(
+                                '/master/payroll-period',
+                            ),
+                        }"
+                    >
+                        <span>Periode Gaji</span>
+                    </Link>
+                </div>
+            </div>
         </nav>
+
+        <!-- KARYAWAN -->
         <nav class="sidebar-nav" v-if="user.role_id == 2">
             <Link
                 href="/dashboard"
                 class="sidebar-item"
                 :class="{ active: page.url === '/dashboard' }"
             >
-                <span class="icon">🏠</span>
+                <font-awesome-icon icon="house" class="icon" />
                 <span class="label">Dashboard</span>
             </Link>
 
@@ -84,7 +112,7 @@ const page = usePage();
                 class="sidebar-item"
                 :class="{ active: page.url.startsWith('/attendance') }"
             >
-                <span class="icon">🕒</span>
+                <font-awesome-icon icon="clock" class="icon" />
                 <span class="label">Absensi</span>
             </Link>
 
@@ -93,25 +121,17 @@ const page = usePage();
                 class="sidebar-item"
                 :class="{ active: page.url.startsWith('/salary') }"
             >
-                <span class="icon">🧾</span>
+                <font-awesome-icon icon="file-invoice-dollar" class="icon" />
                 <span class="label">Slip Gaji</span>
             </Link>
 
-            <Link
-                @click="fiturBelumTersedia()"
-                class="sidebar-item"
-                :class="{ active: page.url.startsWith('/contracts') }"
-            >
-                <span class="icon">📄</span>
+            <Link @click="fiturBelumTersedia()" class="sidebar-item">
+                <font-awesome-icon icon="file-contract" class="icon" />
                 <span class="label">Riwayat Kontrak</span>
             </Link>
 
-            <Link
-                @click="fiturBelumTersedia()"
-                class="sidebar-item"
-                :class="{ active: page.url.startsWith('/warnings') }"
-            >
-                <span class="icon">⚠️</span>
+            <Link @click="fiturBelumTersedia()" class="sidebar-item">
+                <font-awesome-icon icon="triangle-exclamation" class="icon" />
                 <span class="label">Surat Peringatan</span>
             </Link>
         </nav>
@@ -125,9 +145,43 @@ export default {
         const page = usePage();
         return {
             user: page.props.auth.user,
+            masterOpen: false,
+            dataMenuOpen: false,
         };
     },
+    computed: {
+        page() {
+            return this.$page;
+        },
+
+        isMasterActive() {
+            return this.page.url.startsWith('/master');
+        },
+        isDataActive() {
+            return (
+                this.page.url.startsWith('/karyawan/all-karyawan') ||
+                this.page.url.startsWith('/pelamar/all-pelamar')
+            );
+        },
+    },
+    watch: {
+        'page.url'() {
+            this.masterOpen = this.isMasterActive;
+        },
+    },
+    mounted() {
+        // auto-open kalau sedang di halaman master
+        if (this.isMasterActive) this.masterOpen = true;
+        if (this.isDataActive) this.dataMenuOpen = true;
+    },
     methods: {
+        toggleMaster() {
+            this.masterOpen = !this.masterOpen;
+        },
+
+        toggleDataMenu() {
+            this.dataMenuOpen = !this.dataMenuOpen;
+        },
         fiturBelumTersedia() {
             triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
         },

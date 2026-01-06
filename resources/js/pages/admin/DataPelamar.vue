@@ -6,31 +6,27 @@
                 <div>
                     <div class="page-heading-row">
                         <h2 class="page-title">Data Pelamar</h2>
-                        <!-- <span class="page-chip">Master Data</span> -->
                     </div>
                     <p class="page-subtitle">Kelola informasi pelamar</p>
                 </div>
 
                 <div class="page-actions">
                     <Button variant="primary" @click="fiturBelumTersedia">
-                        ➕ Tambah Pelamar
+                        <font-awesome-icon icon="plus" class="icon" />
+                        Tambah Pelamar
                     </Button>
                 </div>
             </div>
 
-            <!-- RINGKASAN DI ATAS TABEL -->
+            <!-- RINGKASAN -->
             <div class="overview-row">
                 <div class="overview-card primary">
                     <div class="overview-label">Total Pelamar</div>
                     <div class="overview-value">{{ totalItems }}</div>
                 </div>
-                <!-- <div class="overview-card neutral">
-                    <div class="overview-label">Kontrak Hampir Habis</div>
-                    <div class="overview-value">0</div>
-                </div> -->
             </div>
 
-            <!-- KONTROL DATATABLE -->
+            <!-- TOOLBAR -->
             <div class="dt-toolbar">
                 <div class="dt-length">
                     <label>
@@ -46,34 +42,32 @@
 
                 <div class="dt-search">
                     <label>
-                        Cari:
                         <input
                             v-model="search"
                             type="search"
-                            placeholder="Nama, NIK, atau jabatan..."
+                            placeholder="Cari Nama, NIK, atau jabatan..."
                         />
                     </label>
                 </div>
             </div>
 
-            <!-- TABEL DALAM CARD -->
+            <!-- TABLE -->
             <div class="table-card">
                 <div class="table-responsive-custom">
                     <table class="table">
                         <thead>
                             <tr>
-                                <th class="col-no">#</th>
-                                <th class="col-name">Nama</th>
-                                <th class="col-nik">NIK</th>
-                                <th class="col-tanggal-lahir">
-                                    Tanggal Melamar
-                                </th>
-                                <th class="col-perusahaan">Perusahaan</th>
-                                <th class="col-position">Jabatan</th>
-                                <th class="col-status">Status</th>
-                                <th class="col-action">Detail</th>
+                                <th>#</th>
+                                <th>Nama</th>
+                                <th>NIK</th>
+                                <th>Tanggal Melamar</th>
+                                <th>Perusahaan</th>
+                                <th>Jabatan</th>
+                                <th>Status</th>
+                                <th>Detail</th>
                             </tr>
                         </thead>
+
                         <tbody>
                             <!-- LOADING -->
                             <tr v-if="loadingUsers">
@@ -97,6 +91,7 @@
                             <!-- DATA -->
                             <tr v-else v-for="(u, index) in users" :key="u.id">
                                 <td>{{ startIndex + index + 1 }}</td>
+
                                 <td>
                                     <div class="cell-user">
                                         <div class="cell-avatar">
@@ -113,22 +108,9 @@
                                     </div>
                                 </td>
 
-                                <td>
-                                    <span class="cell-nik">{{ u.nik }}</span>
-                                </td>
-
-                                <td>
-                                    <span class="cell-tanggal-lahir">
-                                        {{ u.tanggal_lahir }}
-                                    </span>
-                                </td>
-
-                                <td>
-                                    <span class="cell-perusahaan">
-                                        {{ u.perusahaan }}
-                                    </span>
-                                </td>
-
+                                <td>{{ u.nik }}</td>
+                                <td>{{ u.tanggal_lahir }}</td>
+                                <td>{{ u.perusahaan }}</td>
                                 <td>{{ u.position }}</td>
 
                                 <td>
@@ -147,33 +129,24 @@
 
                                 <td class="actions-cell">
                                     <button
-                                        class="action-btn emoji primary"
+                                        class="action-btn primary"
                                         title="Lihat Detail Pelamar"
                                         @click="openDetail(u.id)"
                                     >
-                                        👁️
+                                        <font-awesome-icon icon="eye" />
                                     </button>
-
-                                    <!-- <button
-                                        class="action-btn emoji success"
-                                        title="Slip Gaji Karyawan"
-                                        @click="openPayslip(u.id)"
-                                    >
-                                        📄
-                                    </button> -->
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- FOOTER DATATABLE: INFO + PAGINATION -->
+                <!-- FOOTER -->
                 <div class="dt-footer" v-if="!loadingUsers">
                     <div class="dt-info">
                         Menampilkan
-                        <strong v-if="totalItems">{{ startIndex + 1 }}</strong>
-                        <strong v-else>0</strong>
-                        &nbsp;–&nbsp;
+                        <strong>{{ totalItems ? startIndex + 1 : 0 }}</strong>
+                        –
                         <strong>{{ endIndex }}</strong>
                         dari
                         <strong>{{ totalItems }}</strong>
@@ -188,6 +161,7 @@
                         >
                             «
                         </button>
+
                         <button
                             v-for="page in pages"
                             :key="page"
@@ -197,6 +171,7 @@
                         >
                             {{ page }}
                         </button>
+
                         <button
                             class="dt-page-btn"
                             :disabled="
@@ -209,17 +184,6 @@
                     </div>
                 </div>
             </div>
-
-            <ImportKaryawan
-                v-if="showImportKaryawanModal"
-                @closeModal="closeModalImportKaryawan"
-                @refreshData="fetchEmployees"
-            ></ImportKaryawan>
-            <ImportGaji
-                v-if="showImportGajiModal"
-                @closeModal="closeModalImportGaji"
-                @refreshData="fetchEmployees"
-            ></ImportGaji>
         </section>
     </AppLayout>
 </template>

@@ -1,0 +1,354 @@
+/* =====================
+   DASHBOARD (Inertia Page) — FINAL
+   - Container + sections
+   - Grid
+   - Cards + variants
+   - Card header (SCOPED to avoid global header conflicts)
+   - Badge + dropdown
+   - Value + meta
+   - Circle stats + chart placeholder + CTA button
+   - Animations
+   - Responsive
+===================== */
+
+/* ===== CONTAINER ===== */
+.dashboard-container {
+  margin-top: -50px;
+}
+
+.category-section {
+  margin-bottom: 3rem;
+  animation: dashboard-fadeInUp 0.6s ease-out;
+}
+
+.category-title {
+  color: #000;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== GRID ===== */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ===== CARD ===== */
+.dashboard-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-card.large {
+  grid-column: span 2;
+}
+
+.dashboard-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.dashboard-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* variants */
+.dashboard-card.success::before {
+  background: linear-gradient(90deg, #56ab2f 0%, #a8e063 100%);
+}
+
+.dashboard-card.danger::before {
+  background: linear-gradient(90deg, #eb3349 0%, #f45c43 100%);
+}
+
+.dashboard-card.warning::before {
+  background: linear-gradient(90deg, #f09819 0%, #edde5d 100%);
+}
+
+/* ===== CARD HEADER (SCOPED) ===== */
+.dashboard-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  gap: 12px;
+}
+
+/* Admin dashboard header structure (uses .header-left/.header-right/.header-title) */
+.dashboard-card-header .header-left,
+.dashboard-card-header .header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dashboard-card-header .header-left {
+  flex: 1 1 auto;
+}
+
+.dashboard-card-header .header-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Employee dashboard header structure (uses .dashboard-card-title) */
+.dashboard-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.3rem;
+}
+
+/* ===== BADGE ===== */
+.dashboard-card-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.dashboard-card.success .dashboard-card-badge {
+  background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+}
+
+.dashboard-card.danger .dashboard-card-badge {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+}
+
+.dashboard-card.warning .dashboard-card-badge {
+  background: linear-gradient(135deg, #f09819 0%, #edde5d 100%);
+}
+
+/* ===== DROPDOWN ===== */
+.dashboard-card-dropdown {
+  background: #f7fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a5568;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboard-card-dropdown:hover {
+  border-color: #667eea;
+  background: #ffffff;
+}
+
+.dashboard-card-dropdown:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ===== VALUE + META ===== */
+.dashboard-value {
+  font-size: 3.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+  animation: dashboard-countUp 0.5s ease-out;
+}
+
+.dashboard-card.success .dashboard-value {
+  background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dashboard-card.danger .dashboard-value {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dashboard-card.warning .dashboard-value {
+  background: linear-gradient(135deg, #f09819 0%, #edde5d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dashboard-meta {
+  color: #718096;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* ===== CIRCLE STATS ===== */
+.dashboard-circle {
+  width: 150px;
+  height: 150px;
+  margin: 1.5rem auto;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.dashboard-card.success .dashboard-circle {
+  background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+  box-shadow: 0 8px 20px rgba(86, 171, 47, 0.3);
+}
+
+.dashboard-card.danger .dashboard-circle {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+  box-shadow: 0 8px 20px rgba(235, 51, 73, 0.3);
+}
+
+.dashboard-card.warning .dashboard-circle {
+  background: linear-gradient(135deg, #f09819 0%, #edde5d 100%);
+  box-shadow: 0 8px 20px rgba(240, 152, 25, 0.3);
+}
+
+.dashboard-circle-inner {
+  width: 130px;
+  height: 130px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #2d3748;
+}
+
+/* ===== CHART PLACEHOLDER (scoped) ===== */
+.dashboard-card .chart-placeholder {
+  margin-top: 1.5rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  border-radius: 15px;
+  text-align: center;
+  color: #718096;
+  font-weight: 600;
+  border: 2px dashed #cbd5e0;
+}
+
+/* ===== CTA BUTTON ===== */
+.dashboard-btn-link {
+  margin-top: 1rem;
+  padding: 0.8rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  text-align: center;
+}
+
+.dashboard-btn-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.dashboard-btn-link:active {
+  transform: translateY(0);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes dashboard-fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dashboard-countUp {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .dashboard-card.large {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .category-title {
+    font-size: 1.4rem;
+  }
+
+  .dashboard-value {
+    font-size: 2.5rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-card.large {
+    grid-column: span 1;
+  }
+
+  .dashboard-circle {
+    width: 120px;
+    height: 120px;
+  }
+
+  .dashboard-circle-inner {
+    width: 105px;
+    height: 105px;
+    font-size: 2rem;
+  }
+}

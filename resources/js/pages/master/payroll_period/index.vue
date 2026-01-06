@@ -30,7 +30,6 @@
 
                 <div class="dt-search">
                     <label>
-                        Cari:
                         <input
                             v-model="search"
                             type="search"
@@ -52,7 +51,7 @@
                     </div>
                 </div>
 
-                <div class="table-responsive">
+                <div class="table-responsive-custom">
                     <table class="table">
                         <thead>
                             <tr>
@@ -107,14 +106,16 @@
                                         class="action-btn emoji primary"
                                         title="Edit"
                                     >
-                                        ✏️
+                                        <font-awesome-icon
+                                            icon="pen-to-square"
+                                        />
                                     </Link>
                                     <button
                                         @click="deletePeriod(period.id)"
                                         class="action-btn emoji danger"
                                         title="Hapus"
                                     >
-                                        🗑️
+                                        <font-awesome-icon icon="trash" />
                                     </button>
                                 </td>
                             </tr>

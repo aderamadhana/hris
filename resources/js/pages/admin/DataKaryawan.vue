@@ -16,22 +16,37 @@
 
                 <div class="page-actions">
                     <DropdownButton label="Upload Data">
-                        <a @click="openImportKaryawanModal">
-                            ⬆️ Upload Excel Karyawan
+                        <a
+                            @click="openImportKaryawanModal"
+                            class="dropdown-item"
+                        >
+                            <font-awesome-icon icon="upload" class="icon" />
+                            Upload Excel Karyawan
                         </a>
-                        <a @click="openImportPayslipModal">
-                            🧾 Upload Slip Gaji Karyawan
+                        <a
+                            @click="openImportPayslipModal"
+                            class="dropdown-item"
+                        >
+                            <font-awesome-icon
+                                icon="file-invoice-dollar"
+                                class="icon"
+                            />
+                            Upload Slip Gaji Karyawan
                         </a>
                     </DropdownButton>
+
                     <Button
                         variant="success"
                         :loading="isDownloading"
                         @click="downloadKaryawan"
                     >
-                        ⬇️ Download Karyawan
+                        <font-awesome-icon icon="download" class="icon" />
+                        Download Karyawan
                     </Button>
+
                     <Button variant="primary" @click="tambahKaryawan">
-                        ➕ Tambah Karyawan
+                        <font-awesome-icon icon="plus" class="icon" />
+                        Tambah Karyawan
                     </Button>
                 </div>
             </div>
@@ -69,11 +84,10 @@
 
                 <div class="dt-search">
                     <label>
-                        Cari:
                         <input
                             v-model="search"
                             type="search"
-                            placeholder="NIK atau nama"
+                            placeholder="Cari NIK atau nama"
                         />
                     </label>
                 </div>
@@ -129,13 +143,10 @@
                             class="filter-btn"
                             @click="filteredData"
                         >
-                            <svg
+                            <font-awesome-icon
+                                icon="filter"
                                 class="filter-icon"
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
-                            >
-                                <path d="M3 5h18l-7 8v5l-4 2v-7L3 5z"></path>
-                            </svg>
+                            />
                             <span>Filter</span>
                         </Button>
                     </div>
@@ -211,33 +222,37 @@
 
                                 <td class="actions-cell">
                                     <button
-                                        class="action-btn emoji primary"
+                                        class="action-btn primary"
                                         title="Edit Karyawan"
                                         @click="openEdit(u.id)"
                                     >
-                                        ✏️
-                                    </button>
-                                    <button
-                                        class="action-btn emoji primary"
-                                        title="Lihat Detail Karyawan"
-                                        @click="openDetail(u.id)"
-                                    >
-                                        👁️
+                                        <font-awesome-icon
+                                            icon="pen-to-square"
+                                        />
                                     </button>
 
                                     <button
-                                        class="action-btn emoji primary"
+                                        class="action-btn primary"
+                                        title="Lihat Detail Karyawan"
+                                        @click="openDetail(u.id)"
+                                    >
+                                        <font-awesome-icon icon="eye" />
+                                    </button>
+
+                                    <button
+                                        class="action-btn danger"
                                         title="Non Aktifkan Karyawan"
                                         @click="fiturBelumTersedia"
                                     >
-                                        🗑️
+                                        <font-awesome-icon icon="trash" />
                                     </button>
+
                                     <button
-                                        class="action-btn emoji success"
+                                        class="action-btn success"
                                         title="Slip Gaji Karyawan"
                                         @click="openPayslip(u.id)"
                                     >
-                                        📄
+                                        <font-awesome-icon icon="file-lines" />
                                     </button>
                                 </td>
                             </tr>
