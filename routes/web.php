@@ -75,8 +75,10 @@ Route::middleware('auth')->group(function () {
                 return Inertia::render('master/client/all-client');
             });
             Route::get('/', [PerusahaanController::class, 'index']);
-            // Route::get('/get-data/{id}', [PayrollPeriodController::class, 'getData']);
+            Route::get('/edit/{id}', [PerusahaanController::class, 'edit']);
+            Route::get('/get-data/{id}', [PerusahaanController::class, 'getData']);
             Route::get('/create', [PerusahaanController::class, 'create']);
+            Route::get('/sync', [PerusahaanController::class, 'sync']);
             // Route::post('/store', [PayrollPeriodController::class, 'store']);
             // Route::get('/{payrollPeriod}/edit', [PayrollPeriodController::class, 'edit']);
             // Route::put('/update/{payrollPeriod}', [PayrollPeriodController::class, 'update']);

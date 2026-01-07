@@ -11,10 +11,20 @@
                         Kelola data perusahaan dan periode MOU
                     </p>
                 </div>
-
-                <Button variant="primary" @click="tambahPerusahaan">
-                    + Tambah Client
-                </Button>
+                <div class="page-actions">
+                    <Button
+                        variant="success"
+                        :loading="isDownloading"
+                        @click="syncPerusahaan"
+                    >
+                        <font-awesome-icon icon="sync" class="icon" />
+                        Sync Client
+                    </Button>
+                    <Button variant="primary" @click="tambahPerusahaan">
+                        <font-awesome-icon icon="plus" class="icon" />
+                        Tambah Client
+                    </Button>
+                </div>
             </div>
 
             <!-- Toolbar -->
@@ -119,16 +129,18 @@
                                 </td>
                                 <td class="actions-cell">
                                     <Link
-                                        :href="`/master/perusahaan/${item.id}/edit`"
-                                        class="action-btn emoji primary"
+                                        :href="`/master/client/edit/${item.id}`"
+                                        class="action-btn primary"
                                     >
-                                        ✏️
+                                        <font-awesome-icon
+                                            icon="pen-to-square"
+                                        />
                                     </Link>
                                     <button
-                                        class="action-btn emoji danger"
+                                        class="action-btn danger"
                                         @click="hapus(item.id)"
                                     >
-                                        🗑️
+                                        <font-awesome-icon icon="trash" />
                                     </button>
                                 </td>
                             </tr>
@@ -136,32 +148,41 @@
                     </table>
                 </div>
 
-                <!-- Pagination -->
-                <div class="dt-footer" v-if="totalItems > 0">
+                <!-- FOOTER DATATABLE: INFO + PAGINATION -->
+                <div class="dt-footer" v-if="!loadingUsers">
                     <div class="dt-info">
-                        Menampilkan {{ startIndex + 1 }} – {{ endIndex }} dari
-                        {{ totalItems }} client
+                        Menampilkan
+                        <strong v-if="totalItems">{{ startIndex + 1 }}</strong>
+                        <strong v-else>0</strong>
+                        &nbsp;–&nbsp;
+                        <strong>{{ endIndex }}</strong>
+                        dari
+                        <strong>{{ totalItems }}</strong>
+                        karyawan
                     </div>
 
                     <div class="dt-pagination">
                         <button
+                            class="dt-page-btn"
                             :disabled="currentPage === 1"
                             @click="goToPage(currentPage - 1)"
                         >
                             «
                         </button>
-
                         <button
                             v-for="page in pages"
                             :key="page"
+                            class="dt-page-btn"
                             :class="{ active: page === currentPage }"
                             @click="goToPage(page)"
                         >
                             {{ page }}
                         </button>
-
                         <button
-                            :disabled="currentPage === totalPages"
+                            class="dt-page-btn"
+                            :disabled="
+                                currentPage === totalPages || totalPages === 0
+                            "
                             @click="goToPage(currentPage + 1)"
                         >
                             »
@@ -189,6 +210,7 @@ export default {
             status: '',
             items: [],
             loading: false,
+            isDownloading: false,
 
             currentPage: 1,
             perPage: 10,
@@ -267,6 +289,23 @@ export default {
                 this.fetchPerusahaan(this.currentPage);
             } catch {
                 triggerAlert('error', 'Gagal menghapus perusahaan');
+            }
+        },
+
+        async syncPerusahaan() {
+            try {
+                this.isDownloading = true;
+                const { data } = await axios.get('/master/client/sync');
+
+                // contoh: tampilkan hasil
+                console.log(data.stats);
+                triggerAlert('success', data.message);
+                this.fetchPerusahaan();
+            } catch (error) {
+                console.error('Sync gagal', error);
+                triggerAlert('error', 'Sync gagal');
+            } finally {
+                this.isDownloading = false;
             }
         },
     },

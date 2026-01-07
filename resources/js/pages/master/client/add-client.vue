@@ -347,8 +347,11 @@ export default {
 
                             <div class="card-body space-y-4">
                                 <div class="form-group">
-                                    <label class="field-label required"
-                                        >Kode Perusahaan</label
+                                    <label class="field-label"
+                                        >Kode Perusahaan
+                                        <span class="text-danger"
+                                            >*</span
+                                        ></label
                                     >
                                     <input
                                         v-model="form.kode_perusahaan"
@@ -373,8 +376,11 @@ export default {
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="field-label required"
-                                        >Nama Perusahaan</label
+                                    <label class="field-label"
+                                        >Nama Perusahaan
+                                        <span class="text-danger"
+                                            >*</span
+                                        ></label
                                     >
                                     <input
                                         v-model="form.nama_perusahaan"
@@ -454,8 +460,11 @@ export default {
                                     class="gap-4 sm:grid-cols-2 grid grid-cols-1"
                                 >
                                     <div class="form-group">
-                                        <label class="field-label required"
-                                            >Nama Divisi</label
+                                        <label class="field-label"
+                                            >Nama Divisi
+                                            <span class="text-danger"
+                                                >*</span
+                                            ></label
                                         >
                                         <input
                                             v-model="divisi.nama_divisi"
@@ -506,7 +515,7 @@ export default {
                                     >
                                         Lokasi Penempatan
                                     </h4>
-                                    <p class="text-xs text-slate-500 mb-4">
+                                    <p class="field-hint">
                                         Klik pada peta atau cari lokasi untuk
                                         menentukan titik presensi
                                     </p>
@@ -557,7 +566,8 @@ export default {
                                 </div>
 
                                 <!-- MAP -->
-                                <div class="relative w-full">
+                                <!-- kunci z-index Leaflet di dalam wrapper -->
+                                <div class="map-wrap relative w-full">
                                     <div
                                         :id="`map-${index}`"
                                         class="rounded-xl w-full overflow-hidden border-2"
@@ -646,7 +656,7 @@ export default {
                                     <div
                                         class="bg-blue-50 border-blue-200 rounded-lg p-3 border"
                                     >
-                                        <p class="text-xs text-blue-700">
+                                        <p class="field-hint">
                                             <i class="ti ti-info-circle"></i>
                                             <strong>Radius Presensi:</strong>
                                             Jarak maksimal karyawan dari titik
@@ -693,91 +703,3 @@ export default {
         </div>
     </AppLayout>
 </template>
-
-<style scoped>
-.page-container {
-    width: 100%;
-    max-width: 100%;
-}
-
-/* dropdown: jangan overlay map */
-.search-dropdown {
-    position: static;
-    width: 100%;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    margin-top: 8px;
-    max-height: 220px;
-    overflow-y: auto;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.search-dropdown li {
-    padding: 10px 14px;
-    cursor: pointer;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border-bottom: 1px solid #f1f5f9;
-    transition: all 0.2s;
-}
-
-.search-dropdown li:last-child {
-    border-bottom: none;
-}
-
-.search-dropdown li:hover {
-    background: #f1f5f9;
-    color: #2563eb;
-}
-
-/* spinner di dalam input */
-.search-input-wrap {
-    position: relative;
-}
-
-.search-spinner {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
-    border: 2px solid #cbd5e1;
-    border-top-color: #2563eb;
-    border-radius: 999px;
-    animation: spin 0.8s linear infinite;
-    pointer-events: none;
-}
-
-@keyframes spin {
-    to {
-        transform: translateY(-50%) rotate(360deg);
-    }
-}
-
-/* readonly lebih gelap (input + textarea saja) */
-input.form-input[readonly],
-textarea.form-input[readonly] {
-    background: #e5e7eb;
-    color: #0f172a;
-    border-color: #94a3b8;
-    cursor: not-allowed;
-    user-select: text;
-}
-
-input.form-input[readonly]:focus,
-textarea.form-input[readonly]:focus {
-    outline: none;
-    box-shadow: none;
-    border-color: #94a3b8;
-}
-
-/* Leaflet fill */
-:deep(.leaflet-container) {
-    width: 100% !important;
-    height: 100% !important;
-}
-</style>
