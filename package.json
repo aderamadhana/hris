@@ -41,6 +41,7 @@
         "clsx": "^2.1.1",
         "jquery": "^3.7.1",
         "laravel-vite-plugin": "^2.0.0",
+        "leaflet": "^1.9.4",
         "lucide-vue-next": "^0.468.0",
         "reka-ui": "^2.4.1",
         "select2": "^4.1.0-rc.0",

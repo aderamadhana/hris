@@ -74,9 +74,11 @@ const page = usePage();
 
                 <div v-show="masterOpen" class="sidebar-submenu">
                     <Link
-                        href="#"
+                        href="/master/client/all"
                         class="sidebar-subitem"
-                        @click.prevent="fiturBelumTersedia()"
+                        :class="{
+                            active: page.url.startsWith('/master/client'),
+                        }"
                     >
                         <span>Client</span>
                     </Link>

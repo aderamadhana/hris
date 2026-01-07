@@ -3,6 +3,7 @@ import '../css/components/header.css';
 import '../css/components/sidebar.css';
 import '../css/components/dashboard.css';
 import '../css/components/content.css'
+import 'leaflet/dist/leaflet.css'
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';

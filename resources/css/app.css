@@ -108,8 +108,26 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 20px;
+}
+
+.card-header.border-b {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.card-header .card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.card-header p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.35;
 }
 
 .card-title {
@@ -1797,3 +1815,90 @@ textarea.form-input {
 }
 
 
+/* ===== Minimal utilities (karena bukan Tailwind) ===== */
+.grid { display: grid; }
+.flex { display: flex; }
+.relative { position: relative; }
+.sticky { position: sticky; }
+.bottom-0 { bottom: 0; }
+.w-full { width: 100%; }
+
+.between { display: flex; justify-content: space-between; align-items: center; }
+.justify-end { justify-content: flex-end; }
+
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+
+.mt-8 { margin-top: 2rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+
+.py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+.pt-4 { padding-top: 1rem; }
+
+.border-t { border-top: 1px solid #e5e7eb; }
+.border-b { border-bottom: 1px solid #e5e7eb; }
+
+.z-10 { z-index: 10; }
+
+/* space-y utilities */
+.space-y-4 > * + * { margin-top: 1rem; }
+.space-y-5 > * + * { margin-top: 1.25rem; }
+.space-y-6 > * + * { margin-top: 1.5rem; }
+
+/* grid columns */
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+
+@media (min-width: 640px) {
+  .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sm\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+  .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  /* INI yang bikin kolom kanan jadi full (span 2 kolom) */
+  .lg\:col-span-1 { grid-column: span 1 / span 1; }
+  .lg\:col-span-2 { grid-column: span 2 / span 2; }
+
+  .lg\:sticky { position: sticky; }
+  .lg\:top-6 { top: 1.5rem; }
+}
+
+/* pastikan card & map ngisi kolom */
+.card { width: 100%; max-width: none; }
+
+/* Map: jangan hardcode #map-0..#map-4 */
+:deep([id^="map-"]) {
+  width: 100% !important;
+  height: 450px;
+  min-height: 450px;
+}
+
+/* Leaflet container fill */
+:deep(.leaflet-container) {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* HANYA input & textarea yang punya atribut readonly */
+input.form-input[readonly],
+textarea.form-input[readonly] {
+  background: #e5e7eb;
+  color: #0f172a;
+  border-color: #94a3b8;
+  cursor: not-allowed;
+  user-select: text;
+}
+
+input.form-input[readonly]:focus,
+textarea.form-input[readonly]:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: #94a3b8;
+}
+
+input.form-input[readonly]::placeholder,
+textarea.form-input[readonly]::placeholder {
+  color: #475569;
+}
