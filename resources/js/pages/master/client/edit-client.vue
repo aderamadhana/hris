@@ -240,7 +240,7 @@ export default {
             }).addTo(map);
 
             const circle = L.circle(center, {
-                radius: Number(d.radius_presensi ?? 500),
+                radius: Number(d.radius_presensi ?? 200),
                 color: '#2563eb',
                 fillColor: '#2563eb',
                 fillOpacity: 0.15,
