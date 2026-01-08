@@ -75,8 +75,8 @@ export default {
                     searching: false,
                     alamat_penempatan: d.alamat_penempatan ?? '',
                     radius_presensi: d.radius_presensi ?? 100,
-                    latitude: d.latitude ? Number(d.latitude) : null,
-                    longitude: d.longitude ? Number(d.longitude) : null,
+                    latitude: d.latitude ? Number(d.latitude) : -7.96662,
+                    longitude: d.longitude ? Number(d.longitude) : 112.632632,
                     tanggal_akhir_mou: d.tanggal_akhir_mou ?? null,
                     tanggal_awal_mou: d.tanggal_awal_mou ?? null,
                 }));
