@@ -5,6 +5,16 @@ import { Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import L from 'leaflet';
 
+import 'leaflet/dist/leaflet.css';
+
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: '/assets/images/marker-icon-2x.png',
+    iconUrl: '/assets/images/marker-icon.png',
+    shadowUrl: '/assets/images/marker-shadow.png',
+});
+
 export default {
     components: { AppLayout, Link },
     props: {
@@ -197,7 +207,22 @@ export default {
 
             const zoom = hasCoord ? 16 : 13;
 
+            // === FIX MARKER ICON (ambil dari public/images) ===
+            // cache biar gak bikin icon berulang
+            if (!this._leafletDefaultIcon) {
+                this._leafletDefaultIcon = L.icon({
+                    iconUrl: '/assets/images/marker-icon.png',
+                    iconRetinaUrl: '/assets/images/marker-icon-2x.png',
+                    shadowUrl: '/assets/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41],
+                });
+            }
+
             const map = L.map(el);
+
             const tileLayer = L.tileLayer(
                 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 {
@@ -206,16 +231,16 @@ export default {
                 },
             ).addTo(map);
 
-            // optional debug: kalau tile error (429/403) kamu bakal lihat di console
             tileLayer.on('tileerror', (e) => console.warn('Tile error:', e));
 
             const marker = L.marker(center, {
                 draggable: true,
                 title: 'Drag untuk pindah lokasi',
+                icon: this._leafletDefaultIcon, // <— ini yang bikin marker muncul di server
             }).addTo(map);
 
             const circle = L.circle(center, {
-                radius: d.radius_presensi ?? 500,
+                radius: Number(d.radius_presensi ?? 500),
                 color: '#2563eb',
                 fillColor: '#2563eb',
                 fillOpacity: 0.15,
@@ -228,8 +253,8 @@ export default {
 
                 const { lat, lng } = latlng;
 
-                this.form.divisi[index].latitude = parseFloat(lat.toFixed(6));
-                this.form.divisi[index].longitude = parseFloat(lng.toFixed(6));
+                this.form.divisi[index].latitude = Number(lat.toFixed(6));
+                this.form.divisi[index].longitude = Number(lng.toFixed(6));
 
                 if (!reverse) return;
 
@@ -243,7 +268,7 @@ export default {
                     );
 
                     this.form.divisi[index].alamat_penempatan =
-                        res.data.display_name;
+                        res.data.display_name || '';
                 } catch (e) {
                     console.warn('Reverse geocoding gagal:', e);
                 }
@@ -260,7 +285,7 @@ export default {
                 updateLocation,
             };
 
-            // set view + paksa render tiles (ini yang biasanya menyelesaikan blank)
+            // set view + paksa render tiles (biasanya menyelesaikan blank)
             this.refreshLeaflet(index, center, zoom);
 
             // trigger updateLocation setelah map siap

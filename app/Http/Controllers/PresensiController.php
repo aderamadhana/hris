@@ -29,6 +29,15 @@ class PresensiController extends Controller
         DB::beginTransaction();
 
         try {
+            $employee = Employee::with('shift')->findOrFail($request->employee_id);
+
+            if (!$employee->shift_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Karyawan belum memiliki shift. Hubungi admin.',
+                ], 422);
+            }
+
             // Upload foto
             $fotoPath = null;
             if ($request->hasFile('foto')) {
@@ -40,6 +49,7 @@ class PresensiController extends Controller
             // Simpan presensi
             $presensi = Presensi::create([
                 'employee_id' => $request->employee_id,
+                'shift_id' => $employee->shift_id,
                 'perusahaan_id' => $request->perusahaan_id,
                 'divisi_id' => $request->divisi_id,
                 'tanggal_presensi' => $request->tanggal,
@@ -50,7 +60,7 @@ class PresensiController extends Controller
                 'akurasi_gps' => $request->accuracy,
                 'jarak_dari_lokasi' => $request->jarak_dari_lokasi,
                 'foto_presensi' => $fotoPath,
-                'status' => $this->determineStatus($request),
+                'status' => $this->determineStatus($request, $employee->shift),
             ]);
 
             // Update atau buat rekap harian
@@ -86,7 +96,7 @@ class PresensiController extends Controller
         }
     }
 
-    private function determineStatus($request)
+    private function determineStatus($request, $shift)
     {
         // Validasi jarak
         if ($request->has('in_range') && !$request->boolean('in_range')) {
@@ -99,11 +109,15 @@ class PresensiController extends Controller
         }
 
         // Cek keterlambatan (jika masuk)
-        if ($request->jenis_presensi === 'masuk') {
-            $jamMasuk = now()->format('H:i:s');
-            $batasJamMasuk = '08:00:00';
+        if ($request->jenis_presensi === 'masuk' && $shift) {
+            $waktuPresensi = now();
+            $jamMasukShift = Carbon::parse($shift->jam_masuk);
+            $toleransi = $shift->toleransi_keterlambatan ?? 15; // default 15 menit
 
-            if ($jamMasuk > $batasJamMasuk) {
+            // Tambahkan toleransi
+            $batasMasuk = $jamMasukShift->copy()->addMinutes($toleransi);
+
+            if ($waktuPresensi->gt($batasMasuk)) {
                 return 'terlambat';
             }
         }
@@ -125,6 +139,7 @@ class PresensiController extends Controller
         if (!$rekap->exists) {
             $rekap->employee_id = $presensi->employee_id;
             $rekap->tanggal = $presensi->tanggal_presensi;
+            $rekap->shift_id = $presensi->shift_id;
         }
 
         // Update data berdasarkan jenis presensi

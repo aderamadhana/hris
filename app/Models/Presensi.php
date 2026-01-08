@@ -23,6 +23,11 @@ class Presensi extends Model
         'is_valid_location' => 'boolean',
     ];
 
+    public function shift()
+    {
+        return $this->belongsTo(Shift::class);
+    }
+
     // Relationships
     public function karyawan()
     {

@@ -4,6 +4,15 @@ import { triggerAlert } from '@/utils/alert';
 import { Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: '/assets/images/marker-icon-2x.png',
+    iconUrl: '/assets/images/marker-icon.png',
+    shadowUrl: '/assets/images/marker-shadow.png',
+});
 
 export default {
     components: { AppLayout, Link },
@@ -90,11 +99,24 @@ export default {
 
         // ================= MAP =================
         async initMap(index) {
+            // Guard: jangan init ulang kalau sudah ada
+            if (this.maps?.[index]?.map) {
+                // kalau map muncul di tab/modal, kadang perlu refresh ukuran
+                setTimeout(() => this.maps[index].map.invalidateSize(), 0);
+                return;
+            }
+
+            // kalau ini Vue dan element dibuat via v-for, pastikan DOM sudah jadi
+            if (this.$nextTick) await this.$nextTick();
+
             const el = document.getElementById(`map-${index}`);
             if (!el) return;
 
+            // Pastikan container punya tinggi (kalau 0px, map/marker bisa "hilang")
+            if (!el.style.height) el.style.height = '400px';
+
             const center = [-7.96662, 112.632632]; // Malang
-            const map = L.map(el).setView(center, 13);
+            const map = L.map(el, { zoomControl: true }).setView(center, 13);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap',
@@ -104,10 +126,15 @@ export default {
             const marker = L.marker(center, {
                 draggable: true,
                 title: 'Drag untuk pindah lokasi',
+                // icon: new L.Icon.Default(), // optional; default sudah di-fix via mergeOptions
             }).addTo(map);
 
+            const radius = Number(
+                this.form.divisi?.[index]?.radius_presensi ?? 0,
+            );
+
             const circle = L.circle(center, {
-                radius: this.form.divisi[index].radius_presensi,
+                radius,
                 color: '#2563eb',
                 fillColor: '#2563eb',
                 fillOpacity: 0.15,
@@ -120,8 +147,8 @@ export default {
 
                 const { lat, lng } = latlng;
 
-                this.form.divisi[index].latitude = parseFloat(lat.toFixed(6));
-                this.form.divisi[index].longitude = parseFloat(lng.toFixed(6));
+                this.form.divisi[index].latitude = Number(lat.toFixed(6));
+                this.form.divisi[index].longitude = Number(lng.toFixed(6));
 
                 try {
                     const res = await axios.get(
@@ -133,7 +160,7 @@ export default {
                     );
 
                     this.form.divisi[index].alamat_penempatan =
-                        res.data.display_name;
+                        res.data.display_name || '';
                 } catch (e) {
                     console.warn('Reverse geocoding gagal:', e);
                 }
@@ -143,6 +170,9 @@ export default {
             marker.on('dragend', (e) => updateLocation(e.target.getLatLng()));
 
             this.maps[index] = { map, marker, circle };
+
+            // Penting kalau map muncul di area yang baru dirender / modal / tab
+            setTimeout(() => map.invalidateSize(), 0);
         },
 
         updateRadius(index) {
