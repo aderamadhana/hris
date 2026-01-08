@@ -42,7 +42,17 @@ import {
     faKey,
     faRightFromBracket,
     faBars,
-    faSync 
+    faSync,
+    faLocationCrosshairs,
+    faRotate,
+    faSpinner,
+    faMapLocationDot,
+    faCircleCheck,
+    faSatelliteDish,
+    faCircleXmark,
+    faCircleInfo,
+    faLocationDot,
+    faCamera
 } from '@fortawesome/free-solid-svg-icons'
 
 import 'select2/dist/css/select2.min.css'
@@ -76,7 +86,17 @@ library.add(
     faKey,
     faRightFromBracket,
     faBars, 
-    faSync 
+    faSync,
+    faLocationCrosshairs,
+    faRotate,
+    faSpinner,
+    faMapLocationDot,
+    faCircleCheck,
+    faSatelliteDish,
+    faCircleXmark,
+    faCircleInfo,
+    faLocationDot,
+    faCamera
 )
 
 createInertiaApp({

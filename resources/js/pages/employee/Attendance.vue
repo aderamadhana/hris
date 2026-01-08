@@ -12,10 +12,8 @@
                 </div>
             </div>
 
-            <!-- GRID: KIRI FOTO | KANAN PANDUAN + RIWAYAT -->
             <div class="attendance-grid">
-                <!-- KIRI: FOTO / CAMERA -->
-
+                <!-- KIRI -->
                 <div class="card camera-column">
                     <div class="camera-header">
                         <h3 class="camera-title">Ambil Foto Kehadiran</h3>
@@ -24,22 +22,113 @@
                             pencahayaan cukup.
                         </p>
                     </div>
+
                     <div class="right-top">
                         <div class="att-date">{{ todayLabel }}</div>
                         <div class="att-clock">{{ timeText }}</div>
 
                         <div class="att-location-card">
                             <div class="att-location-header">
-                                <div class="att-location-icon">🏢</div>
+                                <div class="att-location-icon">
+                                    <font-awesome-icon
+                                        :icon="['fas', 'building']"
+                                    />
+                                </div>
+
                                 <div class="att-location-texts">
                                     <div class="att-location-name">
-                                        {{ branchName }}
+                                        {{
+                                            perusahaan?.nama_perusahaan ||
+                                            'Perusahaan -'
+                                        }}
+                                        -
+                                        {{ divisi?.nama_divisi || 'Divisi -' }}
                                     </div>
+
+                                    <div class="att-actions">
+                                        <button
+                                            type="button"
+                                            @click="refreshLocation"
+                                            :disabled="locationLoading"
+                                            class="btn btn-primary"
+                                        >
+                                            <font-awesome-icon
+                                                v-if="!locationLoading"
+                                                :icon="[
+                                                    'fas',
+                                                    currentCoords
+                                                        ? 'rotate'
+                                                        : 'location-crosshairs',
+                                                ]"
+                                                class="btn-ic"
+                                            />
+                                            <font-awesome-icon
+                                                v-else
+                                                :icon="['fas', 'spinner']"
+                                                spin
+                                                class="btn-ic"
+                                            />
+                                            {{
+                                                locationLoading
+                                                    ? 'Mengambil...'
+                                                    : currentCoords
+                                                      ? 'Ambil Ulang Lokasi'
+                                                      : 'Ambil Lokasi'
+                                            }}
+                                        </button>
+
+                                        <!-- <button
+                                            v-if="
+                                                divisi?.latitude &&
+                                                divisi?.longitude
+                                            "
+                                            type="button"
+                                            class="btn btn-secondary"
+                                            @click="openTargetMap"
+                                        >
+                                            <font-awesome-icon
+                                                :icon="[
+                                                    'fas',
+                                                    'map-location-dot',
+                                                ]"
+                                                class="btn-ic"
+                                            />
+                                            Buka Titik Presensi
+                                        </button> -->
+                                    </div>
+
+                                    <div class="att-meta">
+                                        <span
+                                            ><b>Radius:</b>
+                                            {{ radiusText }}</span
+                                        >
+                                        <span
+                                            ><b>Akurasi:</b>
+                                            {{ accuracyText }}</span
+                                        >
+                                        <span v-if="lastLocationAt"
+                                            ><b>Update:</b>
+                                            {{ lastLocationAt }}</span
+                                        >
+                                    </div>
+
                                     <div class="att-location-address">
-                                        <span v-if="locationLoading">
-                                            Mendeteksi lokasi Anda...
+                                        <span v-if="locationStatus === 'idle'">
+                                            {{ locationStatusHint }}
                                         </span>
-                                        <span v-else>{{ branchAddress }}</span>
+
+                                        <span
+                                            v-else-if="
+                                                locationStatus === 'loading'
+                                            "
+                                        >
+                                            Mengambil lokasi dari perangkat...
+                                        </span>
+
+                                        <span v-else>
+                                            {{ branchAddress }}
+                                        </span>
+
                                         <span
                                             v-if="locationError"
                                             class="att-location-error"
@@ -53,30 +142,46 @@
                             <div
                                 class="att-distance-row"
                                 :class="{
-                                    'att-distance-ok': inRange,
-                                    'att-distance-bad': !inRange,
+                                    'att-distance-ok': locationStatus === 'ok',
+                                    'att-distance-bad':
+                                        locationStatus === 'out' ||
+                                        locationStatus === 'error',
+                                    'att-distance-warn':
+                                        locationStatus === 'poor_gps',
+                                    'att-distance-idle':
+                                        locationStatus === 'idle',
                                 }"
                             >
                                 <span class="att-distance-symbol">
-                                    {{ inRange ? '✅' : '⚠️' }}
+                                    <font-awesome-icon
+                                        :icon="statusIcon"
+                                        class="att-fa"
+                                    />
                                 </span>
+
                                 <span class="att-distance-text">
-                                    Jarak: {{ distanceText }}.
-                                    {{
-                                        inRange
-                                            ? 'Dalam jangkauan absen.'
-                                            : 'Di luar jangkauan.'
-                                    }}
+                                    <b>{{ locationStatusLabel }}</b>
+                                    <template v-if="currentCoords">
+                                        — Jarak: {{ distanceText }}
+                                    </template>
+                                    <template
+                                        v-if="
+                                            locationStatusHint &&
+                                            locationStatus !== 'ok'
+                                        "
+                                    >
+                                        · {{ locationStatusHint }}
+                                    </template>
                                 </span>
                             </div>
                         </div>
                     </div>
-                    <CameraCapture />
+
+                    <CameraCapture v-bind="cameraProps" />
                 </div>
 
-                <!-- KANAN: JAM + LOKASI + PANDUAN + RIWAYAT -->
+                <!-- KANAN -->
                 <div class="card right-column">
-                    <!-- PANDUAN -->
                     <div class="guide-block">
                         <h3 class="info-title">Panduan Singkat</h3>
                         <ul class="info-list">
@@ -93,16 +198,20 @@
                             Data foto digunakan sebagai bukti kehadiran sesuai
                             kebijakan HR perusahaan.
                         </div>
+
                         <div class="side-divider"></div>
+
                         <div class="side-header">
                             <div class="side-title-wrap">
-                                <span class="side-icon">🕒</span>
+                                <span class="side-icon">
+                                    <font-awesome-icon
+                                        :icon="['fas', 'clock']"
+                                    />
+                                </span>
                                 <h3 class="side-title">Riwayat Hari Ini</h3>
                             </div>
                             <span class="side-date">{{ todayLabel }}</span>
                         </div>
-
-                        <!-- RIWAYAT HARI INI -->
 
                         <div class="side-section">
                             <div class="side-label">Clock In</div>
@@ -110,15 +219,18 @@
                             <div v-if="firstIn" class="side-block">
                                 <div class="side-time">{{ firstIn.time }}</div>
                                 <div class="side-location">
-                                    <span class="side-location-icon">📍</span>
+                                    <span class="side-location-icon">
+                                        <font-awesome-icon
+                                            :icon="['fas', 'location-dot']"
+                                        />
+                                    </span>
                                     <span class="side-location-text">
                                         {{ firstIn.location }}
                                     </span>
                                 </div>
-                                <div class="side-note">
-                                    {{ firstIn.note }}
-                                </div>
+                                <div class="side-note">{{ firstIn.note }}</div>
                             </div>
+
                             <div v-else class="side-empty">
                                 Belum ada data clock in.
                             </div>
@@ -130,15 +242,18 @@
                             <div v-if="lastOut" class="side-block">
                                 <div class="side-time">{{ lastOut.time }}</div>
                                 <div class="side-location">
-                                    <span class="side-location-icon">📍</span>
+                                    <span class="side-location-icon">
+                                        <font-awesome-icon
+                                            :icon="['fas', 'location-dot']"
+                                        />
+                                    </span>
                                     <span class="side-location-text">
                                         {{ lastOut.location }}
                                     </span>
                                 </div>
-                                <div class="side-note">
-                                    {{ lastOut.note }}
-                                </div>
+                                <div class="side-note">{{ lastOut.note }}</div>
                             </div>
+
                             <div v-else class="side-empty">
                                 – Menunggu clock out –
                             </div>
@@ -154,7 +269,8 @@
 import CameraCapture from '@/components/CameraCapture.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import axios from 'axios';
 
 export default {
     name: 'AttendancePage',
@@ -162,43 +278,301 @@ export default {
         CameraCapture,
         AppLayout,
     },
-    setup() {
-        /** JAM BERJALAN **/
-        const now = ref(new Date());
-        let timer = null;
 
-        const timeText = computed(() =>
-            now.value.toLocaleTimeString('id-ID', {
+    data() {
+        const page = usePage();
+
+        return {
+            user: page.props.auth.user,
+
+            // jam berjalan
+            now: new Date(),
+            timer: null,
+
+            // lokasi (manual refresh)
+            branchName: 'Lokasi Anda',
+            branchAddress: 'Klik "Ambil Lokasi" untuk mendeteksi lokasi.',
+            locationLoading: false,
+            locationError: '',
+            currentCoords: null,
+            lastLocationAt: null,
+
+            // target lokasi (divisi terakhir dari backend)
+            divisi: null,
+            perusahaan: null,
+            history: [],
+
+            // hasil hitung jarak
+            distanceMetersValue: null,
+            distanceText: '-',
+            inRange: false,
+
+            // hard lock presensi + kualitas GPS
+            gpsAccuracyMax: 100, // meter
+
+            // dummy riwayat absen
+            todayAttendance: [
+                {
+                    time: '07.43.54',
+                    type: 'Masuk',
+                    note: 'Shift pagi',
+                    location:
+                        'RW 12, Kel. Bunulrejo, Kota Malang, Jawa Timur, 65123',
+                },
+            ],
+
+            // dummy clock state
+            isCheckedIn: true,
+
+            loading: true,
+            withinRadius: false,
+            gpsOk: false,
+        };
+    },
+
+    computed: {
+        timeText() {
+            return this.now.toLocaleTimeString('id-ID', {
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit',
                 hour12: false,
-            }),
-        );
+            });
+        },
 
-        const todayLabel = computed(() =>
-            now.value.toLocaleDateString('id-ID', {
+        todayLabel() {
+            return this.now.toLocaleDateString('id-ID', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',
-            }),
-        );
+            });
+        },
 
-        /** LOKASI SAAT INI + REVERSE GEOCODE **/
-        const branchName = 'Kantor Malang';
-        const branchAddress = ref('Mendeteksi lokasi Anda...');
-        const locationLoading = ref(true);
-        const locationError = ref('');
-        const currentCoords = ref(null);
+        firstIn() {
+            return this.todayAttendance.find((x) => x.type === 'Masuk') || null;
+        },
 
-        const reverseGeocode = async (lat, lon) => {
+        lastOut() {
+            const outs = this.todayAttendance.filter(
+                (x) => x.type === 'Pulang',
+            );
+            return outs.length ? outs[outs.length - 1] : null;
+        },
+
+        // ===== UX status =====
+        locationStatus() {
+            if (this.locationLoading) return 'loading';
+            if (this.locationError) return 'error';
+            if (!this.currentCoords) return 'idle';
+
+            // gunakan flag hasil recalcDistance
+            if (!this.gpsOk) return 'poor_gps';
+            if (this.withinRadius) return 'ok';
+            return 'out';
+        },
+
+        locationStatusLabel() {
+            switch (this.locationStatus) {
+                case 'loading':
+                    return 'Mengambil lokasi...';
+                case 'error':
+                    return 'Gagal ambil lokasi';
+                case 'idle':
+                    return 'Belum ambil lokasi';
+                case 'poor_gps':
+                    return 'GPS kurang akurat';
+                case 'ok':
+                    return 'Dalam jangkauan';
+                case 'out':
+                    return 'Di luar jangkauan';
+                default:
+                    return '';
+            }
+        },
+
+        locationStatusHint() {
+            switch (this.locationStatus) {
+                case 'idle':
+                    return 'Klik tombol untuk ambil lokasi. Pastikan izin lokasi aktif.';
+                case 'poor_gps':
+                    return 'Akurasi GPS terlalu besar. Pindah ke area terbuka / dekat jendela, lalu coba lagi.';
+                case 'out':
+                    return `Dekati titik presensi divisi (radius ${this.divisi?.radius_presensi ?? '-'} m) lalu ambil ulang lokasi.`;
+                case 'error':
+                    return 'Cek izin lokasi browser / HTTPS, lalu coba lagi.';
+                default:
+                    return '';
+            }
+        },
+
+        accuracyText() {
+            const acc = this.currentCoords?.accuracy;
+            return acc ? `±${Math.round(acc)} m` : '-';
+        },
+
+        radiusText() {
+            const r = this.divisi?.radius_presensi;
+            return r ? `${r} m` : '-';
+        },
+
+        statusIcon() {
+            switch (this.locationStatus) {
+                case 'ok':
+                    return ['fas', 'circle-check'];
+                case 'out':
+                    return ['fas', 'triangle-exclamation'];
+                case 'poor_gps':
+                    return ['fas', 'satellite-dish'];
+                case 'error':
+                    return ['fas', 'circle-xmark'];
+                default:
+                    return ['fas', 'circle-info'];
+            }
+        },
+
+        cameraProps() {
+            return {
+                // identitas untuk backend
+                employeeId: this.user?.employee_id ?? null,
+                userId: this.user?.id ?? null,
+
+                perusahaanId: this.perusahaan?.id ?? null,
+                divisiId: this.divisi?.id ?? null,
+
+                // info target presensi (titik & radius)
+                targetLat:
+                    this.divisi?.latitude != null
+                        ? Number(this.divisi.latitude)
+                        : null,
+                targetLng:
+                    this.divisi?.longitude != null
+                        ? Number(this.divisi.longitude)
+                        : null,
+                radiusPresensi: this.divisi?.radius_presensi ?? null,
+
+                // lokasi user saat ini
+                currentCoords: this.currentCoords, // { latitude, longitude, accuracy }
+                currentLat: this.currentCoords?.latitude ?? null,
+                currentLng: this.currentCoords?.longitude ?? null,
+                accuracy: this.currentCoords?.accuracy ?? null,
+
+                // hasil kalkulasi
+                distanceMeters: this.distanceMetersValue,
+                distanceText: this.distanceText,
+                inRange: this.inRange,
+
+                // status UI lokasi
+                locationStatus: this.locationStatus,
+                locationStatusLabel: this.locationStatusLabel,
+                locationStatusHint: this.locationStatusHint,
+                locationLoading: this.locationLoading,
+                locationError: this.locationError,
+
+                // alamat hasil reverse geocode + waktu refresh
+                branchAddress: this.branchAddress,
+                lastLocationAt: this.lastLocationAt,
+
+                // konteks tampilan (opsional, kalau CameraCapture butuh)
+                todayLabel: this.todayLabel,
+                timeText: this.timeText,
+
+                // state clock (opsional)
+                isCheckedIn: this.isCheckedIn,
+            };
+        },
+    },
+
+    mounted() {
+        this.timer = setInterval(() => {
+            this.now = new Date();
+        }, 1000);
+
+        this.fetchEmployee();
+    },
+
+    beforeUnmount() {
+        if (this.timer) clearInterval(this.timer);
+    },
+
+    methods: {
+        // ===================== DISTANCE =====================
+        distanceMeters(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const toRad = (x) => (x * Math.PI) / 180;
+
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+
+            const a =
+                Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) *
+                    Math.cos(toRad(lat2)) *
+                    Math.sin(dLon / 2) ** 2;
+
+            return 2 * R * Math.asin(Math.sqrt(a));
+        },
+
+        formatDistance(m) {
+            if (m == null) return '-';
+            if (m < 1000) return `${Math.round(m)} meter`;
+            return `${(m / 1000).toFixed(2)} km`;
+        },
+
+        recalcDistance() {
+            // reset biar ga nyangkut nilai lama
+            this.distanceMetersValue = null;
+            this.distanceText = '-';
+            this.withinRadius = false;
+            this.gpsOk = false;
+            this.inRange = false;
+
+            if (!this.currentCoords) return;
+
+            const targetLat = Number(this.divisi?.latitude);
+            const targetLng = Number(this.divisi?.longitude);
+            if (!Number.isFinite(targetLat) || !Number.isFinite(targetLng))
+                return;
+
+            const userLat = Number(this.currentCoords.latitude);
+            const userLng = Number(this.currentCoords.longitude);
+
+            const radius = Number(this.divisi?.radius_presensi ?? 0);
+            const acc = Number(this.currentCoords?.accuracy ?? 0);
+
+            const m = this.distanceMeters(
+                userLat,
+                userLng,
+                targetLat,
+                targetLng,
+            );
+            this.distanceMetersValue = m;
+            this.distanceText = this.formatDistance(m);
+
+            // 1) cek radius
+            this.withinRadius = radius > 0 ? m <= radius : false;
+
+            // 2) cek kualitas GPS
+            this.gpsOk =
+                Number.isFinite(acc) &&
+                acc > 0 &&
+                acc <= Number(this.gpsAccuracyMax);
+
+            // 3) INI yang dipakai untuk presensi (tombol capture)
+            this.inRange = this.withinRadius && this.gpsOk;
+        },
+
+        // ===================== REVERSE GEOCODE =====================
+        async reverseGeocode(lat, lon) {
             try {
-                const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=id`;
+                const url =
+                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2` +
+                    `&lat=${lat}&lon=${lon}&accept-language=id`;
+
                 const res = await fetch(url);
                 if (!res.ok) throw new Error('HTTP error');
-                const data = await res.json();
 
+                const data = await res.json();
                 if (data.display_name) return data.display_name;
 
                 if (data.address) {
@@ -220,121 +594,106 @@ export default {
                 console.error('Reverse geocode error', e);
                 return `Lat: ${lat.toFixed(5)}, Lng: ${lon.toFixed(5)}`;
             }
-        };
+        },
 
-        const initGeolocation = () => {
+        // ===================== MANUAL REFRESH LOCATION =====================
+        refreshLocation() {
             if (!('geolocation' in navigator)) {
-                locationError.value = 'Browser tidak mendukung geolokasi.';
-                branchAddress.value = 'Lokasi tidak tersedia';
-                locationLoading.value = false;
+                this.locationError = 'Browser tidak mendukung geolokasi.';
+                this.branchAddress = 'Lokasi tidak tersedia';
+                this.currentCoords = null;
+                this.recalcDistance();
                 return;
             }
 
+            if (this.locationLoading) return;
+
+            this.locationLoading = true;
+            this.locationError = '';
+            this.branchAddress = 'Mengambil lokasi...';
+
             navigator.geolocation.getCurrentPosition(
                 async (pos) => {
-                    const { latitude, longitude } = pos.coords;
-                    currentCoords.value = { latitude, longitude };
+                    const { latitude, longitude, accuracy } = pos.coords;
 
-                    const addr = await reverseGeocode(latitude, longitude);
-                    branchAddress.value = addr;
-                    locationLoading.value = false;
+                    this.currentCoords = { latitude, longitude, accuracy };
+
+                    this.lastLocationAt = new Date().toLocaleTimeString(
+                        'id-ID',
+                        {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                        },
+                    );
+
+                    const addr = await this.reverseGeocode(latitude, longitude);
+                    this.branchAddress = addr;
+
+                    this.recalcDistance();
+
+                    this.locationLoading = false;
                 },
                 (err) => {
-                    locationError.value =
+                    this.currentCoords = null;
+                    this.inRange = false;
+                    this.distanceText = '-';
+                    this.lastLocationAt = null;
+
+                    this.locationError =
                         err.code === 1
-                            ? 'Izin lokasi ditolak.'
+                            ? 'Izin lokasi ditolak / diblokir.'
                             : 'Lokasi tidak dapat diambil.';
-                    branchAddress.value = 'Lokasi tidak tersedia';
-                    locationLoading.value = false;
+
+                    this.branchAddress = 'Lokasi tidak tersedia';
+                    this.locationLoading = false;
+
+                    console.error('Geolocation error:', err);
                 },
                 {
                     enableHighAccuracy: true,
                     timeout: 10000,
+                    maximumAge: 0,
                 },
             );
-        };
+        },
 
-        onMounted(() => {
-            timer = setInterval(() => {
-                now.value = new Date();
-            }, 1000);
+        openTargetMap() {
+            const lat = Number(this.divisi?.latitude);
+            const lng = Number(this.divisi?.longitude);
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
-            initGeolocation();
-        });
+            const url = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=18/${lat}/${lng}`;
+            window.open(url, '_blank');
+        },
 
-        onBeforeUnmount(() => {
-            if (timer) clearInterval(timer);
-        });
+        // ===================== FETCH DIVISI TERAKHIR =====================
+        fetchEmployee() {
+            const employee_id = this.user.employee_id;
 
-        /** JARAK / STATUS JANGKAUAN – MASIH DUMMY */
-        const distanceText = '1042 meter';
-        const inRange = false;
+            axios
+                .get(`/referensi/perusahaan-terakhir/${employee_id}`)
+                .then((res) => {
+                    this.divisi = res.data.divisi;
+                    this.history = res.data.history;
+                    this.perusahaan = res.data.perusahaan;
 
-        /** RIWAYAT ABSEN DUMMY */
-        const todayAttendance = ref([
-            {
-                time: '07.43.54',
-                type: 'Masuk',
-                note: 'Shift pagi',
-                location:
-                    'RW 12, Kel. Bunulrejo, Kota Malang, Jawa Timur, 65123',
-            },
-            // contoh clock out:
-            // {
-            //   time: '17.02.10',
-            //   type: 'Pulang',
-            //   note: 'Selesai shift',
-            //   location: 'Kantor Malang',
-            // },
-        ]);
+                    this.recalcDistance();
+                })
+                .catch((err) => {
+                    console.error('fetchEmployee error', err);
+                })
+                .finally(() => {
+                    this.loading = false;
+                });
+        },
 
-        const firstIn = computed(
-            () => todayAttendance.value.find((x) => x.type === 'Masuk') || null,
-        );
-
-        const lastOut = computed(() => {
-            const outs = todayAttendance.value.filter(
-                (x) => x.type === 'Pulang',
-            );
-            if (!outs.length) return null;
-            return outs[outs.length - 1];
-        });
-
-        /** CLOCK (DUMMY) */
-        const isCheckedIn = ref(true);
-
-        const handleClock = () => {
-            const label = isCheckedIn.value ? 'Clock Out' : 'Clock In';
+        // ===================== CLOCK (DUMMY) =====================
+        handleClock() {
+            const label = this.isCheckedIn ? 'Clock Out' : 'Clock In';
             triggerAlert('warning', `${label} belum dihubungkan ke backend`);
-            isCheckedIn.value = !isCheckedIn.value;
-        };
-
-        return {
-            // time
-            now,
-            timeText,
-            todayLabel,
-
-            // lokasi
-            branchName,
-            branchAddress,
-            locationLoading,
-            locationError,
-            currentCoords,
-
-            // jarak / status
-            distanceText,
-            inRange,
-
-            // riwayat absen
-            todayAttendance,
-            firstIn,
-            lastOut,
-
-            // clock
-            isCheckedIn,
-            handleClock,
-        };
+            this.isCheckedIn = !this.isCheckedIn;
+        },
     },
 };
 </script>
@@ -346,30 +705,27 @@ export default {
     gap: 24px;
 }
 
-/* GRID: kiri foto, kanan panduan+riwayat */
 .attendance-grid {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
     gap: 24px;
 }
 
-/* Override aturan global .card */
 .attendance-grid .card {
     grid-column: auto;
 }
 
-/* KIRI: CAMERA */
+/* KIRI */
 .camera-column {
     display: flex;
     flex-direction: column;
-    align-items: center; /* kamera tetap center secara visual */
+    align-items: center;
     gap: 18px;
     padding: 28px 22px 32px;
 }
 
-/* header tetap full-width dan rata kiri */
 .camera-header {
-    align-self: stretch; /* <-- biar header melebar full */
+    align-self: stretch;
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -388,17 +744,10 @@ export default {
     color: #6b7280;
 }
 
-/* KANAN: TOP (JAM+LOKASI) + PANDUAN + RIWAYAT */
-.right-column {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    padding: 22px 20px 18px;
-}
-
+/* TOP */
 .right-top {
     width: 100%;
-    align-self: stretch; /* ikut lebar card */
+    align-self: stretch;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -447,19 +796,37 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .att-location-texts {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    width: 100%;
+    text-align: left;
 }
 
 .att-location-name {
     font-size: 14px;
     font-weight: 600;
     color: #111827;
+}
+
+.att-actions {
+    display: flex;
+    gap: 8px;
+    margin: 6px 0 6px;
+    flex-wrap: wrap;
+}
+
+.att-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 4px;
 }
 
 .att-location-address {
@@ -476,29 +843,56 @@ export default {
 
 /* jarak */
 .att-distance-row {
-    margin-top: 4px;
-    padding-top: 6px;
+    margin-top: 6px;
+    padding-top: 8px;
     border-top: 1px dashed #e5e7eb;
     display: flex;
-    align-items: center;
-    gap: 6px;
+    align-items: flex-start;
+    gap: 8px;
     font-size: 13px;
+    line-height: 1.35;
 }
 
 .att-distance-symbol {
     font-size: 14px;
+    margin-top: 1px;
 }
 
 .att-distance-text {
     font-size: 13px;
 }
 
+.att-fa {
+    font-size: 14px;
+}
+
+.btn-ic {
+    margin-right: 6px;
+}
+
+/* status color */
 .att-distance-ok {
     color: #15803d;
 }
 
 .att-distance-bad {
     color: #b91c1c;
+}
+
+.att-distance-warn {
+    color: #b45309;
+}
+
+.att-distance-idle {
+    color: #374151;
+}
+
+/* KANAN */
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 22px 20px 18px;
 }
 
 /* PANDUAN */

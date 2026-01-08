@@ -88,7 +88,10 @@
                     </form>
 
                     <p class="footer-note">
-                        Butuh bantuan? <a href="#">Hubungi admin HR</a>
+                        Butuh bantuan?
+                        <a href="https://wa.me/628813123960" target="_blank"
+                            >Hubungi admin HR</a
+                        >
                     </p>
                 </div>
             </div>

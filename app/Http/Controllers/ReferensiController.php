@@ -111,4 +111,30 @@ class ReferensiController extends Controller
         ]);
     }
 
+    
+    public function getPerusahaanTerakhir($employeeId)
+    {
+        $history = EmployeeEmployment::query()
+            ->with('perusahaanModel')
+            ->where('employee_id', $employeeId)
+            ->orderByRaw("CASE WHEN tgl_akhir_kerja IS NULL OR tgl_akhir_kerja = '' THEN 1 ELSE 0 END DESC")
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->firstOrFail();
+
+        // ambil divisi dari penempatan (harus match perusahaan_id + nama_divisi)
+        $divisi = null;
+        if ($history->perusahaanModel && $history->penempatan) {
+            $divisi = $history->perusahaanModel->divisi()
+                ->where('nama_divisi', $history->penempatan)
+                ->first();
+        }
+
+        return response()->json([
+            'history' => $history,
+            'perusahaan' => $history->perusahaanModel,
+            'divisi' => $divisi,
+        ]);
+    }
+
 }

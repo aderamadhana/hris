@@ -30,7 +30,7 @@ const page = usePage();
                     @click="toggleDataMenu"
                 >
                     <font-awesome-icon icon="folder-open" class="icon" />
-                    <span class="label">Data</span>
+                    <span class="label">Human Resource</span>
                     <span class="caret" :class="{ open: dataMenuOpen }">▾</span>
                 </button>
 
@@ -80,7 +80,7 @@ const page = usePage();
                             active: page.url.startsWith('/master/client'),
                         }"
                     >
-                        <span>Client</span>
+                        <span>Marketing</span>
                     </Link>
 
                     <Link
@@ -92,7 +92,7 @@ const page = usePage();
                             ),
                         }"
                     >
-                        <span>Periode Gaji</span>
+                        <span>Payroll</span>
                     </Link>
                 </div>
             </div>

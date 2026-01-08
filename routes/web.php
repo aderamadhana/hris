@@ -79,9 +79,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/get-data/{id}', [PerusahaanController::class, 'getData']);
             Route::get('/create', [PerusahaanController::class, 'create']);
             Route::get('/sync', [PerusahaanController::class, 'sync']);
-            // Route::post('/store', [PayrollPeriodController::class, 'store']);
-            // Route::get('/{payrollPeriod}/edit', [PayrollPeriodController::class, 'edit']);
-            // Route::put('/update/{payrollPeriod}', [PayrollPeriodController::class, 'update']);
+            Route::post('/store', [PerusahaanController::class, 'store']);
+            Route::put('/update/{id}', [PerusahaanController::class, 'update']);
             // Route::delete('/delete/{payrollPeriod}', [PayrollPeriodController::class, 'destroy']);
         });
     });
@@ -190,6 +189,7 @@ Route::prefix('referensi')->group(function () {
     Route::get('/get-payroll_periods', [ReferensiController::class, 'getPayrollPeriod']);
     Route::get('/get-filter_perusahaan_dan_jabatan', [ReferensiController::class, 'getFilterPerusahaanDanJabatan']);
     Route::get('/get-payroll-periods-by-employee-id/{id}', [ReferensiController::class, 'getPayrollPeriodByEmployeeId']);
+    Route::get('/perusahaan-terakhir/{employeeId}', [ReferensiController::class, 'getPerusahaanTerakhir']);
 });
 
 

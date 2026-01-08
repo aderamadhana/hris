@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Inertia\Inertia;
+use Illuminate\Validation\Rule;
 
 class PerusahaanController extends Controller
 {
@@ -71,6 +72,8 @@ class PerusahaanController extends Controller
                         'radius_presensi',
                         'keterangan',
                         'status',
+                        'tanggal_awal_mou',
+                        'tanggal_akhir_mou',
                         'created_at',
                         'updated_at'
                     )
@@ -111,9 +114,83 @@ class PerusahaanController extends Controller
         ]);
     }
 
-    public function update(Request $request, Perusahaan $payrollPeriod)
+    public function update(Request $request, $id)
     {
-        
+        $perusahaan = Perusahaan::findOrFail($id);
+
+        $validated = $request->validate([
+            'kode_perusahaan' => [
+                'required','string','max:20',
+                Rule::unique('perusahaan', 'kode_perusahaan')->ignore($perusahaan->id),
+            ],
+            'nama_perusahaan' => ['required','string','max:200'],
+            'alamat' => ['required','string'],
+            'status' => ['required', Rule::in(['aktif','tidak_aktif'])],
+            'tanggal_awal_mou' => ['nullable','date'],
+            'tanggal_akhir_mou' => ['nullable','date','after_or_equal:tanggal_awal_mou'],
+
+            'divisi' => ['array'],
+            'divisi.*.id' => ['nullable','integer'],
+            'divisi.*.nama_divisi' => ['required','string','max:100'],
+            'divisi.*.status' => ['required', Rule::in(['aktif','tidak_aktif'])],
+            'divisi.*.alamat_penempatan' => ['nullable','string'],
+            'divisi.*.radius_presensi' => ['nullable','integer','min:0'],
+            'divisi.*.latitude' => ['nullable','numeric'],
+            'divisi.*.longitude' => ['nullable','numeric'],
+            'divisi.*.tanggal_awal_mou' => ['nullable','date'],
+            'divisi.*.tanggal_akhir_mou' => ['nullable','date','after_or_equal:divisi.*.tanggal_awal_mou'],
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $perusahaan->update([
+                'kode_perusahaan' => $validated['kode_perusahaan'],
+                'nama_perusahaan' => $validated['nama_perusahaan'],
+                'alamat' => $validated['alamat'],
+                'status' => $validated['status'],
+                'tanggal_awal_mou' => $validated['tanggal_awal_mou'] ?? null,
+                'tanggal_akhir_mou' => $validated['tanggal_akhir_mou'] ?? null,
+            ]);
+
+            $divisiPayload = $validated['divisi'] ?? [];
+            $keptIds = [];
+
+            foreach ($divisiPayload as $d) {
+                $data = [
+                    'nama_divisi' => $d['nama_divisi'],
+                    'status' => $d['status'],
+                    'alamat_penempatan' => $d['alamat_penempatan'] ?? null,
+                    'radius_presensi' => $d['radius_presensi'] ?? 500,
+                    'latitude' => $d['latitude'] ?? null,
+                    'longitude' => $d['longitude'] ?? null,
+                    'tanggal_awal_mou' => $d['tanggal_awal_mou'] ?? null,
+                    'tanggal_akhir_mou' => $d['tanggal_akhir_mou'] ?? null,
+                ];
+
+                $divisi = $perusahaan->divisi()->updateOrCreate(
+                    ['id' => $d['id'] ?? null],
+                    $data
+                );
+
+                $keptIds[] = $divisi->id;
+            }
+
+            $perusahaan->divisi()
+                ->when(count($keptIds) > 0, fn($q) => $q->whereNotIn('id', $keptIds))
+                ->when(count($keptIds) === 0, fn($q) => $q) 
+                ->delete();
+
+            DB::commit();
+
+            return back()->with('success', 'Data perusahaan berhasil disimpan');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return back()
+                ->withErrors(['server' => 'Terjadi kesalahan saat menyimpan data.'])
+                ->withInput();
+        }
     }
 
     public function destroy(PayrollPeriod $payrollPeriod)

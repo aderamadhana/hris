@@ -22,12 +22,16 @@ class Divisi extends Model
         'radius_presensi',
         'keterangan',
         'status',
+        'tanggal_awal_mou',
+        'tanggal_akhir_mou',
     ];
 
     protected $casts = [
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
         'radius_presensi' => 'integer',
+        'tanggal_awal_mou' => 'date:Y-m-d',
+        'tanggal_akhir_mou' => 'date:Y-m-d',
     ];
 
     // Relationships

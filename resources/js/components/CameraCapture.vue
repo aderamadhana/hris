@@ -10,63 +10,165 @@
         </div>
 
         <div class="camera-actions">
-            <Button variant="primary" size="lg" @click="capture">
-                📸 Ambil Kehadiran
+            <Button
+                variant="primary"
+                size="lg"
+                @click="inRange && capture()"
+                :disabled="locationStatus == 'idle'"
+                :title="
+                    !inRange
+                        ? locationStatus === 'poor_gps'
+                            ? 'GPS kurang akurat. Pindah ke area terbuka lalu ambil ulang lokasi.'
+                            : 'Di luar jangkauan presensi. Ambil ulang lokasi.'
+                        : 'Ambil kehadiran'
+                "
+            >
+                <font-awesome-icon :icon="['fas', 'camera']" class="btn-ic" />
+                Ambil Kehadiran
             </Button>
 
-            <Button variant="ghost" size="md" @click="refreshCamera">
-                🔁 Muat ulang kamera
-            </Button>
+            <!-- <Button variant="ghost" size="md" @click="refreshCamera">
+                <font-awesome-icon :icon="['fas', 'rotate']" class="btn-ic" />
+                Muat ulang kamera
+            </Button> -->
+        </div>
+
+        <div v-if="!inRange" class="camera-hint">
+            <font-awesome-icon
+                :icon="['fas', 'triangle-exclamation']"
+                class="btn-ic"
+            />
+            <span v-if="locationStatus === 'poor_gps'">
+                GPS kurang akurat. Pindah ke area terbuka / dekat jendela, lalu
+                ambil ulang lokasi.
+            </span>
+            <span v-else>
+                Di luar jangkauan presensi. Ambil ulang lokasi dulu.
+            </span>
         </div>
     </div>
 </template>
 
-<script setup>
+<script>
 import Button from '@/components/Button.vue';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { triggerAlert } from '../utils/alert';
 
-const video = ref(null);
-const stream = ref(null);
+export default {
+    name: 'CameraCapture',
+    components: { Button },
 
-const initCamera = async () => {
-    try {
-        const s = await navigator.mediaDevices.getUserMedia({ video: true });
-        stream.value = s;
-        if (video.value) {
-            video.value.srcObject = s;
-        }
-    } catch (e) {
-        console.error(e);
-        triggerAlert('error', 'Gagal mengakses kamera. Periksa izin browser.');
-    }
-};
+    // ✅ WAJIB: deklarasikan props agar bisa diakses sebagai this.employeeId, dst
+    props: {
+        employeeId: { type: [Number, String], default: null },
+        userId: { type: [Number, String], default: null },
 
-onMounted(() => {
-    initCamera();
-});
+        perusahaanId: { type: [Number, String], default: null },
+        divisiId: { type: [Number, String], default: null },
 
-onBeforeUnmount(() => {
-    if (stream.value) {
-        stream.value.getTracks().forEach((t) => t.stop());
-    }
-});
+        targetLat: { type: [Number, String], default: null },
+        targetLng: { type: [Number, String], default: null },
+        radiusPresensi: { type: [Number, String], default: null },
 
-const capture = () => {
-    triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
-};
+        currentCoords: { type: Object, default: null },
+        currentLat: { type: [Number, String], default: null },
+        currentLng: { type: [Number, String], default: null },
+        accuracy: { type: [Number, String], default: null },
 
-const refreshCamera = () => {
-    triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
-    // if (stream.value) {
-    //     stream.value.getTracks().forEach((t) => t.stop());
-    //     stream.value = null;
-    // }
-    // initCamera();
+        distanceMeters: { type: [Number, String], default: null },
+        distanceText: { type: String, default: '-' },
+        inRange: { type: Boolean, default: false },
+
+        locationStatus: { type: String, default: 'idle' },
+        locationStatusLabel: { type: String, default: '' },
+        locationStatusHint: { type: String, default: '' },
+        locationLoading: { type: Boolean, default: false },
+        locationError: { type: String, default: '' },
+
+        branchAddress: { type: String, default: '' },
+        lastLocationAt: { type: String, default: null },
+
+        todayLabel: { type: String, default: '' },
+        timeText: { type: String, default: '' },
+
+        isCheckedIn: { type: Boolean, default: true },
+    },
+
+    data() {
+        return {
+            stream: null,
+        };
+    },
+
+    mounted() {
+        // Debug cepat (hapus kalau sudah beres)
+        // console.log('CameraCapture props:', this.$props);
+        console.log('props:', this.$props);
+        console.log('attrs:', this.$attrs);
+        this.initCamera();
+    },
+
+    beforeUnmount() {
+        this.stopCamera();
+    },
+
+    methods: {
+        async initCamera() {
+            try {
+                const s = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                });
+                this.stream = s;
+                if (this.$refs.video) this.$refs.video.srcObject = s;
+            } catch (e) {
+                console.error(e);
+                triggerAlert(
+                    'error',
+                    'Gagal mengakses kamera. Periksa izin browser.',
+                );
+            }
+        },
+
+        stopCamera() {
+            if (this.stream) {
+                this.stream.getTracks().forEach((t) => t.stop());
+                this.stream = null;
+            }
+        },
+
+        capture() {
+            if (!this.inRange) {
+                triggerAlert(
+                    'error',
+                    'Di luar jangkauan presensi. Ambil ulang lokasi dulu.',
+                );
+                return;
+            }
+
+            triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
+        },
+
+        refreshCamera() {
+            triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
+            // this.stopCamera();
+            // this.initCamera();
+        },
+    },
 };
 </script>
 
 <style scoped>
+.btn-ic {
+    margin-right: 8px;
+}
+
+.camera-hint {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #b91c1c;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
 .camera-wrapper {
     display: flex;
     flex-direction: column;

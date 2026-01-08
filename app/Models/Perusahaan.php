@@ -23,8 +23,8 @@ class Perusahaan extends Model
     ];
 
     protected $casts = [
-        'tanggal_awal_mou' => 'date',
-        'tanggal_akhir_mou' => 'date',
+        'tanggal_awal_mou' => 'date:Y-m-d',
+        'tanggal_akhir_mou' => 'date:Y-m-d',
     ];
 
     // Relationships

@@ -24,6 +24,8 @@ export default {
                 alamat: '',
                 status: 'aktif',
                 divisi: [this.defaultDivisi()],
+                tanggal_akhir_mou: '',
+                tanggal_awal_mou: '',
             },
         };
     },
@@ -47,6 +49,8 @@ export default {
                 latitude: null,
                 longitude: null,
                 radius_presensi: 100,
+                tanggal_akhir_mou: '',
+                tanggal_awal_mou: '',
             };
         },
 
@@ -410,6 +414,29 @@ export default {
                                         placeholder="Alamat lengkap kantor pusat"
                                     ></textarea>
                                 </div>
+                                <div class="form-group">
+                                    <label for="" class="field-label"
+                                        >Tanggal Awal MOU</label
+                                    >
+                                    <input
+                                        type="date"
+                                        v-model="form.tanggal_awal_mou"
+                                        id=""
+                                        class="form-input"
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="field-label"
+                                        >Tanggal Akhir MOU</label
+                                    >
+                                    <input
+                                        type="date"
+                                        v-model="form.tanggal_akhir_mou"
+                                        :min="form.tanggal_awal_mou"
+                                        id=""
+                                        class="form-input"
+                                    />
+                                </div>
 
                                 <div class="form-group">
                                     <label class="field-label">Status</label>
@@ -506,6 +533,33 @@ export default {
                                                 Tidak Aktif
                                             </option>
                                         </select>
+                                    </div>
+                                </div>
+                                <div
+                                    class="gap-4 sm:grid-cols-2 grid grid-cols-1"
+                                >
+                                    <div class="form-group">
+                                        <label for="" class="field-label"
+                                            >Tanggal Awal MOU</label
+                                        >
+                                        <input
+                                            type="date"
+                                            v-model="divisi.tanggal_awal_mou"
+                                            id=""
+                                            class="form-input"
+                                        />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="" class="field-label"
+                                            >Tanggal Akhir MOU</label
+                                        >
+                                        <input
+                                            type="date"
+                                            v-model="divisi.tanggal_akhir_mou"
+                                            :min="divisi.tanggal_awal_mou"
+                                            id=""
+                                            class="form-input"
+                                        />
                                     </div>
                                 </div>
 

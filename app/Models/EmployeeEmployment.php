@@ -29,4 +29,19 @@ class EmployeeEmployment extends Model
     {
         return $value ? \Carbon\Carbon::parse($value)->format('Y-m-d') : null;
     }
+
+    public function perusahaanModel()
+    {
+        return $this->belongsTo(Perusahaan::class, 'perusahaan', 'nama_perusahaan');
+    }
+
+    public function divisiModel()
+    {
+        $perusahaan = $this->perusahaanModel()->first();
+        if (!$perusahaan || !$this->penempatan) return null;
+
+        return $perusahaan->divisi()
+            ->where('nama_divisi', $this->penempatan)
+            ->first();
+    }
 }

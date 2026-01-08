@@ -29,28 +29,31 @@ export default {
                 alamat: '',
                 status: 'aktif',
                 divisi: [this.defaultDivisi()],
+                tanggal_akhir_mou: '',
+                tanggal_awal_mou: '',
             },
         };
     },
 
     mounted() {
         this.$nextTick(() => {
-            this.initMap(0);
+            this.getData();
         });
-        this.getData();
     },
 
     methods: {
+        // ================= FETCH =================
         async getData() {
             try {
                 const { data } = await axios.get(
                     `/master/client/get-data/${this.perusahaan.id}`,
                 );
-
                 const p = data.data;
 
                 this.form.kode_perusahaan = p.kode_perusahaan ?? '';
                 this.form.nama_perusahaan = p.nama_perusahaan ?? '';
+                this.form.tanggal_akhir_mou = p.tanggal_akhir_mou ?? '';
+                this.form.tanggal_awal_mou = p.tanggal_awal_mou ?? '';
                 this.form.alamat = p.alamat ?? '';
                 this.form.status = p.status ?? 'aktif';
 
@@ -61,24 +64,28 @@ export default {
                     searchResults: [],
                     searching: false,
                     alamat_penempatan: d.alamat_penempatan ?? '',
+                    radius_presensi: d.radius_presensi ?? 100,
                     latitude: d.latitude ? Number(d.latitude) : null,
                     longitude: d.longitude ? Number(d.longitude) : null,
-                    radius_presensi: d.radius_presensi ?? 100,
+                    tanggal_akhir_mou: d.tanggal_akhir_mou ?? null,
+                    tanggal_awal_mou: d.tanggal_awal_mou ?? null,
                 }));
 
-                // pastikan minimal 1 divisi biar UI tidak kosong
                 if (!this.form.divisi.length) {
                     this.form.divisi = [this.defaultDivisi()];
                 }
 
-                // kalau kamu pakai leaflet per divisi, re-init map untuk tiap index
-                this.$nextTick(() => {
-                    this.form.divisi.forEach((_, index) => this.initMap(index));
-                });
+                await this.$nextTick();
+
+                // init map harus sequential (hindari race / blank tiles)
+                for (let i = 0; i < this.form.divisi.length; i++) {
+                    await this.initMap(i);
+                }
             } catch (err) {
                 console.error('Gagal ambil data', err);
             }
         },
+
         // ================= BASE =================
         defaultDivisi() {
             return {
@@ -86,11 +93,13 @@ export default {
                 status: 'aktif',
                 search: '',
                 searchResults: [],
-                searching: false, // <- penting untuk spinner
+                searching: false,
                 alamat_penempatan: '',
-                latitude: null,
-                longitude: null,
+                latitude: -7.96662,
+                longitude: 112.632632,
                 radius_presensi: 100,
+                tanggal_akhir_mou: '',
+                tanggal_awal_mou: '',
             };
         },
 
@@ -101,8 +110,8 @@ export default {
             this.searchTimeouts.push(null);
             this.searchControllers.push(null);
 
-            this.$nextTick(() => {
-                this.initMap(index);
+            this.$nextTick(async () => {
+                await this.initMap(index);
             });
         },
 
@@ -112,34 +121,93 @@ export default {
                 return;
             }
 
-            // stop debounce + abort request
             if (this.searchTimeouts[index])
                 clearTimeout(this.searchTimeouts[index]);
             if (this.searchControllers[index])
                 this.searchControllers[index].abort();
 
-            // remove map instance
-            if (this.maps[index]) this.maps[index].map.remove();
+            if (this.maps[index]?.map) this.maps[index].map.remove();
 
             this.form.divisi.splice(index, 1);
             this.maps.splice(index, 1);
-
             this.searchTimeouts.splice(index, 1);
             this.searchControllers.splice(index, 1);
+
+            // IMPORTANT kalau pakai id "map-{index}": setelah splice, index berubah => re-init map sisanya
+            this.$nextTick(async () => {
+                for (let i = index; i < this.form.divisi.length; i++) {
+                    await this.initMap(i, { reverseOnInit: false });
+                }
+            });
+        },
+
+        // ================= MAP HELPERS =================
+        waitForContainer(el, timeoutMs = 2000) {
+            const start = performance.now();
+            return new Promise((resolve) => {
+                const check = () => {
+                    const ok = el.offsetWidth > 0 && el.offsetHeight > 0;
+                    const expired = performance.now() - start > timeoutMs;
+                    if (ok || expired) resolve();
+                    else requestAnimationFrame(check);
+                };
+                check();
+            });
+        },
+
+        refreshLeaflet(index, center, zoom) {
+            const mapObj = this.maps[index];
+            if (!mapObj?.map) return;
+
+            const run = () => {
+                mapObj.map.invalidateSize(true);
+                mapObj.map.setView(center, zoom, { animate: false });
+                mapObj.tileLayer?.redraw();
+            };
+
+            run();
+            requestAnimationFrame(run);
+            setTimeout(run, 150);
+            setTimeout(run, 400);
         },
 
         // ================= MAP =================
-        async initMap(index) {
+        async initMap(index, { reverseOnInit = true } = {}) {
+            await this.$nextTick();
+
             const el = document.getElementById(`map-${index}`);
             if (!el) return;
 
-            const center = [-7.96662, 112.632632]; // Malang
-            const map = L.map(el).setView(center, 13);
+            // tunggu container punya dimensi sebelum bikin map
+            await this.waitForContainer(el);
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap',
-                maxZoom: 19,
-            }).addTo(map);
+            // remove map lama jika ada
+            if (this.maps?.[index]?.map) {
+                this.maps[index].map.remove();
+                this.maps[index] = null;
+            }
+
+            const d = this.form.divisi[index] || {};
+            const defaultCenter = [-7.96662, 112.632632];
+
+            const lat = Number(d.latitude);
+            const lng = Number(d.longitude);
+            const hasCoord = Number.isFinite(lat) && Number.isFinite(lng);
+            const center = hasCoord ? [lat, lng] : defaultCenter;
+
+            const zoom = hasCoord ? 16 : 13;
+
+            const map = L.map(el);
+            const tileLayer = L.tileLayer(
+                'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                {
+                    attribution: '&copy; OpenStreetMap',
+                    maxZoom: 19,
+                },
+            ).addTo(map);
+
+            // optional debug: kalau tile error (429/403) kamu bakal lihat di console
+            tileLayer.on('tileerror', (e) => console.warn('Tile error:', e));
 
             const marker = L.marker(center, {
                 draggable: true,
@@ -147,14 +215,14 @@ export default {
             }).addTo(map);
 
             const circle = L.circle(center, {
-                radius: this.form.divisi[index].radius_presensi,
+                radius: d.radius_presensi ?? 500,
                 color: '#2563eb',
                 fillColor: '#2563eb',
                 fillOpacity: 0.15,
                 weight: 2,
             }).addTo(map);
 
-            const updateLocation = async (latlng) => {
+            const updateLocation = async (latlng, { reverse = true } = {}) => {
                 marker.setLatLng(latlng);
                 circle.setLatLng(latlng);
 
@@ -162,6 +230,8 @@ export default {
 
                 this.form.divisi[index].latitude = parseFloat(lat.toFixed(6));
                 this.form.divisi[index].longitude = parseFloat(lng.toFixed(6));
+
+                if (!reverse) return;
 
                 try {
                     const res = await axios.get(
@@ -182,7 +252,21 @@ export default {
             map.on('click', (e) => updateLocation(e.latlng));
             marker.on('dragend', (e) => updateLocation(e.target.getLatLng()));
 
-            this.maps[index] = { map, marker, circle };
+            this.maps[index] = {
+                map,
+                tileLayer,
+                marker,
+                circle,
+                updateLocation,
+            };
+
+            // set view + paksa render tiles (ini yang biasanya menyelesaikan blank)
+            this.refreshLeaflet(index, center, zoom);
+
+            // trigger updateLocation setelah map siap
+            await updateLocation(L.latLng(center[0], center[1]), {
+                reverse: reverseOnInit && !d.alamat_penempatan,
+            });
         },
 
         updateRadius(index) {
@@ -192,19 +276,26 @@ export default {
             const radius =
                 parseInt(this.form.divisi[index].radius_presensi) || 100;
             mapObj.circle.setRadius(radius);
+
+            // refresh biar circle + tiles konsisten kalau container baru aja muncul
+            const lat = Number(this.form.divisi[index].latitude);
+            const lng = Number(this.form.divisi[index].longitude);
+            const center =
+                Number.isFinite(lat) && Number.isFinite(lng)
+                    ? [lat, lng]
+                    : [-7.96662, 112.632632];
+            this.refreshLeaflet(index, center, 16);
         },
 
         // ================= SEARCH (DEBOUNCE + ABORT + SPINNER) =================
         async searchLocation(index) {
             const q = this.form.divisi[index].search.trim();
 
-            // clear pending debounce
             if (this.searchTimeouts[index]) {
                 clearTimeout(this.searchTimeouts[index]);
                 this.searchTimeouts[index] = null;
             }
 
-            // query pendek: reset
             if (!q || q.length < 3) {
                 this.form.divisi[index].searchResults = [];
                 this.form.divisi[index].searching = false;
@@ -216,24 +307,21 @@ export default {
                 return;
             }
 
-            // debounce 400ms
             this.searchTimeouts[index] = setTimeout(() => {
                 this.doSearchLocation(index, q);
             }, 400);
         },
 
         async doSearchLocation(index, q) {
-            let controller; // <- biar aman dipakai di finally
+            let controller;
 
             try {
-                // abort request sebelumnya
                 if (this.searchControllers[index]) {
                     this.searchControllers[index].abort();
                 }
 
                 controller = new AbortController();
                 this.searchControllers[index] = controller;
-
                 this.form.divisi[index].searching = true;
 
                 const res = await axios.get(
@@ -250,9 +338,7 @@ export default {
                     },
                 );
 
-                // kalau user sudah ngetik query baru, jangan overwrite
                 if (this.form.divisi[index].search.trim() !== q) return;
-
                 this.form.divisi[index].searchResults = res.data;
             } catch (e) {
                 if (e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError')
@@ -261,7 +347,6 @@ export default {
                 console.warn('Search lokasi gagal:', e);
                 triggerAlert('error', 'Pencarian lokasi gagal, coba lagi');
             } finally {
-                // matikan spinner hanya kalau request ini adalah request terakhir untuk index tsb
                 if (
                     controller &&
                     this.searchControllers[index] === controller
@@ -272,7 +357,6 @@ export default {
         },
 
         selectLocation(index, item) {
-            // stop debounce & request
             if (this.searchTimeouts[index]) {
                 clearTimeout(this.searchTimeouts[index]);
                 this.searchTimeouts[index] = null;
@@ -288,11 +372,14 @@ export default {
             const mapObj = this.maps[index];
             if (!mapObj) return;
 
-            const latlng = { lat, lng };
+            const center = [lat, lng];
 
-            mapObj.map.setView(latlng, 16);
-            mapObj.marker.setLatLng(latlng);
-            mapObj.circle.setLatLng(latlng);
+            mapObj.map.invalidateSize(true);
+            mapObj.map.setView(center, 16, { animate: false });
+            mapObj.tileLayer?.redraw();
+
+            mapObj.marker.setLatLng(center);
+            mapObj.circle.setLatLng(center);
 
             this.form.divisi[index].latitude = parseFloat(lat.toFixed(6));
             this.form.divisi[index].longitude = parseFloat(lng.toFixed(6));
@@ -339,24 +426,28 @@ export default {
 
             this.processing = true;
 
-            router.post('/master/perusahaan', this.form, {
-                onSuccess: () => {
-                    triggerAlert(
-                        'success',
-                        'Data perusahaan berhasil disimpan',
-                    );
+            router.put(
+                `/master/client/update/${this.perusahaan.id}`,
+                this.form,
+                {
+                    onSuccess: () => {
+                        triggerAlert(
+                            'success',
+                            'Data perusahaan berhasil disimpan',
+                        );
+                    },
+                    onError: (errors) => {
+                        this.errors = errors;
+                        triggerAlert(
+                            'error',
+                            'Terjadi kesalahan, periksa kembali form',
+                        );
+                    },
+                    onFinish: () => {
+                        this.processing = false;
+                    },
                 },
-                onError: (errors) => {
-                    this.errors = errors;
-                    triggerAlert(
-                        'error',
-                        'Terjadi kesalahan, periksa kembali form',
-                    );
-                },
-                onFinish: () => {
-                    this.processing = false;
-                },
-            });
+            );
         },
     },
 };
@@ -453,6 +544,30 @@ export default {
                                         rows="3"
                                         placeholder="Alamat lengkap kantor pusat"
                                     ></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="" class="field-label"
+                                        >Tanggal Awal MOU</label
+                                    >
+                                    <input
+                                        type="date"
+                                        v-model="form.tanggal_awal_mou"
+                                        id=""
+                                        class="form-input"
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="field-label"
+                                        >Tanggal Akhir MOU</label
+                                    >
+                                    <input
+                                        type="date"
+                                        v-model="form.tanggal_akhir_mou"
+                                        :min="form.tanggal_awal_mou"
+                                        id=""
+                                        class="form-input"
+                                    />
                                 </div>
 
                                 <div class="form-group">
@@ -553,6 +668,33 @@ export default {
                                     </div>
                                 </div>
 
+                                <div
+                                    class="gap-4 sm:grid-cols-2 grid grid-cols-1"
+                                >
+                                    <div class="form-group">
+                                        <label for="" class="field-label"
+                                            >Tanggal Awal MOU</label
+                                        >
+                                        <input
+                                            type="date"
+                                            v-model="divisi.tanggal_awal_mou"
+                                            id=""
+                                            class="form-input"
+                                        />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="" class="field-label"
+                                            >Tanggal Akhir MOU</label
+                                        >
+                                        <input
+                                            type="date"
+                                            v-model="divisi.tanggal_akhir_mou"
+                                            :min="divisi.tanggal_awal_mou"
+                                            id=""
+                                            class="form-input"
+                                        />
+                                    </div>
+                                </div>
                                 <div class="pt-4 border-t">
                                     <h4
                                         class="font-semibold text-sm text-slate-700 mb-1"
