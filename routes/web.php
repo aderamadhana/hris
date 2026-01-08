@@ -10,6 +10,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\ReferensiController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\PresensiController;
 
 use App\Http\Controllers\Masters\PayrollPeriodController;
 use App\Http\Controllers\Masters\PerusahaanController;
@@ -125,6 +126,14 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('payslip')->group(function () {
         Route::get('/show/{id}/{employee_id}', [PayslipController::class, 'showPayslip']);
+    });
+
+    
+    Route::prefix('presensi')->group(function () {
+        Route::post('/store', [PresensiController::class, 'store']);
+        Route::get('/log-harian', [PresensiController::class, 'logHarian']);
+        Route::get('/riwayat', [PresensiController::class, 'riwayat']);
+        Route::post('/export', [PresensiController::class, 'export']);
     });
 
     Route::prefix('admin')->group(function () {

@@ -31,15 +31,7 @@ return new class extends Migration
             $table->boolean('valid_lokasi_pulang')->default(false);
             
             // Status Kehadiran
-            $table->enum('status_kehadiran', [
-                'hadir', 
-                'terlambat', 
-                'tidak_hadir', 
-                'izin', 
-                'sakit', 
-                'cuti',
-                'diluar_radius'
-            ])->default('tidak_hadir');
+            $table->string('status_kehadiran')->nullable()->default('tidak_hadir');
             
             // Durasi Kerja
             $table->integer('durasi_kerja_menit')->nullable()->comment('Durasi kerja dalam menit');

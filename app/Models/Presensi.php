@@ -10,25 +10,8 @@ class Presensi extends Model
     use HasFactory;
 
     protected $table = 'presensi';
-
-    protected $fillable = [
-        'karyawan_id',
-        'perusahaan_id',
-        'divisi_id',
-        'tanggal_presensi',
-        'jenis_presensi',
-        'waktu_presensi',
-        'foto_presensi',
-        'latitude',
-        'longitude',
-        'akurasi_gps',
-        'is_valid_location',
-        'jarak_dari_lokasi',
-        'status',
-        'keterangan',
-        'device_info',
-        'ip_address',
-    ];
+    
+    protected $guarded = [];
 
     protected $casts = [
         'tanggal_presensi' => 'date',

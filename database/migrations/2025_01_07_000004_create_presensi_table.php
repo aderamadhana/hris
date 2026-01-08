@@ -31,7 +31,7 @@ return new class extends Migration
             $table->decimal('jarak_dari_lokasi', 10, 2)->nullable()->comment('Jarak dari titik penempatan dalam meter');
             
             // Status
-            $table->enum('status', ['hadir', 'terlambat', 'diluar_radius'])->default('hadir');
+            $table->string('status')->nullable()->default('tidak_hadir');;
             $table->text('keterangan')->nullable();
             
             // Metadata
@@ -48,7 +48,7 @@ return new class extends Migration
             $table->index(['employee_id', 'tanggal_presensi', 'jenis_presensi'], 'idx_presensi_lookup');
             
             // Unique constraint: 1 karyawan hanya bisa presensi masuk/pulang 1x per hari
-            $table->unique(['employee_id', 'tanggal_presensi', 'jenis_presensi'], 'unique_presensi_harian');
+            // $table->unique(['employee_id', 'tanggal_presensi', 'jenis_presensi'], 'unique_presensi_harian');
         });
     }
 

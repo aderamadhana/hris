@@ -17,51 +17,7 @@ window.$ = window.jQuery = jQuery
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { 
-    faEye, 
-    faEyeSlash,
-    faHouse,
-    faUsers,
-    faFileLines,
-    faBuilding,
-    faCalendarDays,
-    faClock,
-    faFileInvoiceDollar,
-    faFileContract,
-    faTriangleExclamation, 
-    faUpload,
-    faDownload,
-    faPlus,
-    faFilter,
-    faPenToSquare,
-    faTrash,
-    faChevronLeft,
-    faChevronRight,
-    faLayerGroup,
-    faFolderOpen,
-    faUser,
-    faKey,
-    faRightFromBracket,
-    faBars,
-    faSync,
-    faLocationCrosshairs,
-    faRotate,
-    faSpinner,
-    faMapLocationDot,
-    faCircleCheck,
-    faSatelliteDish,
-    faCircleXmark,
-    faCircleInfo,
-    faLocationDot,
-    faCamera
-} from '@fortawesome/free-solid-svg-icons'
-
-import 'select2/dist/css/select2.min.css'
-import 'select2'
-
-const appName = 'HRIS System';
-
-library.add(
-    faEye, 
+    faEye,
     faEyeSlash,
     faHouse,
     faUsers,
@@ -85,18 +41,73 @@ library.add(
     faUser,
     faKey,
     faRightFromBracket,
-    faBars, 
+    faRightToBracket,
+    faBars,
     faSync,
     faLocationCrosshairs,
     faRotate,
     faSpinner,
     faMapLocationDot,
     faCircleCheck,
+    faCircleExclamation,
     faSatelliteDish,
     faCircleXmark,
     faCircleInfo,
     faLocationDot,
-    faCamera
+    faHourglassHalf,
+    faBriefcase,
+    faCamera,
+    faCheck,
+
+} from '@fortawesome/free-solid-svg-icons'
+
+import 'select2/dist/css/select2.min.css'
+import 'select2'
+
+const appName = 'HRIS System';
+
+library.add(
+    faEye,
+    faEyeSlash,
+    faHouse,
+    faUsers,
+    faFileLines,
+    faBuilding,
+    faCalendarDays,
+    faClock,
+    faFileInvoiceDollar,
+    faFileContract,
+    faTriangleExclamation,
+    faUpload,
+    faDownload,
+    faPlus,
+    faFilter,
+    faPenToSquare,
+    faTrash,
+    faChevronLeft,
+    faChevronRight,
+    faLayerGroup,
+    faFolderOpen,
+    faUser,
+    faKey,
+    faRightFromBracket,
+    faRightToBracket,
+    faBars,
+    faSync,
+    faLocationCrosshairs,
+    faRotate,
+    faSpinner,
+    faMapLocationDot,
+    faCircleCheck,
+    faCircleExclamation,
+    faSatelliteDish,
+    faCircleXmark,
+    faCircleInfo,
+    faLocationDot,
+    faHourglassHalf,
+    faBriefcase,
+    faCamera,
+    faCheck,
 )
 
 createInertiaApp({

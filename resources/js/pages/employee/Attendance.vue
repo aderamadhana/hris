@@ -30,9 +30,7 @@
                         <div class="att-location-card">
                             <div class="att-location-header">
                                 <div class="att-location-icon">
-                                    <font-awesome-icon
-                                        :icon="['fas', 'building']"
-                                    />
+                                    <font-awesome-icon icon="building" />
                                 </div>
 
                                 <div class="att-location-texts">
@@ -54,17 +52,16 @@
                                         >
                                             <font-awesome-icon
                                                 v-if="!locationLoading"
-                                                :icon="[
-                                                    'fas',
+                                                :icon="
                                                     currentCoords
-                                                        ? 'rotate'
-                                                        : 'location-crosshairs',
-                                                ]"
+                                                        ? faRotate
+                                                        : faLocationCrosshairs
+                                                "
                                                 class="btn-ic"
                                             />
                                             <font-awesome-icon
                                                 v-else
-                                                :icon="['fas', 'spinner']"
+                                                :icon="faSpinner"
                                                 spin
                                                 class="btn-ic"
                                             />
@@ -77,24 +74,17 @@
                                             }}
                                         </button>
 
-                                        <!-- <button
-                                            v-if="
-                                                divisi?.latitude &&
-                                                divisi?.longitude
-                                            "
-                                            type="button"
-                                            class="btn btn-secondary"
-                                            @click="openTargetMap"
-                                        >
-                                            <font-awesome-icon
-                                                :icon="[
-                                                    'fas',
-                                                    'map-location-dot',
-                                                ]"
-                                                class="btn-ic"
-                                            />
-                                            Buka Titik Presensi
-                                        </button> -->
+                                        <!--
+                    <button
+                      v-if="divisi?.latitude && divisi?.longitude"
+                      type="button"
+                      class="btn btn-secondary"
+                      @click="openTargetMap"
+                    >
+                      <font-awesome-icon :icon="faMapLocationDot" class="btn-ic" />
+                      Buka Titik Presensi
+                    </button>
+                    -->
                                     </div>
 
                                     <div class="att-meta">
@@ -162,8 +152,8 @@
                                 <span class="att-distance-text">
                                     <b>{{ locationStatusLabel }}</b>
                                     <template v-if="currentCoords">
-                                        — Jarak: {{ distanceText }}
-                                    </template>
+                                        — Jarak: {{ distanceText }}</template
+                                    >
                                     <template
                                         v-if="
                                             locationStatusHint &&
@@ -204,9 +194,7 @@
                         <div class="side-header">
                             <div class="side-title-wrap">
                                 <span class="side-icon">
-                                    <font-awesome-icon
-                                        :icon="['fas', 'clock']"
-                                    />
+                                    <font-awesome-icon :icon="faClock" />
                                 </span>
                                 <h3 class="side-title">Riwayat Hari Ini</h3>
                             </div>
@@ -214,49 +202,193 @@
                         </div>
 
                         <div class="side-section">
-                            <div class="side-label">Clock In</div>
+                            <div class="side-label">
+                                <font-awesome-icon :icon="faRightToBracket" />
+                                Clock In
+                            </div>
 
                             <div v-if="firstIn" class="side-block">
                                 <div class="side-time">{{ firstIn.time }}</div>
+
                                 <div class="side-location">
                                     <span class="side-location-icon">
                                         <font-awesome-icon
-                                            :icon="['fas', 'location-dot']"
+                                            :icon="faLocationDot"
                                         />
                                     </span>
                                     <span class="side-location-text">
                                         {{ firstIn.location }}
                                     </span>
                                 </div>
-                                <div class="side-note">{{ firstIn.note }}</div>
+
+                                <div
+                                    class="side-note"
+                                    :class="getStatusClass(firstIn.status)"
+                                >
+                                    <font-awesome-icon
+                                        :icon="
+                                            firstIn.status === 'hadir'
+                                                ? faCircleCheck
+                                                : faCircleExclamation
+                                        "
+                                    />
+                                    {{ firstIn.note }}
+                                </div>
+
+                                <!-- Detail Info -->
+                                <div class="side-detail">
+                                    <div
+                                        class="detail-item"
+                                        v-if="firstIn.jarak"
+                                    >
+                                        <span class="detail-label">Jarak:</span>
+                                        <span class="detail-value"
+                                            >{{
+                                                Math.round(firstIn.jarak)
+                                            }}m</span
+                                        >
+                                    </div>
+                                    <div
+                                        class="detail-item"
+                                        v-if="firstIn.akurasi"
+                                    >
+                                        <span class="detail-label"
+                                            >Akurasi GPS:</span
+                                        >
+                                        <span class="detail-value"
+                                            >±{{
+                                                Math.round(firstIn.akurasi)
+                                            }}m</span
+                                        >
+                                    </div>
+                                </div>
+
+                                <!-- Foto Preview -->
+                                <div v-if="firstIn.foto" class="side-photo">
+                                    <img
+                                        :src="firstIn.foto"
+                                        alt="Foto Clock In"
+                                    />
+                                </div>
                             </div>
 
                             <div v-else class="side-empty">
-                                Belum ada data clock in.
+                                <font-awesome-icon
+                                    :icon="faClock"
+                                    class="empty-icon"
+                                />
+                                <span>Belum ada data clock in</span>
                             </div>
                         </div>
 
+                        <!-- Clock Out Section -->
                         <div class="side-section">
-                            <div class="side-label">Clock Out</div>
+                            <div class="side-label">
+                                <font-awesome-icon :icon="faRightFromBracket" />
+                                Clock Out
+                            </div>
 
                             <div v-if="lastOut" class="side-block">
                                 <div class="side-time">{{ lastOut.time }}</div>
+
                                 <div class="side-location">
                                     <span class="side-location-icon">
                                         <font-awesome-icon
-                                            :icon="['fas', 'location-dot']"
+                                            icon="location-dot"
                                         />
                                     </span>
                                     <span class="side-location-text">
                                         {{ lastOut.location }}
                                     </span>
                                 </div>
-                                <div class="side-note">{{ lastOut.note }}</div>
+
+                                <div
+                                    class="side-note"
+                                    :class="getStatusClass(lastOut.status)"
+                                >
+                                    <font-awesome-icon
+                                        :icon="
+                                            lastOut.status === 'hadir'
+                                                ? faCircleCheck
+                                                : faCircleExclamation
+                                        "
+                                    />
+                                    {{ lastOut.note }}
+                                </div>
+
+                                <!-- Detail Info -->
+                                <div class="side-detail">
+                                    <div
+                                        class="detail-item"
+                                        v-if="lastOut.jarak"
+                                    >
+                                        <span class="detail-label">Jarak:</span>
+                                        <span class="detail-value"
+                                            >{{
+                                                Math.round(lastOut.jarak)
+                                            }}m</span
+                                        >
+                                    </div>
+                                    <div
+                                        class="detail-item"
+                                        v-if="lastOut.akurasi"
+                                    >
+                                        <span class="detail-label"
+                                            >Akurasi GPS:</span
+                                        >
+                                        <span class="detail-value"
+                                            >±{{
+                                                Math.round(lastOut.akurasi)
+                                            }}m</span
+                                        >
+                                    </div>
+                                </div>
+
+                                <!-- Foto Preview -->
+                                <div v-if="lastOut.foto" class="side-photo">
+                                    <img
+                                        :src="lastOut.foto"
+                                        alt="Foto Clock Out"
+                                    />
+                                </div>
                             </div>
 
-                            <div v-else class="side-empty">
-                                – Menunggu clock out –
+                            <div v-else class="side-empty waiting">
+                                <font-awesome-icon
+                                    :icon="faHourglassHalf"
+                                    class="empty-icon"
+                                />
+                                <span>Menunggu clock out</span>
                             </div>
+                        </div>
+
+                        <!-- Total Jam Kerja (jika sudah clock out) -->
+                        <div v-if="firstIn && lastOut" class="side-section">
+                            <div class="side-label">
+                                <font-awesome-icon :icon="faBriefcase" />
+                                Total Jam Kerja
+                            </div>
+                            <div class="side-block total-work">
+                                <div class="work-hours">
+                                    {{
+                                        calculateWorkHours(
+                                            firstIn.time,
+                                            lastOut.time,
+                                        )
+                                    }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Refresh Button -->
+                        <div class="side-actions">
+                            <Button
+                                variant="success"
+                                :loading="isRefresh"
+                                @click="refreshLog"
+                                ><font-awesome-icon icon="rotate" /> Refresh
+                                Data</Button
+                            >
                         </div>
                     </div>
                 </div>
@@ -266,9 +398,28 @@
 </template>
 
 <script>
+import Button from '@/components/Button.vue';
 import CameraCapture from '@/components/CameraCapture.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
+import {
+    faBriefcase,
+    faBuilding,
+    faCircleCheck,
+    faCircleExclamation,
+    faCircleInfo,
+    faCircleXmark,
+    faClock,
+    faHourglassHalf,
+    faLocationCrosshairs,
+    faLocationDot,
+    faRightFromBracket,
+    faRightToBracket,
+    faRotate,
+    faSatelliteDish,
+    faSpinner,
+    faTriangleExclamation,
+} from '@fortawesome/free-solid-svg-icons';
 import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 
@@ -277,12 +428,30 @@ export default {
     components: {
         CameraCapture,
         AppLayout,
+        Button,
     },
 
     data() {
         const page = usePage();
 
         return {
+            faBuilding,
+            faRotate,
+            faLocationCrosshairs,
+            faSpinner,
+            faClock,
+            faRightToBracket,
+            faRightFromBracket,
+            faLocationDot,
+            faCircleCheck,
+            faCircleExclamation,
+            faHourglassHalf,
+            faBriefcase,
+            faTriangleExclamation,
+            faSatelliteDish,
+            faCircleXmark,
+            faCircleInfo,
+
             user: page.props.auth.user,
 
             // jam berjalan
@@ -327,6 +496,11 @@ export default {
             loading: true,
             withinRadius: false,
             gpsOk: false,
+
+            todayLog: null,
+            firstIn: null,
+            lastOut: null,
+            isRefresh: false,
         };
     },
 
@@ -349,16 +523,16 @@ export default {
             });
         },
 
-        firstIn() {
-            return this.todayAttendance.find((x) => x.type === 'Masuk') || null;
-        },
+        // firstIn() {
+        //     return this.todayAttendance.find((x) => x.type === 'Masuk') || null;
+        // },
 
-        lastOut() {
-            const outs = this.todayAttendance.filter(
-                (x) => x.type === 'Pulang',
-            );
-            return outs.length ? outs[outs.length - 1] : null;
-        },
+        // lastOut() {
+        //     const outs = this.todayAttendance.filter(
+        //         (x) => x.type === 'Pulang',
+        //     );
+        //     return outs.length ? outs[outs.length - 1] : null;
+        // },
 
         // ===== UX status =====
         locationStatus() {
@@ -489,6 +663,7 @@ export default {
         }, 1000);
 
         this.fetchEmployee();
+        this.fetchTodayLog();
     },
 
     beforeUnmount() {
@@ -496,6 +671,134 @@ export default {
     },
 
     methods: {
+        async fetchTodayLog() {
+            this.loading = true;
+            const employee_id = this.user.employee_id;
+
+            try {
+                const response = await axios.get('/presensi/log-harian', {
+                    params: {
+                        employee_id: employee_id,
+                        tanggal: new Date().toISOString().split('T')[0], // Format: YYYY-MM-DD
+                    },
+                });
+
+                if (response.data.success) {
+                    this.todayLog = response.data.data;
+                    this.processLogData();
+                }
+            } catch (error) {
+                console.error('Error fetching log:', error);
+                triggerAlert('error', 'Gagal memuat data presensi hari ini');
+            } finally {
+                this.loading = false;
+            }
+            this.isRefresh = false;
+        },
+
+        processLogData() {
+            if (
+                !this.todayLog ||
+                !this.todayLog.detail ||
+                this.todayLog.detail.length === 0
+            ) {
+                this.firstIn = null;
+                this.lastOut = null;
+                return;
+            }
+
+            // Cari clock in (masuk) pertama
+            const clockInData = this.todayLog.detail.find(
+                (item) => item.jenis_presensi === 'masuk',
+            );
+
+            console.log(this.todayLog);
+
+            if (clockInData) {
+                this.firstIn = {
+                    time: clockInData.waktu_formatted, // Format: HH:mm
+                    location:
+                        this.todayLog?.divisi?.nama_divisi ||
+                        'Lokasi tidak tersedia',
+                    note: this.getStatusNote(clockInData.status),
+                    status: clockInData.status,
+                    foto: clockInData.foto_presensi,
+                    jarak: clockInData.jarak_dari_lokasi,
+                    akurasi: clockInData.akurasi_gps,
+                };
+            } else {
+                this.firstIn = null;
+            }
+
+            // Cari clock out (pulang) terakhir
+            const clockOutData = this.todayLog.detail
+                .slice()
+                .reverse()
+                .find((item) => item.jenis_presensi === 'pulang');
+
+            if (clockOutData) {
+                this.lastOut = {
+                    time: clockOutData.waktu_formatted,
+                    location:
+                        this.todayLog?.divisi?.nama_divisi ||
+                        'Lokasi tidak tersedia',
+                    note: this.getStatusNote(clockOutData.status),
+                    status: clockOutData.status,
+                    foto: clockOutData.foto_presensi,
+                    jarak: clockOutData.jarak_dari_lokasi,
+                    akurasi: clockOutData.akurasi_gps,
+                };
+            } else {
+                this.lastOut = null;
+            }
+        },
+
+        getStatusNote(status) {
+            const statusNotes = {
+                hadir: 'Presensi berhasil',
+                terlambat: 'Terlambat masuk',
+                tidak_valid: 'Di luar jangkauan',
+                perlu_verifikasi: 'Perlu verifikasi admin',
+            };
+
+            return statusNotes[status] || 'Status tidak diketahui';
+        },
+
+        getStatusClass(status) {
+            const statusClasses = {
+                hadir: 'status-success',
+                terlambat: 'status-warning',
+                tidak_valid: 'status-danger',
+                perlu_verifikasi: 'status-info',
+            };
+
+            return statusClasses[status] || 'status-default';
+        },
+
+        // Method untuk refresh data setelah presensi berhasil
+        refreshLog() {
+            this.isRefresh = true;
+            this.fetchTodayLog();
+        },
+
+        calculateWorkHours(clockIn, clockOut) {
+            if (!clockIn || !clockOut) return '-';
+
+            const [inHour, inMin] = clockIn.split(':').map(Number);
+            const [outHour, outMin] = clockOut.split(':').map(Number);
+
+            const inMinutes = inHour * 60 + inMin;
+            const outMinutes = outHour * 60 + outMin;
+
+            const diffMinutes = outMinutes - inMinutes;
+
+            if (diffMinutes < 0) return '-';
+
+            const hours = Math.floor(diffMinutes / 60);
+            const minutes = diffMinutes % 60;
+
+            return `${hours} jam ${minutes} menit`;
+        },
         // ===================== DISTANCE =====================
         distanceMeters(lat1, lon1, lat2, lon2) {
             const R = 6371000;
@@ -699,6 +1002,9 @@ export default {
 </script>
 
 <style scoped>
+/* =========================
+   LAYOUT
+========================= */
 .attendance-page {
     display: flex;
     flex-direction: column;
@@ -707,15 +1013,18 @@ export default {
 
 .attendance-grid {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
+    grid-template-columns: minmax(0, 1fr) 420px;
     gap: 24px;
+    align-items: start;
 }
 
 .attendance-grid .card {
     grid-column: auto;
 }
 
-/* KIRI */
+/* =========================
+   KIRI (CAMERA)
+========================= */
 .camera-column {
     display: flex;
     flex-direction: column;
@@ -734,7 +1043,7 @@ export default {
 .camera-title {
     margin: 0;
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 700;
     color: #111827;
 }
 
@@ -762,14 +1071,16 @@ export default {
 }
 
 .att-clock {
-    font-size: 40px;
-    font-weight: 600;
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.14em;
+    letter-spacing: clamp(0.08em, 0.9vw, 0.14em);
     color: #111827;
 }
 
-/* KARTU LOKASI */
+/* =========================
+   KARTU LOKASI (KIRI)
+========================= */
 .att-location-card {
     width: 100%;
     border-radius: 14px;
@@ -779,7 +1090,7 @@ export default {
     padding: 14px 18px 12px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .att-location-header {
@@ -797,6 +1108,7 @@ export default {
     align-items: center;
     justify-content: center;
     font-size: 14px;
+    flex: 0 0 auto;
 }
 
 .att-location-texts {
@@ -805,18 +1117,22 @@ export default {
     gap: 2px;
     width: 100%;
     text-align: left;
+    min-width: 0;
 }
 
 .att-location-name {
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     color: #111827;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .att-actions {
     display: flex;
     gap: 8px;
-    margin: 6px 0 6px;
+    margin: 8px 0 6px;
     flex-wrap: wrap;
 }
 
@@ -832,13 +1148,14 @@ export default {
 .att-location-address {
     font-size: 13px;
     color: #4b5563;
+    line-height: 1.35;
 }
 
 .att-location-error {
     display: block;
     font-size: 12px;
     color: #b91c1c;
-    margin-top: 2px;
+    margin-top: 4px;
 }
 
 /* jarak */
@@ -856,10 +1173,12 @@ export default {
 .att-distance-symbol {
     font-size: 14px;
     margin-top: 1px;
+    flex: 0 0 auto;
 }
 
 .att-distance-text {
     font-size: 13px;
+    min-width: 0;
 }
 
 .att-fa {
@@ -874,43 +1193,47 @@ export default {
 .att-distance-ok {
     color: #15803d;
 }
-
 .att-distance-bad {
     color: #b91c1c;
 }
-
 .att-distance-warn {
     color: #b45309;
 }
-
 .att-distance-idle {
     color: #374151;
 }
 
-/* KANAN */
+.camera-column .camera-capture {
+    width: 100%;
+}
+
+/* =========================
+   KANAN (SIDEBAR)
+========================= */
 .right-column {
     display: flex;
     flex-direction: column;
     gap: 14px;
     padding: 22px 20px 18px;
+    min-width: 0;
 }
 
-/* PANDUAN */
+/* Panduan */
 .guide-block {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 12px;
 }
 
 .info-title {
     margin: 0;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
     color: #111827;
 }
 
 .info-list {
-    margin: 4px 0 0;
+    margin: 0;
     padding-left: 18px;
     font-size: 14px;
     color: #4b5563;
@@ -921,11 +1244,10 @@ export default {
 }
 
 .info-note {
-    margin-top: 6px;
     font-size: 13px;
     color: #6b7280;
-    padding: 8px 10px;
-    border-radius: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
     background: #f9fafb;
     border: 1px dashed #e5e7eb;
 }
@@ -936,98 +1258,262 @@ export default {
     background: #e5e7eb;
 }
 
-/* RIWAYAT */
+/* Header riwayat */
 .side-header {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
+    padding: 6px 2px 2px;
 }
 
 .side-title-wrap {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    min-width: 0;
 }
 
 .side-icon {
     font-size: 18px;
+    flex: 0 0 auto;
 }
 
 .side-title {
     margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #111827;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .side-date {
     font-size: 12px;
-    color: #6b7280;
+    color: #64748b;
+    white-space: nowrap;
 }
 
+/* =========================
+   SECTION CARD (Clock In/Out/Total)
+========================= */
 .side-section {
-    padding-top: 8px;
-    border-top: 1px solid #e5e7eb;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    padding: 14px;
 }
 
+/* label */
 .side-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     font-size: 12px;
-    font-weight: 600;
-    color: #6b7280;
+    font-weight: 800;
+    color: #475569;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    margin-bottom: 4px;
+    margin-bottom: 10px;
 }
 
+/* Isi: grid supaya foto thumbnail kecil di kanan */
 .side-block {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 72px;
+    gap: 12px;
+    align-items: start;
 }
 
+/* isi kiri */
 .side-time {
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
     font-variant-numeric: tabular-nums;
-    color: #111827;
 }
 
 .side-location {
     display: flex;
     align-items: flex-start;
-    gap: 4px;
-    margin-top: 2px;
+    gap: 6px;
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 13px;
+    min-width: 0;
 }
 
 .side-location-icon {
     font-size: 13px;
     margin-top: 2px;
+    flex: 0 0 auto;
 }
 
 .side-location-text {
-    font-size: 13px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     color: #4b5563;
 }
 
+/* Status pill */
 .side-note {
-    font-size: 13px;
-    color: #6b7280;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+    width: fit-content;
+    margin-top: 8px;
 }
 
-.side-empty {
-    font-size: 13px;
-    color: #9ca3af;
-    font-style: italic;
-    padding: 4px 0 2px;
+.side-note.status-success {
+    background: #f0fdf4;
+    color: #166534;
+}
+.side-note.status-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+.side-note.status-danger {
+    background: #fef2f2;
+    color: #991b1b;
+}
+.side-note.status-info {
+    background: #eff6ff;
+    color: #1e40af;
+}
+.side-note.status-default {
+    background: #f1f5f9;
+    color: #475569;
 }
 
-.camera-column .camera-capture {
+/* Detail jadi chip kecil */
+.side-detail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    font-size: 12px;
+}
+
+.detail-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.detail-label {
+    color: #64748b;
+    font-weight: 800;
+}
+
+.detail-value {
+    font-weight: 900;
+    color: #0f172a;
+}
+
+/* Foto: thumbnail kecil */
+.side-photo {
+    justify-self: end;
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+.side-photo img {
     width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
-/* RESPONSIVE */
-@media (max-width: 900px) {
+/* Empty state */
+.side-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 10px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px dashed #e2e8f0;
+    color: #64748b;
+    font-size: 13px;
+    text-align: center;
+}
+
+.side-empty.waiting {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.empty-icon {
+    font-size: 18px;
+    opacity: 0.85;
+}
+
+/* Total Work */
+.total-work {
+    text-align: center;
+}
+
+.work-hours {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #10b981;
+}
+
+/* Actions */
+.side-actions {
+    margin-top: 0.5rem;
+}
+
+.btn-refresh {
+    width: 100%;
+    padding: 0.75rem;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    color: #475569;
+    font-size: 0.875rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-refresh:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 1024px) {
     .attendance-grid {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -1036,13 +1522,213 @@ export default {
         padding: 20px 16px 24px;
     }
 
-    .att-clock {
-        font-size: 34px;
-        letter-spacing: 0.12em;
-    }
-
     .right-column {
         padding: 20px 18px;
+    }
+}
+
+@media (max-width: 520px) {
+    .att-actions {
+        width: 100%;
+    }
+
+    .att-actions .btn,
+    .att-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .side-section {
+        padding: 12px;
+    }
+
+    /* di HP: foto jadi strip kecil bawah (tidak besar) */
+    .side-block {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .side-photo {
+        width: 100%;
+        height: 120px;
+        justify-self: stretch;
+    }
+
+    .side-photo img {
+        height: 120px;
+    }
+}
+
+.right-column .side-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fff;
+    padding: 14px;
+}
+
+.right-column .side-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+}
+
+/* KUNCI LAYOUT CLOCK IN/OUT */
+.right-column .side-block {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 76px; /* kanan khusus thumbnail */
+    grid-template-areas:
+        'time   photo'
+        'loc    photo'
+        'note   photo'
+        'detail photo';
+    column-gap: 12px;
+    row-gap: 8px;
+    align-items: start;
+    min-width: 0;
+}
+
+.right-column .side-time {
+    grid-area: time;
+    font-size: 18px;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.right-column .side-location {
+    grid-area: loc;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    color: #64748b;
+    font-size: 13px;
+    min-width: 0;
+}
+
+.right-column .side-location-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    color: #4b5563;
+}
+
+.right-column .side-note {
+    grid-area: note;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+    width: fit-content;
+}
+
+/* DETAIL JARAK/AKURASI JADI CHIP KECIL (BUKAN KOTAK BESAR) */
+.right-column .side-detail {
+    grid-area: detail;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+}
+
+.right-column .detail-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-size: 12px;
+}
+
+.right-column .detail-label {
+    color: #64748b;
+    font-weight: 800;
+}
+
+.right-column .detail-value {
+    color: #0f172a;
+    font-weight: 900;
+}
+
+/* FOTO THUMBNAIL KECIL */
+.right-column .side-photo {
+    grid-area: photo;
+    width: 76px;
+    height: 76px;
+    margin: 0 !important;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    justify-self: end;
+    align-self: start;
+}
+
+.right-column .side-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Empty state biar rapi */
+.right-column .side-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 10px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px dashed #e2e8f0;
+    color: #64748b;
+    font-size: 13px;
+    text-align: center;
+    font-style: normal !important;
+}
+
+.right-column .side-empty.waiting {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.right-column .empty-icon {
+    font-size: 18px;
+    opacity: 0.85;
+}
+
+/* Mobile: stack, foto jadi strip kecil (tetap tidak besar) */
+@media (max-width: 520px) {
+    .right-column .side-block {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            'time'
+            'loc'
+            'note'
+            'detail'
+            'photo';
+    }
+
+    .right-column .side-photo {
+        width: 100%;
+        height: 120px;
+        justify-self: stretch;
     }
 }
 </style>
