@@ -8,7 +8,7 @@
             <div class="auth-left">
                 <div class="brand-center">
                     <img
-                        src="/assets/images/logo_baru.png"
+                        src="/assets/images/hris.png"
                         alt="PT Mitra Wira Mas"
                         class="brand-logo-login"
                     />
@@ -18,6 +18,11 @@
             <!-- RIGHT: login -->
             <div class="auth-right">
                 <div class="login-card">
+                    <img
+                        src="/assets/images/logo_baru.png"
+                        alt="PT Mitra Wira Mas"
+                        class="brand-logo-login"
+                    />
                     <h2>Masuk ke akun Anda</h2>
                     <p class="subtitle">
                         Gunakan NIK dan kata sandi yang sudah didaftarkan.
