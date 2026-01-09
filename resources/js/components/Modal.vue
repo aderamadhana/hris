@@ -59,24 +59,6 @@ export default {
     z-index: 1000;
 }
 
-.modal-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.55);
-}
-
-.modal-panel {
-    position: relative;
-    /* max-width: 480px; */
-    width: 100%;
-    margin: 0 16px;
-    background: #ffffff;
-    border-radius: 18px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.4);
-    padding: 20px 22px 16px;
-}
-
 /* dst: .modal-header, .modal-text, .modal-body, .hint, .modal-footer */
 .modal-header {
     display: flex;
@@ -128,5 +110,60 @@ export default {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+}
+
+.modal-root {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+}
+
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(2px);
+}
+
+.modal-panel {
+    position: relative;
+    z-index: 1;
+
+    width: min(760px, 100%);
+    max-height: min(82vh, 760px);
+
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(2, 6, 23, 0.08);
+}
+
+/* kalau kamu punya sizeClass */
+.modal-panel.modal-sm {
+    width: min(520px, 100%);
+}
+.modal-panel.modal-md {
+    width: min(760px, 100%);
+}
+.modal-panel.modal-lg {
+    width: min(980px, 100%);
+}
+
+@media (max-width: 480px) {
+    .modal-root {
+        padding: 12px;
+    }
+    .modal-panel {
+        border-radius: 14px;
+        max-height: 86vh;
+    }
 }
 </style>

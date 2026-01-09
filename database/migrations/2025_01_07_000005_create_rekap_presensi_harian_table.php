@@ -34,6 +34,7 @@ return new class extends Migration
             $table->string('status_kehadiran')->nullable()->default('tidak_hadir');
             
             // Durasi Kerja
+            $table->integer('total_jam_kerja')->nullable()->comment('dalam menit');
             $table->integer('durasi_kerja_menit')->nullable()->comment('Durasi kerja dalam menit');
             
             $table->text('keterangan')->nullable();

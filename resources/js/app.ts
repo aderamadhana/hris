@@ -58,6 +58,14 @@ import {
     faBriefcase,
     faCamera,
     faCheck,
+    faArrowRightToBracket,
+    faArrowRightFromBracket,
+    faMobileScreen,
+    faCalendarXmark,
+    faClockRotateLeft,
+    faCalendarCheck,
+    faCalendar,
+    faArrowRight,
 
 } from '@fortawesome/free-solid-svg-icons'
 
@@ -108,6 +116,14 @@ library.add(
     faBriefcase,
     faCamera,
     faCheck,
+    faArrowRightToBracket,
+    faArrowRightFromBracket,
+    faMobileScreen,
+    faCalendarXmark,
+    faClockRotateLeft,
+    faCalendarCheck,
+    faCalendar,
+    faArrowRight,
 )
 
 createInertiaApp({

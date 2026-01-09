@@ -1,451 +1,1887 @@
 <template>
-    <section class="dashboard">
-        <!-- HEADER -->
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Dashboard Saya</h1>
-            </div>
+    <!-- HEADER -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <h1 class="dashboard-title">Dashboard Kehadiran</h1>
+            <p class="dashboard-subtitle">Rekap kehadiran hari ini</p>
+        </div>
+        <button
+            @click="refreshData"
+            class="btn-refresh-header"
+            :disabled="loading"
+        >
+            <font-awesome-icon
+                :icon="['fas', 'rotate']"
+                :class="{ 'fa-spin': loading }"
+            />
+        </button>
+    </div>
+    <div class="card dashboard-page">
+        <div v-if="loading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Memuat data dashboard...</p>
         </div>
 
-        <!-- GRID -->
-        <div class="dashboard-container">
-            <!-- KATEGORI: KEHADIRAN -->
-            <div class="category-section">
-                <h2 class="category-title">📅 Kehadiran</h2>
-                <div class="dashboard-grid">
-                    <!-- STATUS KEHADIRAN HARI INI -->
-                    <div class="dashboard-card large">
-                        <div class="dashboard-card-header">
-                            <div>
-                                <div class="dashboard-card-title">
-                                    Kehadiran Hari Ini
-                                </div>
-                                <div class="dashboard-meta">
-                                    16 Desember 2025 · Shift Pagi
-                                </div>
+        <!-- CONTENT -->
+        <div v-else class="dashboard-content">
+            <!-- Status Banner -->
+            <div class="date-now">
+                <p class="dashboard-subtitle">{{ todayDate }}</p>
+                <div v-if="shiftInfo" class="shift-paneldsa">
+                    <div class="shift-panel__head">
+                        <font-awesome-icon :icon="['fa', 'briefcase']" />
+                        <div class="shift-panel__headText">
+                            <div class="shift-panel__title">
+                                {{ shiftInfo.nama_shift }}
                             </div>
-                            <span class="dashboard-card-badge">Realtime</span>
-                        </div>
-
-                        <div class="dashboard-value">Hadir</div>
-
-                        <div class="dashboard-meta">
-                            Clock In: 08:15 · Clock Out: -
-                        </div>
-
-                        <div class="chart-placeholder">
-                            Timeline kehadiran hari ini
+                            <div class="shift-panel__meta">
+                                {{ shiftInfo.kode_shift }} •
+                                {{
+                                    shiftInfo.is_flexible ? 'Flexible' : 'Fixed'
+                                }}
+                            </div>
                         </div>
                     </div>
 
-                    <!-- ON-TIME -->
-                    <div class="dashboard-card success">
-                        <div class="dashboard-card-header">
-                            <div class="dashboard-card-title">
-                                Ketepatan Waktu
-                            </div>
-                            <span class="dashboard-card-badge">Bulan ini</span>
+                    <div class="shift-panel__grid">
+                        <div class="kv">
+                            <div class="k">Jam Masuk</div>
+                            <div class="v">{{ shiftInfo.jam_masuk }}</div>
                         </div>
 
-                        <div class="dashboard-circle">
-                            <div class="dashboard-circle-inner">92%</div>
-                        </div>
-
-                        <div class="dashboard-meta">
-                            18 hari datang tepat waktu
-                        </div>
-                    </div>
-
-                    <!-- TERLAMBAT -->
-                    <div class="dashboard-card danger">
-                        <div class="dashboard-card-header">
-                            <div class="dashboard-card-title">
-                                Keterlambatan
-                            </div>
-                            <span class="dashboard-card-badge">Bulan ini</span>
-                        </div>
-
-                        <div class="dashboard-circle">
-                            <div class="dashboard-circle-inner">3x</div>
-                        </div>
-
-                        <div class="dashboard-meta">
-                            Rata-rata terlambat 12 menit
+                        <div class="kv">
+                            <div class="k">Jam Pulang</div>
+                            <div class="v">{{ shiftInfo.jam_pulang }}</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- KATEGORI: KONTRAK -->
-            <div class="category-section">
-                <h2 class="category-title">📋 Kontrak</h2>
-                <div class="dashboard-grid">
-                    <!-- STATUS KONTRAK -->
-                    <div class="dashboard-card">
-                        <div class="dashboard-card-header">
-                            <div class="dashboard-card-title">
-                                Status Kontrak
+            <!-- Main Grid: 2 columns on desktop -->
+            <div class="main-grid">
+                <!-- LEFT COLUMN -->
+                <div class="left-column">
+                    <!-- Clock Times Card -->
+                    <div class="clock-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Waktu Kehadiran</h3>
+                            <div class="realtime-badge">
+                                <span class="pulse-dot"></span>
+                                Live
                             </div>
-                            <span class="dashboard-card-badge">PKWT</span>
                         </div>
+                        <div class="card-body">
+                            <div class="clock-times">
+                                <div class="clock-item clock-in-item">
+                                    <div class="clock-icon clock-in">
+                                        <font-awesome-icon
+                                            :icon="[
+                                                'fas',
+                                                'arrow-right-to-bracket',
+                                            ]"
+                                        />
+                                    </div>
+                                    <div class="clock-details">
+                                        <span class="clock-label"
+                                            >Clock In</span
+                                        >
+                                        <span class="clock-value">{{
+                                            clockInTime
+                                        }}</span>
+                                    </div>
+                                </div>
 
-                        <div class="dashboard-value">31 Mar 2026</div>
-                        <div class="dashboard-meta">
-                            Berlaku hingga tanggal tersebut
+                                <div class="clock-item clock-out-item">
+                                    <div class="clock-icon clock-out">
+                                        <font-awesome-icon
+                                            :icon="[
+                                                'fas',
+                                                'arrow-right-from-bracket',
+                                            ]"
+                                        />
+                                    </div>
+                                    <div class="clock-details">
+                                        <span class="clock-label"
+                                            >Clock Out</span
+                                        >
+                                        <span class="clock-value">{{
+                                            clockOutTime
+                                        }}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- HISTORY KONTRAK KERJA -->
-                    <div class="dashboard-card">
-                        <div class="dashboard-card-header">
-                            <div class="dashboard-card-title">
-                                History Kontrak
+                    <!-- Detail Timeline -->
+                    <div class="timeline-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Detail Presensi Hari Ini</h3>
+                        </div>
+                        <div class="card-body">
+                            <div
+                                v-if="todayAttendance?.detail?.length"
+                                class="timeline"
+                            >
+                                <div
+                                    v-for="item in todayAttendance.detail"
+                                    :key="item.id"
+                                    class="timeline-item"
+                                >
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-header">
+                                            <div class="timeline-time">
+                                                <font-awesome-icon
+                                                    :icon="['fas', 'clock']"
+                                                />
+                                                {{ item.waktu_formatted }}
+                                            </div>
+                                            <span
+                                                class="timeline-badge"
+                                                :class="
+                                                    item.is_valid_location
+                                                        ? 'valid'
+                                                        : 'invalid'
+                                                "
+                                            >
+                                                <font-awesome-icon
+                                                    :icon="[
+                                                        'fas',
+                                                        item.is_valid_location
+                                                            ? 'check-circle'
+                                                            : 'exclamation-circle',
+                                                    ]"
+                                                />
+                                                {{
+                                                    item.is_valid_location
+                                                        ? 'Valid'
+                                                        : 'Invalid'
+                                                }}
+                                            </span>
+                                        </div>
+
+                                        <div class="timeline-type">
+                                            {{
+                                                item.jenis_presensi === 'masuk'
+                                                    ? 'Clock In'
+                                                    : 'Clock Out'
+                                            }}
+                                        </div>
+
+                                        <div
+                                            v-if="item.foto_presensi"
+                                            class="timeline-photo"
+                                        >
+                                            <img
+                                                :src="item.foto_presensi"
+                                                alt="Foto Presensi"
+                                            />
+                                        </div>
+
+                                        <div
+                                            v-if="
+                                                item.jarak_dari_lokasi ||
+                                                item.device_info
+                                            "
+                                            class="timeline-meta"
+                                        >
+                                            <span v-if="item.jarak_dari_lokasi">
+                                                <font-awesome-icon
+                                                    :icon="[
+                                                        'fas',
+                                                        'location-dot',
+                                                    ]"
+                                                />
+                                                {{ item.jarak_dari_lokasi }}m
+                                            </span>
+                                            <span v-if="item.device_info">
+                                                <font-awesome-icon
+                                                    :icon="[
+                                                        'fas',
+                                                        'mobile-screen',
+                                                    ]"
+                                                />
+                                                {{ item.device_info }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <span class="dashboard-card-badge">Riwayat</span>
+
+                            <div v-else class="empty-state">
+                                <font-awesome-icon
+                                    :icon="['fas', 'calendar-xmark']"
+                                />
+                                <p>Belum ada aktivitas presensi hari ini</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN -->
+                <div class="right-column">
+                    <!-- Stats Cards -->
+                    <div class="stats-section">
+                        <h3 class="section-subtitle">Statistik Bulan Ini</h3>
+
+                        <div class="stat-card card-success">
+                            <div class="stat-icon-badge success">
+                                <font-awesome-icon
+                                    :icon="['fa', 'calendar-check']"
+                                />
+                            </div>
+                            <div class="stat-body">
+                                <div class="stat-value">
+                                    {{ onTimePercentage }}%
+                                </div>
+                                <div class="stat-label">Ketepatan Waktu</div>
+                                <div class="stat-sublabel">
+                                    {{ onTimeCount }} dari
+                                    {{ totalWorkingDays }} hari
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="dashboard-value">4</div>
-                        <div class="dashboard-meta">Total kontrak tercatat</div>
+                        <div class="stat-card card-warning">
+                            <div class="stat-icon-badge warning">
+                                <font-awesome-icon
+                                    :icon="['fas', 'clock-rotate-left']"
+                                />
+                            </div>
+                            <div class="stat-body">
+                                <div class="stat-value">{{ lateCount }}x</div>
+                                <div class="stat-label">Terlambat</div>
+                                <div class="stat-sublabel">Bulan ini</div>
+                            </div>
+                        </div>
 
-                        <button class="dashboard-btn-link">
-                            Lihat Detail History →
-                        </button>
+                        <div class="stat-card card-info">
+                            <div class="stat-icon-badge info">
+                                <font-awesome-icon
+                                    :icon="['fas', 'calendar-check']"
+                                />
+                            </div>
+                            <div class="stat-body">
+                                <div class="stat-value">
+                                    {{ onTimeCount + lateCount }}
+                                </div>
+                                <div class="stat-label">Total Hadir</div>
+                                <div class="stat-sublabel">Bulan ini</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contract Section -->
+                    <div class="contract-section">
+                        <h3 class="section-subtitle">Informasi Kontrak</h3>
+
+                        <div class="contract-card">
+                            <div class="contract-icon">
+                                <font-awesome-icon
+                                    :icon="['fas', 'briefcase']"
+                                />
+                            </div>
+                            <div class="contract-content">
+                                <div class="contract-label">Status Kontrak</div>
+                                <div class="contract-value">
+                                    {{ contractType }}
+                                </div>
+                                <div class="contract-detail">
+                                    <font-awesome-icon
+                                        :icon="['fas', 'calendar']"
+                                    />
+                                    Berlaku hingga {{ contractEndDateLabel }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="contract-card clickable">
+                            <div class="contract-icon">
+                                <font-awesome-icon
+                                    :icon="['fas', 'clock-rotate-left']"
+                                />
+                            </div>
+                            <div
+                                class="contract-content history-trigger"
+                                role="button"
+                                tabindex="0"
+                                @click="openHistoryModal"
+                                @keydown.enter.prevent="openHistoryModal"
+                                @keydown.space.prevent="openHistoryModal"
+                            >
+                                <div class="contract-label">
+                                    Riwayat Kontrak
+                                </div>
+
+                                <div class="contract-value">
+                                    {{ contractHistoryTotal }}
+                                </div>
+
+                                <div class="contract-detail">
+                                    <font-awesome-icon
+                                        :icon="['fa', 'arrow-right']"
+                                    />
+                                    Lihat detail riwayat
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+        <Modal v-if="showHistoryModal" @click.self="closeHistoryModal">
+            <div class="history-modal">
+                <div class="history-modal__header">
+                    <div class="history-modal__title">Riwayat Kontrak</div>
+                    <button
+                        class="history-modal__close"
+                        type="button"
+                        @click="closeHistoryModal"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <div class="history-modal__body">
+                    <div v-if="historyLoading" class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Memuat data riwayat...</p>
+                    </div>
+
+                    <div v-else-if="!histories.length" class="history-empty">
+                        Tidak ada riwayat kontrak.
+                    </div>
+
+                    <div v-else class="history-list">
+                        <div
+                            v-for="h in histories"
+                            :key="h.id"
+                            class="history-item"
+                        >
+                            <div class="history-top">
+                                <div class="history-main">
+                                    <div class="history-title">
+                                        {{ h.jenis_kontrak || 'Kontrak' }} •
+                                        {{ h.status || '-' }}
+                                    </div>
+                                    <div class="history-sub">
+                                        {{ h.perusahaan || '-' }}
+                                        <span v-if="h.penempatan"
+                                            >• {{ h.penempatan }}</span
+                                        >
+                                        <span v-if="h.jabatan"
+                                            >• {{ h.jabatan }}</span
+                                        >
+                                    </div>
+                                </div>
+
+                                <div class="history-dates">
+                                    <span>{{
+                                        h.tgl_awal_kerja_label || '-'
+                                    }}</span>
+                                    <span>→</span>
+                                    <span>{{
+                                        h.tgl_akhir_kerja_label || '-'
+                                    }}</span>
+                                </div>
+                            </div>
+
+                            <div class="history-meta">
+                                <span v-if="h.no_kontrak"
+                                    ><b>No Kontrak:</b> {{ h.no_kontrak }}</span
+                                >
+                                <span v-if="h.cost_center"
+                                    ><b>CC:</b> {{ h.cost_center }}</span
+                                >
+                                <span v-if="h.masa_kerja"
+                                    ><b>Masa:</b> {{ h.masa_kerja }}</span
+                                >
+                                <span v-if="h.pola_kerja"
+                                    ><b>Pola:</b> {{ h.pola_kerja }}</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Modal>
+    </div>
 </template>
 
-<script setup>
-import { router } from '@inertiajs/vue3';
+<script>
+import Modal from '@/components/Modal.vue';
+import { triggerAlert } from '@/utils/alert';
+import { usePage } from '@inertiajs/vue3';
+import axios from 'axios';
 
-// Props dari controller
-const props = defineProps({
-    today: {
-        type: String,
-        default: 'Jumat, 13 Desember 2024',
+export default {
+    name: 'DashboardPresensiKontrak',
+    components: {
+        Modal,
     },
-    shift: {
-        type: String,
-        default: 'Shift Pagi (08:00 - 17:00)',
-    },
-    attendanceStatus: {
-        type: String,
-        default: 'Hadir',
-    },
-    clockIn: {
-        type: String,
-        default: '07:58',
-    },
-    clockOut: {
-        type: String,
-        default: '17:15',
-    },
-    onTimeRate: {
-        type: Number,
-        default: 95,
-    },
-    onTimeCount: {
-        type: Number,
-        default: 19,
-    },
-    lateCount: {
-        type: Number,
-        default: 3,
-    },
-    avgLate: {
-        type: Number,
-        default: 12,
-    },
-    leaveRemaining: {
-        type: Number,
-        default: 8,
-    },
-    leaveUsed: {
-        type: Number,
-        default: 4,
-    },
-    overtimeHours: {
-        type: Number,
-        default: 16,
-    },
-    overtimeDays: {
-        type: Number,
-        default: 4,
-    },
-    contractType: {
-        type: String,
-        default: 'PKWT',
-    },
-    contractEnd: {
-        type: String,
-        default: '31 Maret 2025',
-    },
-    contractHistory: {
-        type: Array,
-        default: () => [
-            {
-                id: 1,
-                type: 'PKWT',
-                startDate: '01 April 2024',
-                endDate: '31 Maret 2025',
-                status: 'Aktif',
-                duration: '12 bulan',
-            },
-            {
-                id: 2,
-                type: 'PKWT',
-                startDate: '01 April 2023',
-                endDate: '31 Maret 2024',
-                status: 'Selesai',
-                duration: '12 bulan',
-            },
-            {
-                id: 3,
-                type: 'Probation',
-                startDate: '01 Januari 2023',
-                endDate: '31 Maret 2023',
-                status: 'Selesai',
-                duration: '3 bulan',
-            },
-        ],
-    },
-});
 
-// Functions
-const fiturBelumTersedia = () => {
-    alert('Fitur ini sedang dalam pengembangan');
-};
+    data() {
+        const page = usePage();
+        return {
+            user: page.props.auth.user,
+            loading: true,
+            todayAttendance: null,
+            monthlyStats: null,
+            contractSummary: null,
+            _fetchSeq: 0,
 
-const showContractHistory = () => {
-    // Redirect ke halaman history atau buka modal
-    router.visit(route('contract.history'));
-    // Atau bisa pakai modal jika prefer
+            showHistoryModal: false,
+            historyLoading: false,
+            histories: [],
+        };
+    },
+    watch: {
+        showHistoryModal(v) {
+            // lock scroll biar modal enak
+            document.body.style.overflow = v ? 'hidden' : '';
+        },
+    },
+    computed: {
+        todayDate() {
+            return (
+                this.todayAttendance?.tanggal_formatted ||
+                new Date().toLocaleDateString('id-ID', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                })
+            );
+        },
+
+        attendanceDetail() {
+            return Array.isArray(this.todayAttendance?.detail)
+                ? this.todayAttendance.detail
+                : [];
+        },
+
+        hasClockIn() {
+            return this.attendanceDetail.some(
+                (i) => i.jenis_presensi === 'masuk',
+            );
+        },
+
+        hasClockOut() {
+            return this.attendanceDetail.some(
+                (i) => i.jenis_presensi === 'pulang',
+            );
+        },
+
+        attendanceStatus() {
+            if (this.hasClockOut) return 'selesai';
+            if (this.hasClockIn) return 'hadir';
+            return 'belum';
+        },
+
+        statusBadge() {
+            const status = this.attendanceStatus;
+            const rekap = this.todayAttendance?.rekap;
+
+            const badges = {
+                hadir: {
+                    label: 'Sedang Bekerja',
+                    class: 'banner-success',
+                    icon: 'briefcase',
+                    time:
+                        this.clockInTime !== '-'
+                            ? `Masuk pukul ${this.clockInTime}`
+                            : null,
+                },
+                selesai: {
+                    label: 'Selesai Bekerja',
+                    class: 'banner-info',
+                    icon: 'circle-check',
+                    time: rekap?.total_jam_kerja
+                        ? `Total ${rekap.total_jam_kerja}`
+                        : null,
+                },
+                belum: {
+                    label: 'Belum Presensi',
+                    class: 'banner-warning',
+                    icon: 'clock',
+                    time: 'Silakan lakukan clock in',
+                },
+            };
+            return badges[status] || badges.belum;
+        },
+
+        clockInTime() {
+            return this._pickTime('masuk', 'min');
+        },
+
+        clockOutTime() {
+            return this._pickTime('pulang', 'max');
+        },
+
+        shiftInfo() {
+            return this.todayAttendance?.shift || null;
+        },
+
+        lateCount() {
+            return this.monthlyStats?.kehadiran?.terlambat ?? 0;
+        },
+
+        onTimeCount() {
+            return this.monthlyStats?.kehadiran?.hadir ?? 0;
+        },
+
+        totalWorkingDays() {
+            return this.monthlyStats?.kehadiran?.total_hari_kerja ?? 0;
+        },
+
+        onTimePercentage() {
+            const total = this.totalWorkingDays;
+            if (!total) return 0;
+            return Math.round((this.onTimeCount / total) * 100);
+        },
+
+        contractType() {
+            return this.contractSummary?.contract_type || '-';
+        },
+
+        contractEndDateLabel() {
+            return this.contractSummary?.contract_end_date_label || '-';
+        },
+
+        contractHistoryTotal() {
+            const v =
+                this.contractSummary?.total_kontrak ??
+                this.contractSummary?.history_total ??
+                this.contractSummary?.history?.total ??
+                this.contractSummary?.riwayat?.total ??
+                this.contractSummary?.total ??
+                0;
+            return typeof v === 'number' ? v : Number(v) || 0;
+        },
+
+        contractHistoryUrl() {
+            return (
+                this.contractSummary?.history_url ||
+                this.contractSummary?.riwayat_url ||
+                '/kontrak/riwayat'
+            );
+        },
+    },
+
+    mounted() {
+        this.fetchDashboardData();
+        window.addEventListener('keydown', this.onKeydown);
+    },
+
+    beforeUnmount() {
+        window.removeEventListener('keydown', this.onKeydown);
+        document.body.style.overflow = '';
+    },
+
+    methods: {
+        onKeydown(e) {
+            if (!this.showHistoryModal) return;
+            if (e.key === 'Escape') this.closeHistoryModal();
+        },
+
+        // supaya template lama @click="goToHistory" tetap jalan
+        goToHistory() {
+            this.openHistoryModal();
+        },
+
+        async openHistoryModal() {
+            this.showHistoryModal = true;
+            this.historyLoading = true;
+            const employeeId = this.user?.employee_id;
+
+            try {
+                // Endpoint riwayat (harus ada): /kontrak/history?employee_id=...
+                const { data } = await axios.get('/presensi/kontrak-summary', {
+                    params: { employee_id: employeeId },
+                });
+
+                this.histories = data.histories ?? [];
+            } catch (err) {
+                this.histories = [];
+            } finally {
+                this.historyLoading = false;
+            }
+        },
+
+        closeHistoryModal() {
+            this.showHistoryModal = false;
+        },
+        _localISODate(d = new Date()) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        },
+
+        _toMinutes(hhmm) {
+            if (!hhmm || typeof hhmm !== 'string') return null;
+            const [h, m] = hhmm.split(':').map((x) => Number(x));
+            if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+            return h * 60 + m;
+        },
+
+        _pickTime(jenis, mode) {
+            const items = this.attendanceDetail.filter(
+                (i) => i.jenis_presensi === jenis,
+            );
+            if (!items.length) return '-';
+
+            let best = items[0];
+            let bestMin = this._toMinutes(best.waktu_formatted);
+
+            for (const it of items) {
+                const curMin = this._toMinutes(it.waktu_formatted);
+                if (curMin == null || bestMin == null) continue;
+
+                if (mode === 'min' && curMin < bestMin) {
+                    best = it;
+                    bestMin = curMin;
+                }
+                if (mode === 'max' && curMin > bestMin) {
+                    best = it;
+                    bestMin = curMin;
+                }
+            }
+
+            return best?.waktu_formatted || '-';
+        },
+
+        _normalizeMonthlyStats(rootPayload) {
+            const data = rootPayload?.data;
+            if (!data) return null;
+            return data.summary ?? data;
+        },
+
+        async fetchDashboardData() {
+            this.loading = true;
+            const seq = ++this._fetchSeq;
+
+            try {
+                const employeeId = this.user?.employee_id;
+                if (!employeeId) throw new Error('employee_id tidak ditemukan');
+
+                const today = this._localISODate(new Date());
+                const now = new Date();
+                const currentMonth = now.getMonth() + 1;
+                const currentYear = now.getFullYear();
+
+                const CONTRACT_ENDPOINT = '/presensi/kontrak-summary';
+
+                const results = await Promise.allSettled([
+                    axios.get('/presensi/log', {
+                        params: { employee_id: employeeId, tanggal: today },
+                    }),
+                    axios.get('/presensi/log', {
+                        params: {
+                            employee_id: employeeId,
+                            bulan: currentMonth,
+                            tahun: currentYear,
+                        },
+                    }),
+                    axios.get(CONTRACT_ENDPOINT, {
+                        params: { employee_id: employeeId },
+                    }),
+                ]);
+
+                if (seq !== this._fetchSeq) return;
+
+                const [attendanceRes, statsRes, contractRes] = results;
+
+                if (
+                    attendanceRes.status === 'fulfilled' &&
+                    attendanceRes.value.data?.success
+                ) {
+                    this.todayAttendance =
+                        attendanceRes.value.data.data ?? null;
+                } else {
+                    this.todayAttendance = null;
+                }
+
+                if (
+                    statsRes.status === 'fulfilled' &&
+                    statsRes.value.data?.success
+                ) {
+                    this.monthlyStats =
+                        this._normalizeMonthlyStats(statsRes.value.data) ??
+                        null;
+                } else {
+                    this.monthlyStats = null;
+                }
+
+                if (contractRes.status === 'fulfilled') {
+                    const payload = contractRes.value.data;
+                    if (payload?.success)
+                        this.contractSummary = payload ?? null;
+                    else this.contractSummary = payload ?? null;
+                } else {
+                    this.contractSummary = null;
+                }
+
+                console.log(this.contractSummary);
+            } catch (error) {
+                console.error('Error fetching dashboard:', error);
+                triggerAlert('error', 'Gagal memuat data dashboard');
+            } finally {
+                if (seq === this._fetchSeq) this.loading = false;
+            }
+        },
+
+        refreshData() {
+            this.fetchDashboardData();
+        },
+    },
 };
 </script>
 
-<style>
-/* .dashboard {
-    padding: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
-} */
+<style scoped>
+/* ==================== BASE ==================== */
+* {
+    box-sizing: border-box;
+}
 
-/* PAGE HEADER */
-.page-header {
+/* ==================== PAGE WRAPPER ==================== */
+.dashboard-page {
+    width: 100%;
+    padding: 1.5rem;
+    min-height: 100vh;
+    background: #f8fafc;
+}
+
+@media (max-width: 768px) {
+    .dashboard-page {
+        padding: 1rem;
+    }
+}
+
+/* ==================== HEADER ==================== */
+.dashboard-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
+    justify-content: space-between;
     gap: 1rem;
 }
 
-.page-title {
+.header-content {
+    flex: 1;
+    min-width: 0; /* penting supaya text/shift panel bisa shrink tanpa overflow */
+}
+
+.dashboard-title {
     font-size: 1.875rem;
     font-weight: 700;
-    color: #111827;
+    color: #1e293b;
+    margin: 0 0 0.25rem 0;
+}
+
+.dashboard-subtitle {
+    font-size: 1rem;
+    color: #64748b;
     margin: 0;
 }
 
-.page-subtitle {
-    font-size: 0.875rem;
-    color: #6b7280;
-    margin: 0.25rem 0 0 0;
-}
-
-.btn {
-    padding: 0.625rem 1.25rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    background: white;
-    color: #374151;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
-}
-
-/* DASHBOARD GRID */
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.25rem;
-}
-
-.dashboard-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease;
-}
-
-.dashboard-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
-}
-
-.dashboard-card.large {
-    grid-column: span 2;
-}
-
-/* Card variants */
-.dashboard-card.danger {
-    border-left: 4px solid #ef4444;
-    background: linear-gradient(to right, #fef2f2 0%, white 100%);
-}
-
-.dashboard-card.warning {
-    border-left: 4px solid #f59e0b;
-    background: linear-gradient(to right, #fffbeb 0%, white 100%);
-}
-
-.dashboard-card.success {
-    border-left: 4px solid #10b981;
-    background: linear-gradient(to right, #f0fdf4 0%, white 100%);
-}
-
-/* Card header */
-.dashboard-card-header {
+/* wrapper tanggal + shift panel (kamu taruh di sini) */
+.date-now {
+    padding-bottom: 15px;
     display: flex;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: 16px;
+}
+
+.date-now .dashboard-subtitle {
+    margin: 0;
+    padding-top: 6px;
+    line-height: 1.2;
+    opacity: 0.85;
+    font-size: 30px;
+}
+
+/* SHIFT PANEL di header */
+.shift-paneldsa {
+    margin-left: auto;
+    min-width: 280px;
+    max-width: 380px;
+    width: clamp(280px, 32vw, 380px);
+
+    padding: 12px 14px;
+    border-radius: 14px;
+
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.shift-paneldsa .shift-panel__head {
+    display: flex;
     align-items: center;
-    margin-bottom: 1rem;
-    gap: 0.75rem;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
-.dashboard-card-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #374151;
-    letter-spacing: -0.01em;
+.shift-paneldsa .shift-panel__headText {
+    min-width: 0;
+    line-height: 1.2;
 }
 
-/* Card badge */
-.dashboard-card-badge {
-    padding: 0.25rem 0.625rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border-radius: 9999px;
-    background: #f3f4f6;
-    color: #6b7280;
+.shift-paneldsa .shift-panel__title {
+    font-size: 14px;
+    font-weight: 700;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.dashboard-card.danger .dashboard-card-badge {
-    background: #fee2e2;
-    color: #dc2626;
+.shift-paneldsa .shift-panel__meta {
+    margin-top: 2px;
+    font-size: 12px;
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.dashboard-card.success .dashboard-card-badge {
+.shift-paneldsa .shift-panel__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 14px;
+}
+
+.shift-paneldsa .kv .k {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+.shift-paneldsa .kv .v {
+    margin-top: 2px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* header responsive */
+@media (max-width: 768px) {
+    .date-now {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .shift-paneldsa {
+        margin-left: 0;
+        width: 100%;
+        max-width: none;
+    }
+    .date-now .dashboard-subtitle {
+        font-size: 25px;
+    }
+}
+
+@media (max-width: 420px) {
+    .shift-paneldsa .shift-panel__grid {
+        grid-template-columns: 1fr;
+    }
+    .date-now .dashboard-subtitle {
+        font-size: 20px;
+    }
+}
+
+.btn-refresh-header {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.btn-refresh-header:hover:not(:disabled) {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-refresh-header:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ==================== LOADING ==================== */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    gap: 1rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* ==================== STATUS BANNER ==================== */
+.status-banner {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-left: 5px solid;
+    margin-bottom: 2rem;
+}
+
+.banner-success {
+    border-left-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5 0%, white 100%);
+}
+
+.banner-info {
+    border-left-color: #3b82f6;
+    background: linear-gradient(135deg, #eff6ff 0%, white 100%);
+}
+
+.banner-warning {
+    border-left-color: #f59e0b;
+    background: linear-gradient(135deg, #fffbeb 0%, white 100%);
+}
+
+.status-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+}
+
+.banner-success .status-icon {
     background: #d1fae5;
     color: #059669;
 }
 
-/* Value */
-.dashboard-value {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #111827;
-    line-height: 1;
-    margin-bottom: 0.5rem;
+.banner-info .status-icon {
+    background: #dbeafe;
+    color: #2563eb;
 }
 
-.dashboard-card.danger .dashboard-value {
-    color: #dc2626;
-}
-
-.dashboard-card.warning .dashboard-value {
+.banner-warning .status-icon {
+    background: #fef3c7;
     color: #d97706;
 }
 
-.dashboard-card.success .dashboard-value {
+.status-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.status-label {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.status-time {
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+.shift-info {
+    padding: 0.625rem 1.125rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .status-banner {
+        flex-wrap: wrap;
+    }
+
+    .shift-info {
+        width: 100%;
+    }
+}
+
+/* ==================== MAIN GRID ==================== */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .main-grid {
+        grid-template-columns: 1.5fr 1fr;
+    }
+}
+
+.left-column,
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ==================== CARD COMMON ==================== */
+.clock-card,
+.timeline-card,
+.stat-card,
+.contract-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.realtime-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.875rem;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #16a34a;
+}
+
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    background: #16a34a;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* ==================== CLOCK TIMES ==================== */
+.clock-times {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .clock-times {
+        grid-template-columns: 1fr;
+    }
+}
+
+.clock-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    transition: all 0.2s;
+}
+
+.clock-item:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.clock-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.clock-in {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.clock-out {
+    background: linear-gradient(135deg, #ec4899, #db2777);
+    color: white;
+}
+
+.clock-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.clock-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.clock-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* ==================== TIMELINE ==================== */
+.timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    position: relative;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 12px;
+    height: 12px;
+    background: #3b82f6;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 1.5rem;
+    bottom: -1.25rem;
+    width: 2px;
+    background: #e2e8f0;
+}
+
+.timeline-content {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.timeline-time {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.timeline-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.timeline-badge.valid {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.timeline-badge.invalid {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.timeline-type {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.75rem;
+}
+
+.timeline-photo {
+    margin: 0.75rem 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #e2e8f0;
+}
+
+.timeline-photo img {
+    width: 100%;
+    height: auto;
+    max-height: 280px;
+    object-fit: cover;
+    display: block;
+}
+
+.timeline-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.timeline-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #94a3b8;
+}
+
+.empty-state svg {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* ==================== RIGHT COLUMN ==================== */
+.section-subtitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #475569;
+    margin: 0 0 1rem 0;
+}
+
+.stats-section,
+.contract-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ==================== STAT CARDS ==================== */
+.stat-card {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    border-left: 4px solid;
+    transition: all 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.card-success {
+    border-left-color: #10b981;
+}
+
+.card-warning {
+    border-left-color: #f59e0b;
+}
+
+.card-info {
+    border-left-color: #3b82f6;
+}
+
+.stat-icon-badge {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+}
+
+.stat-icon-badge.success {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
     color: #059669;
 }
 
-/* Meta */
-.dashboard-meta {
-    font-size: 0.813rem;
-    color: #6b7280;
-    line-height: 1.4;
+.stat-icon-badge.warning {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #d97706;
 }
 
-/* Chart Placeholder */
-.chart-placeholder {
-    margin-top: 1rem;
-    padding: 2rem;
-    background: #f9fafb;
-    border-radius: 8px;
-    text-align: center;
-    color: #9ca3af;
-    font-size: 0.875rem;
-    border: 2px dashed #e5e7eb;
-}
-
-/* Button Link */
-.dashboard-btn-link {
-    margin-top: 1rem;
-    padding: 0.5rem 1rem;
-    font-size: 0.813rem;
-    font-weight: 600;
-    color: #3b82f6;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    width: 100%;
-    text-align: left;
-}
-
-.dashboard-btn-link:hover {
+.stat-icon-badge.info {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
     color: #2563eb;
-    text-decoration: underline;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .dashboard {
+.stat-body {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1;
+    margin-bottom: 0.375rem;
+}
+
+.stat-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.25rem;
+}
+
+.stat-sublabel {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+/* ==================== CONTRACT CARDS ==================== */
+.contract-card {
+    padding: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    border: 2px solid #e2e8f0;
+    transition: all 0.2s;
+}
+
+.contract-card.clickable {
+    cursor: pointer;
+}
+
+.contract-card.clickable:hover {
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+}
+
+.contract-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f0f9ff, #dbeafe);
+    border: 2px solid #bfdbfe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563eb;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.contract-content {
+    flex: 1;
+}
+
+.contract-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.contract-value {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.contract-detail {
+    font-size: 0.875rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.history-trigger {
+    cursor: pointer;
+}
+.history-trigger:focus {
+    outline: 2px solid rgba(59, 130, 246, 0.35);
+    outline-offset: 6px;
+    border-radius: 10px;
+}
+
+/* konten di dalam modal */
+.history-modal {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.history-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding: 16px 18px;
+    background: #fff;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.history-modal__title {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 15px;
+}
+
+.history-modal__close {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.history-modal__close:hover {
+    background: #f8fafc;
+}
+
+.history-modal__body {
+    padding: 16px 18px;
+    overflow: auto; /* scroll di body */
+    background: #fff;
+}
+
+/* list */
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.history-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px 14px;
+    background: #f8fafc;
+}
+
+.history-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.history-title {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 13px;
+}
+
+.history-sub {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.history-dates {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #334155;
+    white-space: nowrap;
+    padding-top: 2px;
+}
+
+.history-meta {
+    margin-top: 10px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: #475569;
+}
+
+/* empty/loading */
+.history-loading,
+.history-empty {
+    color: #64748b;
+    padding: 6px 0;
+}
+
+/* ==================== RESPONSIVE ==================== */
+/* Mobile Small (< 380px) */
+@media (max-width: 379px) {
+    .dashboard-page {
+        padding: 0.75rem;
+    }
+
+    .dashboard-header {
+        margin-bottom: 1.25rem;
+    }
+
+    .dashboard-title {
+        font-size: 1.25rem;
+    }
+
+    .dashboard-subtitle {
+        font-size: 0.8rem;
+    }
+
+    .btn-refresh-header {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
+    }
+
+    .status-banner {
+        padding: 1rem;
+        gap: 0.875rem;
+    }
+
+    .status-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.4rem;
+    }
+
+    .status-label {
+        font-size: 1rem;
+    }
+
+    .status-time {
+        font-size: 0.8rem;
+    }
+
+    .card-header {
         padding: 1rem;
     }
 
-    .page-header {
+    .card-title {
+        font-size: 1rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .clock-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+
+    .clock-value {
+        font-size: 1.25rem;
+    }
+
+    .timeline-photo img {
+        max-height: 200px;
+    }
+
+    .stat-icon-badge {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+    }
+
+    .contract-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.25rem;
+    }
+
+    .contract-value {
+        font-size: 1.125rem;
+    }
+}
+
+/* Mobile Medium (380px - 480px) */
+@media (min-width: 380px) and (max-width: 480px) {
+    .dashboard-page {
+        padding: 0.875rem;
+    }
+
+    .dashboard-title {
+        font-size: 1.375rem;
+    }
+
+    .dashboard-subtitle {
+        font-size: 0.875rem;
+    }
+
+    .status-banner {
+        padding: 1.125rem;
+    }
+
+    .status-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+    }
+
+    .status-label {
+        font-size: 1.125rem;
+    }
+
+    .timeline-photo img {
+        max-height: 220px;
+    }
+
+    .stat-value {
+        font-size: 1.875rem;
+    }
+
+    .contract-value {
+        font-size: 1.25rem;
+    }
+}
+
+/* Mobile Large & Tablet (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+
+    .timeline-photo img {
+        max-height: 240px;
+    }
+
+    .stat-value {
+        font-size: 1.875rem;
+    }
+
+    .contract-value {
+        font-size: 1.25rem;
+    }
+}
+
+/* Tablet Large (769px - 1023px) */
+@media (min-width: 769px) and (max-width: 1023px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-section {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .contract-section {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .section-subtitle {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Desktop Small (1024px - 1279px) */
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .dashboard-page {
+        padding: 1.25rem;
+    }
+}
+
+/* All Mobile Devices */
+@media (max-width: 768px) {
+    .main-grid {
+        gap: 1.25rem;
+    }
+
+    .left-column,
+    .right-column {
+        gap: 1.25rem;
+    }
+
+    /* Fix clock times to always be 2 columns on very small screens */
+    .clock-times {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .clock-item {
+        padding: 0.875rem;
+        gap: 0.75rem;
+    }
+
+    .clock-label {
+        font-size: 0.75rem;
+    }
+
+    .clock-value {
+        font-size: 1.125rem;
+    }
+
+    /* Timeline adjustments */
+    .timeline-item {
+        padding-left: 1.5rem;
+    }
+
+    .timeline-marker {
+        width: 10px;
+        height: 10px;
+        border-width: 2px;
+    }
+
+    .timeline-item:not(:last-child)::before {
+        left: 4px;
+    }
+
+    .timeline-content {
+        padding: 1rem;
+    }
+
+    .timeline-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .timeline-type {
+        font-size: 0.95rem;
+    }
+
+    .timeline-meta {
+        gap: 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    /* Stats cards - stack vertically */
+    .stat-card {
+        padding: 1.25rem;
+        gap: 1rem;
+    }
+
+    /* Contract cards */
+    .contract-card {
+        padding: 1.25rem;
+        gap: 1rem;
+    }
+
+    .contract-label {
+        font-size: 0.75rem;
+    }
+
+    .contract-detail {
+        font-size: 0.8rem;
+    }
+}
+
+/* Very small screens optimization */
+@media (max-width: 360px) {
+    .clock-times {
+        grid-template-columns: 1fr;
+    }
+
+    .status-banner {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-
-    .dashboard-card {
-        padding: 1.25rem;
-    }
-
-    .dashboard-card.large {
-        grid-column: span 1;
-    }
-
-    .dashboard-value {
-        font-size: 2rem;
-    }
-}
-
-@media (min-width: 1400px) {
-    .dashboard-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
-
-    .dashboard-card.large {
-        grid-column: span 2;
+    .shift-info {
+        width: 100%;
+        justify-content: center;
     }
 }
 </style>

@@ -379,7 +379,7 @@ export default {
 
                 formData.append(
                     'jenis_presensi',
-                    this.isCheckedIn ? 'pulang' : 'masuk',
+                    this.isCheckedIn ? 'masuk' : 'pulang',
                 );
                 formData.append('waktu', new Date().toISOString());
                 formData.append(
@@ -411,12 +411,12 @@ export default {
 
                     // NOTE: router.visit di kode kamu sebelumnya tidak di-import.
                     // Pastikan router tersedia (mis. Inertia router) sebelum dipakai.
-                    setTimeout(() => {
-                        if (typeof router !== 'undefined'?.visit)
-                            router.visit('/karyawan/presensi/riwayat');
-                        else
-                            window.location.href = '/karyawan/presensi/riwayat';
-                    }, 1500);
+                    // setTimeout(() => {
+                    //     if (typeof router !== 'undefined'?.visit)
+                    //         router.visit('/karyawan/presensi/riwayat');
+                    //     else
+                    //         window.location.href = '/karyawan/presensi/riwayat';
+                    // }, 1500);
                 } else {
                     triggerAlert(
                         'error',
