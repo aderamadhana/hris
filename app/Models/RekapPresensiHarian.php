@@ -45,9 +45,14 @@ class RekapPresensiHarian extends Model
     ];
 
     // Relationships
-    public function karyawan()
+    public function shift()
     {
-        return $this->belongsTo(Karyawan::class);
+        return $this->belongsTo(Shift::class);
+    }
+    
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
     }
 
     public function perusahaan()

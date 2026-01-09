@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Presensi;
+use App\Models\Employee;
 use App\Models\RekapPresensiHarian;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -29,12 +30,34 @@ class PresensiController extends Controller
         DB::beginTransaction();
 
         try {
+            $tanggal = Carbon::parse($request->tanggal)->format('Y-m-d');
+
+            // ✅ Ambil employee dengan shift
             $employee = Employee::with('shift')->findOrFail($request->employee_id);
 
             if (!$employee->shift_id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Karyawan belum memiliki shift. Hubungi admin.',
+                ], 422);
+            }
+
+            // ✅ CEK APAKAH SUDAH ADA PRESENSI HARI INI
+            $existingPresensi = Presensi::where('employee_id', $request->employee_id)
+                ->whereDate('tanggal_presensi', $tanggal)
+                ->where('jenis_presensi', $request->jenis_presensi)
+                ->first();
+
+            if ($existingPresensi) {
+                DB::rollBack();
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda sudah melakukan presensi ' . $request->jenis_presensi . ' hari ini.',
+                    'data' => [
+                        'waktu_presensi' => Carbon::parse($existingPresensi->waktu_presensi)->format('H:i'),
+                        'status' => $existingPresensi->status,
+                    ],
                 ], 422);
             }
 
@@ -46,13 +69,13 @@ class PresensiController extends Controller
                 $fotoPath = $file->storeAs('presensi', $filename, 'public');
             }
 
-            // Simpan presensi
+            // ✅ Simpan presensi dengan shift_id
             $presensi = Presensi::create([
                 'employee_id' => $request->employee_id,
                 'shift_id' => $employee->shift_id,
                 'perusahaan_id' => $request->perusahaan_id,
                 'divisi_id' => $request->divisi_id,
-                'tanggal_presensi' => $request->tanggal,
+                'tanggal_presensi' => $tanggal,
                 'jenis_presensi' => $request->jenis_presensi,
                 'waktu_presensi' => now(),
                 'latitude' => $request->latitude,
@@ -70,19 +93,18 @@ class PresensiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Presensi berhasil disimpan',
-                'data' => $presensi,
+                'message' => 'Presensi ' . $request->jenis_presensi . ' berhasil disimpan',
+                'data' => $presensi->load(['shift', 'employee']),
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
 
             // Hapus foto jika ada error
-            if ($fotoPath) {
+            if (isset($fotoPath) && $fotoPath) {
                 Storage::disk('public')->delete($fotoPath);
             }
 
-            // Log error
             Log::error('Presensi Store Error', [
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
@@ -96,20 +118,33 @@ class PresensiController extends Controller
         }
     }
 
+    /**
+     * ✅ Determine status dengan handling shift fleksibel
+     */
     private function determineStatus($request, $shift)
     {
-        // Validasi jarak
+        // 1. Validasi jarak (prioritas tertinggi)
         if ($request->has('in_range') && !$request->boolean('in_range')) {
             return 'tidak_valid';
         }
 
-        // Validasi akurasi GPS
+        // 2. Validasi akurasi GPS
         if ($request->has('accuracy') && $request->accuracy > 100) {
             return 'perlu_verifikasi';
         }
 
-        // Cek keterlambatan (jika masuk)
+        // 3. Cek keterlambatan (hanya untuk presensi masuk)
         if ($request->jenis_presensi === 'masuk' && $shift) {
+            // ✅ Cek apakah shift fleksibel (kode FLEX atau nama mengandung "fleksibel")
+            $isFlexibleShift = strtoupper($shift->kode_shift) === 'FLEX' 
+                            || stripos($shift->nama_shift, 'fleksibel') !== false;
+
+            // ✅ Jika shift fleksibel, tidak perlu cek keterlambatan
+            if ($isFlexibleShift) {
+                return 'hadir'; // Shift fleksibel selalu hadir
+            }
+
+            // Untuk shift non-fleksibel, cek keterlambatan
             $waktuPresensi = now();
             $jamMasukShift = Carbon::parse($shift->jam_masuk);
             $toleransi = $shift->toleransi_keterlambatan ?? 15; // default 15 menit
@@ -125,21 +160,23 @@ class PresensiController extends Controller
         return 'hadir';
     }
 
+    /**
+     * ✅ Update rekap harian dengan shift
+     */
     private function updateRekapHarian($presensi)
     {
-        // Cari atau buat rekap baru
         $rekap = RekapPresensiHarian::firstOrNew([
             'employee_id' => $presensi->employee_id,
             'tanggal' => $presensi->tanggal_presensi,
-            'perusahaan_id' => $presensi->perusahaan_id,
-            'divisi_id' => $presensi->divisi_id
         ]);
 
-        // PENTING: Set employee_id dan tanggal jika record baru
+        // Set data jika record baru
         if (!$rekap->exists) {
             $rekap->employee_id = $presensi->employee_id;
             $rekap->tanggal = $presensi->tanggal_presensi;
-            $rekap->shift_id = $presensi->shift_id;
+            $rekap->shift_id = $presensi->shift_id; // ✅ Set shift_id
+            $rekap->perusahaan_id = $presensi->perusahaan_id;
+            $rekap->divisi_id = $presensi->divisi_id;
         }
 
         // Update data berdasarkan jenis presensi
@@ -156,14 +193,95 @@ class PresensiController extends Controller
 
         // Hitung total jam kerja jika sudah ada masuk dan pulang
         if ($rekap->waktu_masuk && $rekap->waktu_pulang) {
-            $masuk = \Carbon\Carbon::parse($rekap->waktu_masuk);
-            $pulang = \Carbon\Carbon::parse($rekap->waktu_pulang);
+            $masuk = Carbon::parse($rekap->waktu_masuk);
+            $pulang = Carbon::parse($rekap->waktu_pulang);
             $rekap->total_jam_kerja = $pulang->diffInMinutes($masuk);
         }
 
         $rekap->save();
 
         return $rekap;
+    }
+
+    /**
+     * ✅ Check status presensi hari ini
+     */
+    public function checkStatus(Request $request)
+    {
+        $request->validate([
+            'employee_id' => 'required|exists:employees,id',
+            'tanggal' => 'nullable|date',
+        ]);
+
+        $tanggal = $request->tanggal 
+            ? Carbon::parse($request->tanggal)->format('Y-m-d')
+            : Carbon::today()->format('Y-m-d');
+
+        // ✅ Ambil employee dengan shift
+        $employee = Employee::with('shift')->find($request->employee_id);
+
+        $presensiMasuk = Presensi::where('employee_id', $request->employee_id)
+            ->whereDate('tanggal_presensi', $tanggal)
+            ->where('jenis_presensi', 'masuk')
+            ->first();
+
+        $presensiPulang = Presensi::where('employee_id', $request->employee_id)
+            ->whereDate('tanggal_presensi', $tanggal)
+            ->where('jenis_presensi', 'pulang')
+            ->first();
+
+        // ✅ Cek apakah shift fleksibel
+        $isFlexibleShift = false;
+        $shiftInfo = null;
+        
+        if ($employee->shift) {
+            $isFlexibleShift = strtoupper($employee->shift->kode_shift) === 'FLEX' 
+                            || stripos($employee->shift->nama_shift, 'fleksibel') !== false;
+            
+            $shiftInfo = [
+                'id' => $employee->shift->id,
+                'nama_shift' => $employee->shift->nama_shift,
+                'kode_shift' => $employee->shift->kode_shift,
+                'jam_masuk' => $isFlexibleShift ? null : Carbon::parse($employee->shift->jam_masuk)->format('H:i'),
+                'jam_pulang' => $isFlexibleShift ? null : Carbon::parse($employee->shift->jam_pulang)->format('H:i'),
+                'is_flexible' => $isFlexibleShift,
+                'toleransi_keterlambatan' => $employee->shift->toleransi_keterlambatan,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'tanggal' => $tanggal,
+                'sudah_masuk' => !is_null($presensiMasuk),
+                'sudah_pulang' => !is_null($presensiPulang),
+                'shift' => $shiftInfo, // ✅ Info shift
+                'masuk' => $presensiMasuk ? [
+                    'waktu' => Carbon::parse($presensiMasuk->waktu_presensi)->format('H:i'),
+                    'status' => $presensiMasuk->status,
+                    'foto' => $presensiMasuk->foto_presensi ? asset('storage/' . $presensiMasuk->foto_presensi) : null,
+                ] : null,
+                'pulang' => $presensiPulang ? [
+                    'waktu' => Carbon::parse($presensiPulang->waktu_presensi)->format('H:i'),
+                    'status' => $presensiPulang->status,
+                    'foto' => $presensiPulang->foto_presensi ? asset('storage/' . $presensiPulang->foto_presensi) : null,
+                ] : null,
+                'next_action' => $this->getNextAction($presensiMasuk, $presensiPulang),
+            ],
+        ]);
+    }
+
+    private function getNextAction($presensiMasuk, $presensiPulang)
+    {
+        if (!$presensiMasuk) {
+            return 'masuk';
+        }
+
+        if (!$presensiPulang) {
+            return 'pulang';
+        }
+
+        return 'selesai';
     }
 
     public function logHarian(Request $request)
@@ -177,7 +295,6 @@ class PresensiController extends Controller
 
         $employeeId = $request->employee_id;
         
-        // Default ke hari ini jika tidak ada parameter
         $tanggal = $request->tanggal ? Carbon::parse($request->tanggal) : Carbon::today();
         $bulan = $request->bulan ?? $tanggal->month;
         $tahun = $request->tahun ?? $tanggal->year;
@@ -214,24 +331,69 @@ class PresensiController extends Controller
     }
 
     /**
-     * Get log presensi untuk hari tertentu
+     * ✅ Get log hari ini dengan shift info
      */
     private function getLogHariIni($employeeId, $tanggal)
     {
-        // Ambil rekap harian
-        $rekap = RekapPresensiHarian::where('employee_id', $employeeId)
+        // Ambil employee + shift default
+        $employee = Employee::with('shift')->find($employeeId);
+
+        // Ambil rekap harian dengan shift
+        $rekap = RekapPresensiHarian::with('shift')
+            ->where('employee_id', $employeeId)
             ->where('tanggal', $tanggal->format('Y-m-d'))
             ->first();
 
-        // Ambil detail presensi (masuk & pulang)
-        $presensiDetail = Presensi::where('employee_id', $employeeId)
+        // Ambil detail presensi
+        $presensiDetail = Presensi::with('shift')
+            ->where('employee_id', $employeeId)
             ->where('tanggal_presensi', $tanggal->format('Y-m-d'))
             ->orderBy('waktu_presensi', 'asc')
             ->get();
 
+        // ✅ SHIFT: prioritas rekap->shift, fallback employee->shift
+        $shift = $rekap->shift ?? ($employee->shift ?? null);
+
+        $shiftInfo = null;
+
+        if ($shift) {
+            $isFlexible = strtoupper((string) $shift->kode_shift) === 'FLEX'
+                || stripos((string) $shift->nama_shift, 'fleksibel') !== false;
+
+            // Format jam aman (jika field time bisa null / string)
+            $jamMasuk = $isFlexible
+                ? 'Fleksibel'
+                : ($shift->jam_masuk ? Carbon::parse($shift->jam_masuk)->format('H:i') : null);
+
+            $jamPulang = $isFlexible
+                ? 'Fleksibel'
+                : ($shift->jam_pulang ? Carbon::parse($shift->jam_pulang)->format('H:i') : null);
+
+            $shiftInfo = [
+                'nama_shift'   => $shift->nama_shift,
+                'kode_shift'   => $shift->kode_shift,
+                'jam_masuk'    => $jamMasuk,
+                'jam_pulang'   => $jamPulang,
+                'is_flexible'  => $isFlexible,
+                'source'       => $rekap && $rekap->shift ? 'rekap' : 'employee', // opsional buat debug
+            ];
+        } else {
+            // optional: biar front-end tidak perlu handle null
+            $shiftInfo = [
+                'nama_shift'  => 'Shift tidak tersedia',
+                'kode_shift'  => null,
+                'jam_masuk'   => null,
+                'jam_pulang'  => null,
+                'is_flexible' => false,
+                'source'      => 'none',
+            ];
+        }
+
+
         return [
             'tanggal' => $tanggal->format('Y-m-d'),
             'tanggal_formatted' => $tanggal->locale('id')->isoFormat('dddd, D MMMM YYYY'),
+            'shift' => $shiftInfo, // ✅ Info shift
             'rekap' => $rekap,
             'detail' => $presensiDetail->map(function ($item) {
                 return [
@@ -255,23 +417,34 @@ class PresensiController extends Controller
     }
 
     /**
-     * Get log presensi untuk satu bulan
+     * ✅ Get log bulanan dengan shift info
      */
     private function getLogBulanan($employeeId, $bulan, $tahun)
     {
         $startDate = Carbon::create($tahun, $bulan, 1)->startOfMonth();
         $endDate = Carbon::create($tahun, $bulan, 1)->endOfMonth();
 
-        $logs = RekapPresensiHarian::where('employee_id', $employeeId)
+        $logs = RekapPresensiHarian::with('shift')
+            ->where('employee_id', $employeeId)
             ->whereBetween('tanggal', [$startDate, $endDate])
             ->orderBy('tanggal', 'desc')
             ->get()
             ->map(function ($item) {
+                // ✅ Format shift info
+                $shiftInfo = null;
+                if ($item->shift) {
+                    $isFlexible = strtoupper($item->shift->kode_shift) === 'FLEX' 
+                               || stripos($item->shift->nama_shift, 'fleksibel') !== false;
+                    
+                    $shiftInfo = $item->shift->nama_shift . ($isFlexible ? ' (Fleksibel)' : '');
+                }
+
                 return [
                     'id' => $item->id,
                     'tanggal' => $item->tanggal,
                     'tanggal_formatted' => Carbon::parse($item->tanggal)->locale('id')->isoFormat('dddd, D MMMM YYYY'),
                     'hari' => Carbon::parse($item->tanggal)->locale('id')->isoFormat('dddd'),
+                    'shift' => $shiftInfo, // ✅ Nama shift
                     'waktu_masuk' => $item->waktu_masuk ? Carbon::parse($item->waktu_masuk)->format('H:i') : null,
                     'waktu_pulang' => $item->waktu_pulang ? Carbon::parse($item->waktu_pulang)->format('H:i') : null,
                     'foto_masuk' => $item->foto_masuk ? asset('storage/' . $item->foto_masuk) : null,
@@ -285,9 +458,6 @@ class PresensiController extends Controller
         return $logs;
     }
 
-    /**
-     * Get summary presensi bulanan
-     */
     private function getSummaryBulanan($employeeId, $bulan, $tahun)
     {
         $startDate = Carbon::create($tahun, $bulan, 1)->startOfMonth();
@@ -314,7 +484,6 @@ class PresensiController extends Controller
         $totalSakit = $rekaps->where('status_kehadiran', 'sakit')->count();
         $totalTidakValid = $rekaps->where('status_kehadiran', 'tidak_valid')->count();
 
-        // Hitung total jam kerja
         $totalJamKerja = $rekaps->sum('total_jam_kerja');
         $rataRataJamKerja = $rekaps->where('total_jam_kerja', '>', 0)->avg('total_jam_kerja');
 
@@ -348,9 +517,6 @@ class PresensiController extends Controller
         ];
     }
 
-    /**
-     * Format menit ke jam dan menit
-     */
     private function formatJamKerja($menit)
     {
         if (!$menit) return '0 jam 0 menit';
@@ -361,9 +527,6 @@ class PresensiController extends Controller
         return $jam . ' jam ' . $sisaMenit . ' menit';
     }
 
-    /**
-     * Get riwayat presensi untuk periode tertentu
-     */
     public function riwayat(Request $request)
     {
         $request->validate([
@@ -376,7 +539,7 @@ class PresensiController extends Controller
         ]);
 
         $query = Presensi::where('employee_id', $request->employee_id)
-            ->with(['perusahaan', 'divisi']);
+            ->with(['perusahaan', 'divisi', 'shift']); // ✅ Tambah shift
 
         // Filter tanggal
         if ($request->tanggal_mulai && $request->tanggal_selesai) {
@@ -389,25 +552,20 @@ class PresensiController extends Controller
         } elseif ($request->tanggal_selesai) {
             $query->where('tanggal_presensi', '<=', $request->tanggal_selesai);
         } else {
-            // Default 30 hari terakhir
             $query->where('tanggal_presensi', '>=', Carbon::now()->subDays(30));
         }
 
-        // Filter status
         if ($request->status) {
             $query->where('status', $request->status);
         }
 
-        // Filter jenis presensi
         if ($request->jenis_presensi) {
             $query->where('jenis_presensi', $request->jenis_presensi);
         }
 
-        // Order by terbaru
         $query->orderBy('tanggal_presensi', 'desc')
               ->orderBy('waktu_presensi', 'desc');
 
-        // Pagination
         $perPage = $request->per_page ?? 15;
         $riwayat = $query->paginate($perPage);
 
@@ -427,6 +585,7 @@ class PresensiController extends Controller
                     'jarak_dari_lokasi' => $item->jarak_dari_lokasi,
                     'foto_presensi' => $item->foto_presensi ? asset('storage/' . $item->foto_presensi) : null,
                     'status' => $item->status,
+                    'shift' => $item->shift?->nama_shift, // ✅ Nama shift
                     'perusahaan' => $item->perusahaan?->nama_perusahaan,
                     'divisi' => $item->divisi?->nama_divisi,
                 ];
@@ -442,9 +601,6 @@ class PresensiController extends Controller
         ]);
     }
 
-    /**
-     * Export presensi ke Excel/PDF
-     */
     public function export(Request $request)
     {
         $request->validate([
@@ -455,7 +611,6 @@ class PresensiController extends Controller
         ]);
 
         // TODO: Implementasi export Excel/PDF
-        // Bisa pakai Laravel Excel atau DomPDF
 
         return response()->json([
             'success' => true,

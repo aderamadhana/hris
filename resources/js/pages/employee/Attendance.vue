@@ -201,194 +201,319 @@
                             <span class="side-date">{{ todayLabel }}</span>
                         </div>
 
-                        <div class="side-section">
-                            <div class="side-label">
-                                <font-awesome-icon :icon="faRightToBracket" />
-                                Clock In
+                        <div class="clock-sidebar">
+                            <!-- Loading State -->
+                            <div v-if="loading" class="table-spinner">
+                                <span class="spinner"></span>
+                                <span class="spinner-text">Memuat data...</span>
                             </div>
-
-                            <div v-if="firstIn" class="side-block">
-                                <div class="side-time">{{ firstIn.time }}</div>
-
-                                <div class="side-location">
-                                    <span class="side-location-icon">
+                            <div v-else>
+                                <!-- ✅ Shift Info Section (NEW) -->
+                                <div class="side-section shift-section">
+                                    <div class="side-label">
                                         <font-awesome-icon
-                                            :icon="faLocationDot"
+                                            :icon="['fas', 'clock']"
                                         />
-                                    </span>
-                                    <span class="side-location-text">
-                                        {{ firstIn.location }}
-                                    </span>
-                                </div>
-
-                                <div
-                                    class="side-note"
-                                    :class="getStatusClass(firstIn.status)"
-                                >
-                                    <font-awesome-icon
-                                        :icon="
-                                            firstIn.status === 'hadir'
-                                                ? faCircleCheck
-                                                : faCircleExclamation
-                                        "
-                                    />
-                                    {{ firstIn.note }}
-                                </div>
-
-                                <!-- Detail Info -->
-                                <div class="side-detail">
-                                    <div
-                                        class="detail-item"
-                                        v-if="firstIn.jarak"
-                                    >
-                                        <span class="detail-label">Jarak:</span>
-                                        <span class="detail-value"
-                                            >{{
-                                                Math.round(firstIn.jarak)
-                                            }}m</span
-                                        >
+                                        Shift Hari Ini
                                     </div>
-                                    <div
-                                        class="detail-item"
-                                        v-if="firstIn.akurasi"
-                                    >
-                                        <span class="detail-label"
-                                            >Akurasi GPS:</span
-                                        >
-                                        <span class="detail-value"
-                                            >±{{
-                                                Math.round(firstIn.akurasi)
-                                            }}m</span
-                                        >
+                                    <div class="shift-info-block">
+                                        <div class="shift-name">
+                                            {{ shiftInfo?.nama_shift }}
+                                            <span
+                                                v-if="shiftInfo?.is_flexible"
+                                                class="badge-flexible"
+                                            >
+                                                Fleksibel
+                                            </span>
+                                        </div>
+                                        <div class="shift-time">
+                                            {{ shiftDisplay?.label || '-' }}
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Foto Preview -->
-                                <div v-if="firstIn.foto" class="side-photo">
-                                    <img
-                                        :src="firstIn.foto"
-                                        alt="Foto Clock In"
-                                    />
-                                </div>
-                            </div>
-
-                            <div v-else class="side-empty">
-                                <font-awesome-icon
-                                    :icon="faClock"
-                                    class="empty-icon"
-                                />
-                                <span>Belum ada data clock in</span>
-                            </div>
-                        </div>
-
-                        <!-- Clock Out Section -->
-                        <div class="side-section">
-                            <div class="side-label">
-                                <font-awesome-icon :icon="faRightFromBracket" />
-                                Clock Out
-                            </div>
-
-                            <div v-if="lastOut" class="side-block">
-                                <div class="side-time">{{ lastOut.time }}</div>
-
-                                <div class="side-location">
-                                    <span class="side-location-icon">
+                                <!-- Clock In Section -->
+                                <div class="side-section">
+                                    <div class="side-label">
                                         <font-awesome-icon
-                                            icon="location-dot"
+                                            :icon="['fas', 'right-to-bracket']"
                                         />
-                                    </span>
-                                    <span class="side-location-text">
-                                        {{ lastOut.location }}
-                                    </span>
-                                </div>
-
-                                <div
-                                    class="side-note"
-                                    :class="getStatusClass(lastOut.status)"
-                                >
-                                    <font-awesome-icon
-                                        :icon="
-                                            lastOut.status === 'hadir'
-                                                ? faCircleCheck
-                                                : faCircleExclamation
-                                        "
-                                    />
-                                    {{ lastOut.note }}
-                                </div>
-
-                                <!-- Detail Info -->
-                                <div class="side-detail">
-                                    <div
-                                        class="detail-item"
-                                        v-if="lastOut.jarak"
-                                    >
-                                        <span class="detail-label">Jarak:</span>
-                                        <span class="detail-value"
-                                            >{{
-                                                Math.round(lastOut.jarak)
-                                            }}m</span
-                                        >
+                                        Clock In
                                     </div>
-                                    <div
-                                        class="detail-item"
-                                        v-if="lastOut.akurasi"
-                                    >
-                                        <span class="detail-label"
-                                            >Akurasi GPS:</span
+
+                                    <div v-if="firstIn" class="side-block">
+                                        <div class="side-time">
+                                            {{ firstIn.time }}
+                                            <!-- ✅ Late badge (jika terlambat) -->
+                                            <span
+                                                v-if="isLateClockIn"
+                                                class="late-badge"
+                                            >
+                                                <font-awesome-icon
+                                                    :icon="['fas', 'clock']"
+                                                />
+                                                Terlambat
+                                            </span>
+                                        </div>
+
+                                        <div class="side-location">
+                                            <span class="side-location-icon">
+                                                <font-awesome-icon
+                                                    :icon="[
+                                                        'fas',
+                                                        'location-dot',
+                                                    ]"
+                                                />
+                                            </span>
+                                            <span class="side-location-text">
+                                                {{ firstIn.location }}
+                                            </span>
+                                        </div>
+
+                                        <div
+                                            class="side-note"
+                                            :class="
+                                                getStatusClass(firstIn.status)
+                                            "
                                         >
-                                        <span class="detail-value"
-                                            >±{{
-                                                Math.round(lastOut.akurasi)
-                                            }}m</span
+                                            <font-awesome-icon
+                                                :icon="
+                                                    firstIn.status === 'hadir'
+                                                        ? [
+                                                              'fas',
+                                                              'circle-check',
+                                                          ]
+                                                        : [
+                                                              'fas',
+                                                              'circle-exclamation',
+                                                          ]
+                                                "
+                                            />
+                                            {{ firstIn.note }}
+                                        </div>
+
+                                        <!-- Detail Info -->
+                                        <!-- <div class="side-detail">
+                                            <div
+                                                class="detail-item"
+                                                v-if="firstIn.jarak"
+                                            >
+                                                <span class="detail-label"
+                                                    >Jarak:</span
+                                                >
+                                                <span class="detail-value">
+                                                    {{
+                                                        Math.round(
+                                                            firstIn.jarak,
+                                                        )
+                                                    }}m
+                                                </span>
+                                            </div>
+                                            <div
+                                                class="detail-item"
+                                                v-if="firstIn.akurasi"
+                                            >
+                                                <span class="detail-label"
+                                                    >Akurasi GPS:</span
+                                                >
+                                                <span class="detail-value">
+                                                    ±{{
+                                                        Math.round(
+                                                            firstIn.akurasi,
+                                                        )
+                                                    }}m
+                                                </span>
+                                            </div>
+                                        </div> -->
+
+                                        <!-- Foto Preview -->
+                                        <div
+                                            v-if="firstIn.foto"
+                                            class="side-photo"
                                         >
+                                            <img
+                                                :src="firstIn.foto"
+                                                alt="Foto Clock In"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div v-else class="side-empty">
+                                        <font-awesome-icon
+                                            :icon="['fas', 'clock']"
+                                            class="empty-icon"
+                                        />
+                                        <span>Belum ada data clock in</span>
+
+                                        <!-- ✅ Show expected time (jika shift tidak fleksibel) -->
+                                        <div
+                                            v-if="
+                                                shiftDisplay &&
+                                                !shiftInfo?.is_flexible
+                                            "
+                                            class="expected-time"
+                                        >
+                                            Jam masuk: {{ shiftDisplay.masuk }}
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Foto Preview -->
-                                <div v-if="lastOut.foto" class="side-photo">
-                                    <img
-                                        :src="lastOut.foto"
-                                        alt="Foto Clock Out"
-                                    />
+                                <!-- Clock Out Section -->
+                                <div class="side-section">
+                                    <div class="side-label">
+                                        <font-awesome-icon
+                                            :icon="[
+                                                'fas',
+                                                'right-from-bracket',
+                                            ]"
+                                        />
+                                        Clock Out
+                                    </div>
+
+                                    <div v-if="lastOut" class="side-block">
+                                        <div class="side-time">
+                                            {{ lastOut.time }}
+                                        </div>
+
+                                        <div class="side-location">
+                                            <span class="side-location-icon">
+                                                <font-awesome-icon
+                                                    :icon="[
+                                                        'fas',
+                                                        'location-dot',
+                                                    ]"
+                                                />
+                                            </span>
+                                            <span class="side-location-text">
+                                                {{ lastOut.location }}
+                                            </span>
+                                        </div>
+
+                                        <div
+                                            class="side-note"
+                                            :class="
+                                                getStatusClass(lastOut.status)
+                                            "
+                                        >
+                                            <font-awesome-icon
+                                                :icon="
+                                                    lastOut.status === 'hadir'
+                                                        ? [
+                                                              'fas',
+                                                              'circle-check',
+                                                          ]
+                                                        : [
+                                                              'fas',
+                                                              'circle-exclamation',
+                                                          ]
+                                                "
+                                            />
+                                            {{ lastOut.note }}
+                                        </div>
+
+                                        <!-- Detail Info -->
+                                        <!-- <div class="side-detail">
+                                            <div
+                                                class="detail-item"
+                                                v-if="lastOut.jarak"
+                                            >
+                                                <span class="detail-label"
+                                                    >Jarak:</span
+                                                >
+                                                <span class="detail-value">
+                                                    {{
+                                                        Math.round(
+                                                            lastOut.jarak,
+                                                        )
+                                                    }}m
+                                                </span>
+                                            </div>
+                                            <div
+                                                class="detail-item"
+                                                v-if="lastOut.akurasi"
+                                            >
+                                                <span class="detail-label"
+                                                    >Akurasi GPS:</span
+                                                >
+                                                <span class="detail-value">
+                                                    ±{{
+                                                        Math.round(
+                                                            lastOut.akurasi,
+                                                        )
+                                                    }}m
+                                                </span>
+                                            </div>
+                                        </div> -->
+
+                                        <!-- Foto Preview -->
+                                        <div
+                                            v-if="lastOut.foto"
+                                            class="side-photo"
+                                        >
+                                            <img
+                                                :src="lastOut.foto"
+                                                alt="Foto Clock Out"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- ✅ FIX: bedakan state sebelum clock in vs menunggu clock out -->
+                                    <div
+                                        v-else
+                                        class="side-empty"
+                                        :class="{ waiting: !!firstIn }"
+                                    >
+                                        <font-awesome-icon
+                                            :icon="
+                                                firstIn
+                                                    ? ['fas', 'hourglass-half']
+                                                    : ['fas', 'clock']
+                                            "
+                                            class="empty-icon"
+                                        />
+
+                                        <span v-if="firstIn"
+                                            >Menunggu clock out</span
+                                        >
+                                        <span v-else
+                                            >Clock out akan tersedia setelah
+                                            clock in</span
+                                        >
+
+                                        <!-- ✅ Show expected time hanya kalau sudah clock in & shift tidak fleksibel -->
+                                        <div
+                                            v-if="
+                                                firstIn &&
+                                                shiftDisplay &&
+                                                !shiftInfo?.is_flexible
+                                            "
+                                            class="expected-time"
+                                        >
+                                            Jam pulang:
+                                            {{ shiftDisplay.pulang }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Refresh Button -->
+                                <div class="side-actions">
+                                    <button
+                                        @click="refreshLog"
+                                        class="btn-refresh"
+                                        :disabled="isRefresh"
+                                    >
+                                        <font-awesome-icon
+                                            :icon="['fas', 'rotate']"
+                                            :class="{ 'fa-spin': isRefresh }"
+                                        />
+                                        {{
+                                            isRefresh
+                                                ? 'Memuat...'
+                                                : 'Refresh Data'
+                                        }}
+                                    </button>
                                 </div>
                             </div>
-
-                            <div v-else class="side-empty waiting">
-                                <font-awesome-icon
-                                    :icon="faHourglassHalf"
-                                    class="empty-icon"
-                                />
-                                <span>Menunggu clock out</span>
-                            </div>
-                        </div>
-
-                        <!-- Total Jam Kerja (jika sudah clock out) -->
-                        <div v-if="firstIn && lastOut" class="side-section">
-                            <div class="side-label">
-                                <font-awesome-icon :icon="faBriefcase" />
-                                Total Jam Kerja
-                            </div>
-                            <div class="side-block total-work">
-                                <div class="work-hours">
-                                    {{
-                                        calculateWorkHours(
-                                            firstIn.time,
-                                            lastOut.time,
-                                        )
-                                    }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Refresh Button -->
-                        <div class="side-actions">
-                            <Button
-                                variant="success"
-                                :loading="isRefresh"
-                                @click="refreshLog"
-                                ><font-awesome-icon icon="rotate" /> Refresh
-                                Data</Button
-                            >
                         </div>
                     </div>
                 </div>
@@ -491,7 +616,7 @@ export default {
             ],
 
             // dummy clock state
-            isCheckedIn: true,
+            isCheckedIn: false,
 
             loading: true,
             withinRadius: false,
@@ -501,6 +626,7 @@ export default {
             firstIn: null,
             lastOut: null,
             isRefresh: false,
+            shiftInfo: null,
         };
     },
 
@@ -523,18 +649,6 @@ export default {
             });
         },
 
-        // firstIn() {
-        //     return this.todayAttendance.find((x) => x.type === 'Masuk') || null;
-        // },
-
-        // lastOut() {
-        //     const outs = this.todayAttendance.filter(
-        //         (x) => x.type === 'Pulang',
-        //     );
-        //     return outs.length ? outs[outs.length - 1] : null;
-        // },
-
-        // ===== UX status =====
         locationStatus() {
             if (this.locationLoading) return 'loading';
             if (this.locationError) return 'error';
@@ -655,6 +769,27 @@ export default {
                 isCheckedIn: this.isCheckedIn,
             };
         },
+        shiftDisplay() {
+            return this.getShiftTimeDisplay();
+        },
+
+        // ✅ Computed property untuk work hours
+        workHours() {
+            return this.calculateWorkHours();
+        },
+
+        // ✅ Check if late (untuk shift non-fleksibel)
+        isLateClockIn() {
+            if (
+                !this.firstIn ||
+                !this.shiftInfo ||
+                this.shiftInfo.is_flexible
+            ) {
+                return false;
+            }
+
+            return this.firstIn.status === 'terlambat';
+        },
     },
 
     mounted() {
@@ -679,7 +814,7 @@ export default {
                 const response = await axios.get('/presensi/log-harian', {
                     params: {
                         employee_id: employee_id,
-                        tanggal: new Date().toISOString().split('T')[0], // Format: YYYY-MM-DD
+                        tanggal: new Date().toISOString().split('T')[0],
                     },
                 });
 
@@ -692,34 +827,42 @@ export default {
                 triggerAlert('error', 'Gagal memuat data presensi hari ini');
             } finally {
                 this.loading = false;
+                this.isRefresh = false;
             }
-            this.isRefresh = false;
         },
 
-        processLogData() {
+        async processLogData() {
             if (
                 !this.todayLog ||
                 !this.todayLog.detail ||
                 this.todayLog.detail.length === 0
             ) {
+                // ✅ PERBAIKAN: Status awal tidak ada presensi sama sekali
                 this.firstIn = null;
                 this.lastOut = null;
+                this.shiftInfo = this.todayLog?.shift || null;
+                this.isCheckedIn = true;
                 return;
             }
+
+            // ✅ Set shift info
+            this.shiftInfo = this.todayLog.shift;
 
             // Cari clock in (masuk) pertama
             const clockInData = this.todayLog.detail.find(
                 (item) => item.jenis_presensi === 'masuk',
             );
 
-            console.log(this.todayLog);
+            this.isCheckedIn = false;
 
             if (clockInData) {
+                const alamat = await this.getAlamat(
+                    clockInData.latitude,
+                    clockInData.longitude,
+                );
                 this.firstIn = {
-                    time: clockInData.waktu_formatted, // Format: HH:mm
-                    location:
-                        this.todayLog?.divisi?.nama_divisi ||
-                        'Lokasi tidak tersedia',
+                    time: clockInData.waktu_formatted,
+                    location: alamat || 'Lokasi tidak tersedia',
                     note: this.getStatusNote(clockInData.status),
                     status: clockInData.status,
                     foto: clockInData.foto_presensi,
@@ -737,11 +880,13 @@ export default {
                 .find((item) => item.jenis_presensi === 'pulang');
 
             if (clockOutData) {
+                const alamat = await this.getAlamat(
+                    clockOutData.latitude,
+                    clockOutData.longitude,
+                );
                 this.lastOut = {
                     time: clockOutData.waktu_formatted,
-                    location:
-                        this.todayLog?.divisi?.nama_divisi ||
-                        'Lokasi tidak tersedia',
+                    location: alamat || 'Lokasi tidak tersedia',
                     note: this.getStatusNote(clockOutData.status),
                     status: clockOutData.status,
                     foto: clockOutData.foto_presensi,
@@ -759,6 +904,9 @@ export default {
                 terlambat: 'Terlambat masuk',
                 tidak_valid: 'Di luar jangkauan',
                 perlu_verifikasi: 'Perlu verifikasi admin',
+                izin: 'Sedang izin',
+                sakit: 'Sedang sakit',
+                alpha: 'Tidak hadir',
             };
 
             return statusNotes[status] || 'Status tidak diketahui';
@@ -770,9 +918,60 @@ export default {
                 terlambat: 'status-warning',
                 tidak_valid: 'status-danger',
                 perlu_verifikasi: 'status-info',
+                izin: 'status-info',
+                sakit: 'status-secondary',
+                alpha: 'status-danger',
             };
 
             return statusClasses[status] || 'status-default';
+        },
+
+        // ✅ Format shift time display
+        getShiftTimeDisplay() {
+            if (!this.shiftInfo) return null;
+
+            if (this.shiftInfo.is_flexible) {
+                return {
+                    masuk: 'Fleksibel',
+                    pulang: 'Fleksibel',
+                    label: 'Waktu Kerja Fleksibel',
+                };
+            }
+
+            return {
+                masuk: this.shiftInfo.jam_masuk,
+                pulang: this.shiftInfo.jam_pulang,
+                label: `${this.shiftInfo.jam_masuk} - ${this.shiftInfo.jam_pulang}`,
+            };
+        },
+
+        // ✅ Calculate work hours
+        calculateWorkHours() {
+            if (!this.firstIn || !this.lastOut) return null;
+
+            const masuk = this.firstIn.time.split(':');
+            const pulang = this.lastOut.time.split(':');
+
+            const masukMinutes = parseInt(masuk[0]) * 60 + parseInt(masuk[1]);
+            const pulangMinutes =
+                parseInt(pulang[0]) * 60 + parseInt(pulang[1]);
+
+            let diffMinutes = pulangMinutes - masukMinutes;
+
+            if (diffMinutes < 0) {
+                // Handle overnight shift
+                diffMinutes += 24 * 60;
+            }
+
+            const hours = Math.floor(diffMinutes / 60);
+            const minutes = diffMinutes % 60;
+
+            return {
+                total: diffMinutes,
+                hours: hours,
+                minutes: minutes,
+                formatted: `${hours} jam ${minutes} menit`,
+            };
         },
 
         // Method untuk refresh data setelah presensi berhasil
@@ -991,11 +1190,24 @@ export default {
                 });
         },
 
-        // ===================== CLOCK (DUMMY) =====================
-        handleClock() {
-            const label = this.isCheckedIn ? 'Clock Out' : 'Clock In';
-            triggerAlert('warning', `${label} belum dihubungkan ke backend`);
-            this.isCheckedIn = !this.isCheckedIn;
+        async getAlamat(lat, lon) {
+            try {
+                const url =
+                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2` +
+                    `&lat=${lat}&lon=${lon}&accept-language=id`;
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('HTTP error');
+
+                const data = await res.json();
+
+                if (data.address) {
+                    const a = data.address;
+                    return a.road + ', ' + a.postcode + ', ' + a.county;
+                }
+            } catch (e) {
+                return `Lokasi tidak tersedia`;
+            }
         },
     },
 };
@@ -1730,5 +1942,131 @@ export default {
         height: 120px;
         justify-self: stretch;
     }
+}
+.shift-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+}
+
+.shift-section .side-label {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.shift-info-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.shift-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.badge-flexible {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.shift-time {
+    font-size: 1.5rem;
+    font-weight: 700;
+    opacity: 0.95;
+}
+
+/* ✅ Late Badge */
+.late-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+/* ✅ Expected Time */
+.expected-time {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #f8fafc;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* ✅ Work Hours */
+.total-work {
+    text-align: center;
+    padding: 1rem;
+}
+
+.work-hours {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #10b981;
+    margin-bottom: 0.25rem;
+}
+
+.work-hours-detail {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+/* ✅ Refresh Button Disabled */
+.btn-refresh:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.fa-spin {
+    animation: fa-spin 1s linear infinite;
+}
+
+@keyframes fa-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Default section di right-column, KECUALI shift */
+.right-column .side-section:not(.shift-section) {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fff;
+    padding: 14px;
+}
+
+/* Shift section harus lebih spesifik dari .right-column .side-section */
+.right-column .side-section.shift-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: #fff;
+}
+
+/* label di shift */
+.right-column .side-section.shift-section .side-label {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* pastikan teks utama ikut putih (jaga-jaga kalau ada override lain) */
+.right-column .side-section.shift-section .shift-name,
+.right-column .side-section.shift-section .shift-time {
+    color: #fff;
 }
 </style>

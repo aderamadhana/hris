@@ -29,9 +29,9 @@ class Presensi extends Model
     }
 
     // Relationships
-    public function karyawan()
+    public function employee()
     {
-        return $this->belongsTo(Karyawan::class);
+        return $this->belongsTo(Employee::class);
     }
 
     public function perusahaan()

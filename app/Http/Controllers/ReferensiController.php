@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\{
+    Employee,
     PayrollPeriod,
     PayrollSummary,
     EmployeeEmployment
@@ -122,7 +123,7 @@ class ReferensiController extends Controller
             ->orderByDesc('id')
             ->firstOrFail();
 
-        // ambil divisi dari penempatan (harus match perusahaan_id + nama_divisi)
+        // Ambil divisi dari penempatan (harus match perusahaan_id + nama_divisi)
         $divisi = null;
         if ($history->perusahaanModel && $history->penempatan) {
             $divisi = $history->perusahaanModel->divisi()
@@ -130,11 +131,52 @@ class ReferensiController extends Controller
                 ->first();
         }
 
+        // ✅ Ambil shift dari employee
+        $employee = Employee::with('shift')->find($employeeId);
+        $shift = $employee->shift ?? null;
+
+        // ✅ Format shift info
+        $shiftInfo = null;
+        if ($shift) {
+            $shiftInfo = [
+                'id' => $shift->id,
+                'nama_shift' => $shift->nama_shift,
+                'kode_shift' => $shift->kode_shift,
+                'jam_masuk' => $shift->jam_masuk,
+                'jam_pulang' => $shift->jam_pulang,
+                'jam_masuk_format' => \Carbon\Carbon::parse($shift->jam_masuk)->format('H:i'),
+                'jam_pulang_format' => \Carbon\Carbon::parse($shift->jam_pulang)->format('H:i'),
+                'toleransi_keterlambatan' => $shift->toleransi_keterlambatan,
+                'durasi_kerja' => $shift->durasi_kerja,
+                'durasi_kerja_format' => $this->formatDurasiKerja($shift->durasi_kerja),
+                'keterangan' => $shift->keterangan,
+            ];
+        }
+
         return response()->json([
             'history' => $history,
             'perusahaan' => $history->perusahaanModel,
             'divisi' => $divisi,
+            'shift' => $shiftInfo, // ✅ NEW
+            'employee' => [
+                'id' => $employee->id,
+                'nama' => $employee->nama ?? $employee->name,
+                'shift_id' => $employee->shift_id,
+            ],
         ]);
+    }
+
+    /**
+     * Format durasi kerja dari menit ke jam:menit
+     */
+    private function formatDurasiKerja($menit)
+    {
+        if (!$menit) return '0 jam 0 menit';
+        
+        $jam = floor($menit / 60);
+        $sisaMenit = $menit % 60;
+        
+        return $jam . ' jam ' . $sisaMenit . ' menit';
     }
 
 }
