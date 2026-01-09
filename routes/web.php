@@ -142,6 +142,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/kontrak-summary', [PresensiLogController::class, 'summary']);
     });
 
+    //ADMIN VIEW
+    Route::prefix('logs')->group(function () {
+        Route::get('/presensi/all', function () {
+            return Inertia::render('presensi/all-presensi');
+        });
+        Route::get('/presensi', [PresensiLogController::class, 'index']);
+    });
+
     Route::prefix('admin')->group(function () {
         Route::get('/karyawan', function () {
             return Inertia::render('admin/DataKaryawan');

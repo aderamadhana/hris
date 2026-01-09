@@ -962,3 +962,56 @@ textarea.form-input[readonly]:focus {
     color: #94a3b8;            /* slate-400 */
     margin-top: 1px;
 }
+
+
+/* LIST ADMIN PRESENSI */
+.presensi-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Blok teks presensi */
+.presensi-cell > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.2;
+  font-size: 13px;
+}
+
+/* Container foto */
+.presensi-photos {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+/* Thumbnail foto */
+.thumb {
+  width: 65px;
+  height: 65px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+/* Optional: saat hover, sedikit membesar (tanpa merusak layout) */
+.thumb:hover {
+  transform: scale(1.05);
+}
+
+/* Optional: kalau tabel sempit, stack jadi vertikal */
+@media (max-width: 768px) {
+  .presensi-cell {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .presensi-photos {
+    justify-content: flex-start;
+  }
+}

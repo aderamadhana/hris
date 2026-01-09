@@ -4,12 +4,170 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use App\Models\Employee;
 use App\Models\EmployeeEmployment;
+use App\Models\RekapPresensiHarian;
 
 class PresensiLogController extends Controller
 {
+    public function index(Request $request)
+    {
+        $perPage = max(1, min((int) $request->get('per_page', 10), 100));
+        $page    = (int) $request->get('page', 1);
+
+        $query = RekapPresensiHarian::query()->with([
+            'employee:id,nama',
+            'employee.employments:id,employee_id,perusahaan,jabatan,penempatan',
+            'shift:id,nama_shift,jam_masuk,jam_pulang',
+        ]);
+
+        // filter tanggal absen
+        if ($request->filled('filtered_tanggal_absen')) {
+            $date = Carbon::parse($request->filtered_tanggal_absen)->toDateString();
+            $query->whereDate('tanggal', $date);
+        }
+
+        // filter perusahaan (nama perusahaan di employee_employment.perusahaan)
+        if ($request->filled('filtered_perusahaan')) {
+            $fp = trim($request->filtered_perusahaan);
+            $query->whereHas('employee.employments', function ($q) use ($fp) {
+                $q->where('perusahaan', 'like', "%{$fp}%");
+            });
+        }
+
+        // filter jabatan (employee_employment.jabatan)
+        if ($request->filled('filtered_jabatan')) {
+            $fj = trim($request->filtered_jabatan);
+            $query->whereHas('employee.employments', function ($q) use ($fj) {
+                $q->where('jabatan', 'like', "%{$fj}%");
+            });
+        }
+
+        // status (anggap status_kehadiran)
+        if ($request->filled('status')) {
+            $query->where('status_kehadiran', $request->status);
+        }
+
+        // search bebas
+        if ($request->filled('search')) {
+            $s = trim($request->search);
+            $query->where(function ($q) use ($s) {
+                $q->where('keterangan', 'like', "%{$s}%")
+                ->orWhere('status_kehadiran', 'like', "%{$s}%")
+                ->orWhereHas('employee', function ($qe) use ($s) {
+                    $qe->where('nama', 'like', "%{$s}%");
+                })
+                ->orWhereHas('employee.employments', function ($qx) use ($s) {
+                    $qx->where('perusahaan', 'like', "%{$s}%")
+                        ->orWhere('jabatan', 'like', "%{$s}%")
+                        ->orWhere('penempatan', 'like', "%{$s}%");
+                });
+            });
+        }
+
+        $query->orderBy('tanggal', 'desc')->orderBy('id', 'desc');
+
+        $records = $query->paginate($perPage, ['*'], 'page', $page);
+
+        $extractTime = function ($t): ?string {
+            if (!$t) return null;
+            if ($t instanceof \DateTimeInterface) return $t->format('H:i:s');
+            $s = trim((string) $t);
+            if (preg_match('/(\d{2}:\d{2}:\d{2})/', $s, $m)) return $m[1];
+            if (preg_match('/(\d{2}:\d{2})/', $s, $m)) return $m[1] . ':00';
+            return null;
+        };
+
+        $computeWorkMinutes = function ($tanggalYmd, $inValue, $outValue) use ($extractTime): ?int {
+            $in  = $extractTime($inValue);
+            $out = $extractTime($outValue);
+            if (!$tanggalYmd || !$in || !$out) return null;
+
+            $tz = config('app.timezone');
+            $start = Carbon::createFromFormat('Y-m-d H:i:s', "{$tanggalYmd} {$in}", $tz);
+            $end   = Carbon::createFromFormat('Y-m-d H:i:s', "{$tanggalYmd} {$out}", $tz);
+            if ($end->lessThan($start)) $end->addDay();
+
+            $diff = $start->diffInMinutes($end, false);
+            return $diff >= 0 ? $diff : null;
+        };
+
+        $minutesToHHmmSafe = function ($minutes): ?string {
+            if ($minutes === null || !is_numeric($minutes)) return null;
+            $m = (int) round((float) $minutes);
+            if ($m < 0) return null;
+            return sprintf('%02d:%02d', intdiv($m, 60), $m % 60);
+        };
+
+        $durationLabel = function ($clockOut, $minutes): ?string {
+            if (!$clockOut) return 'Belum clock-out';
+            if ($minutes === null) return 'Durasi tidak valid';
+            return null;
+        };
+
+        $data = $records->getCollection()->map(function ($p) use (
+            $extractTime,
+            $computeWorkMinutes,
+            $minutesToHHmmSafe,
+            $durationLabel
+        ) {
+            $tanggalYmd = $p->tanggal ? Carbon::parse($p->tanggal)->format('Y-m-d') : null;
+
+            $clockIn  = $extractTime($p->waktu_masuk);
+            $clockOut = $extractTime($p->waktu_pulang);
+
+            $computedMinutes = $computeWorkMinutes($tanggalYmd, $p->waktu_masuk, $p->waktu_pulang);
+            $dbMinutes = (is_numeric($p->total_jam_kerja) && (int)$p->total_jam_kerja >= 0) ? (int)$p->total_jam_kerja : null;
+            $totalMinutes = $computedMinutes ?? $dbMinutes;
+
+            $hhmm  = $minutesToHHmmSafe($totalMinutes);
+            $label = $durationLabel($clockOut, $totalMinutes);
+
+            $employment = $p->employee->employments ?? null;
+
+            return [
+                'id' => $p->id,
+                'tanggal' => $p->tanggal ? Carbon::parse($p->tanggal)->format('d/m/Y') : '-',
+
+                // ambil dari employee_employment
+                'nama_perusahaan' => $employment->perusahaan ?? '-',
+                'nama_divisi' => $employment->penempatan ?? '-', // divisi = penempatan
+                'jabatan' => $employment->jabatan ?? '-',        // opsional kalau mau tampil
+
+                'nama_karyawan' => $p->employee->nama ?? '-',
+                'status_kehadiran' => $p->status_kehadiran ?? '-',
+                'keterangan' => $p->keterangan,
+
+                'data_presensi' => [
+                    'clock_in' => $clockIn,
+                    'clock_out' => $clockOut,
+                    'foto_masuk_url' => $p->foto_masuk ? Storage::url($p->foto_masuk) : null,
+                    'foto_pulang_url' => $p->foto_pulang ? Storage::url($p->foto_pulang) : null,
+
+                    'jam_masuk' => $p->shift ? $extractTime($p->shift->jam_masuk) : null,
+                    'jam_pulang' => $p->shift ? $extractTime($p->shift->jam_pulang) : null,
+                    'nama_shift' => $p->shift->nama_shift ?? '-',
+
+                    'total_jam_kerja_menit' => $totalMinutes,
+                    'total_jam_kerja_hhmm'  => $hhmm,
+                    'durasi_label'          => $label,
+                ],
+            ];
+        });
+
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'total' => $records->total(),
+                'per_page' => $records->perPage(),
+                'current_page' => $records->currentPage(),
+                'last_page' => $records->lastPage(),
+            ],
+        ]);
+    }
+
     public function logHarian(Request $request)
     {
         $validated = $request->validate([

@@ -104,7 +104,6 @@ class ReferensiController extends Controller
 
         $penempatan = EmployeeEmployment::whereNotIn('employee_id', [1,2])->distinct()
             ->pluck('penempatan');
-
             
         return response()->json([
             'perusahaan' => $perusahaan,
