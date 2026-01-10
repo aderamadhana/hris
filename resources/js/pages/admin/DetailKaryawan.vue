@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import Profil from '../employee/Profil.vue';
+import Profil from 'admin/hr/karyawan/profil.vue';
 
 export default {
     components: { Profil },
