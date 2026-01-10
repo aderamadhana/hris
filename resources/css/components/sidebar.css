@@ -71,10 +71,9 @@
 /* ===== BRAND ===== */
 .brand{
   display:flex;
-  flex-direction:column;
   align-items:center;
-  gap:8px;
-  padding-bottom:12px;
+  justify-content:center;
+  padding: 8px 0 12px;
   position:relative;
 }
 
@@ -94,45 +93,13 @@
   );
 }
 
-.brand-logo{
-  width:36px;
-  height:36px;
-  border-radius:14px;
-  background: linear-gradient(135deg, var(--sb-accent) 0%, #3b82f6 100%);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:700;
-  font-size:18px;
-  color:#fff;
-
-  box-shadow:
-    0 10px 26px rgba(14,165,233,.45),
-    0 0 0 4px rgba(14,165,233,.10);
-
-  position:relative;
-  overflow:hidden;
-}
-
-.brand-logo::before{
-  content:"";
-  position:absolute;
-  top:-50%; left:-50%;
-  width:200%;
-  height:200%;
-  background: linear-gradient(45deg, transparent, rgba(255,255,255,.18), transparent);
-  animation: sidebar-shimmer 3s infinite;
-}
-
-.brand-text{
-  font-size:10px;
+.brand-title{
+  font-size:12px;
   font-weight:800;
-  letter-spacing:.20em;
+  letter-spacing:.10em;
   text-transform:uppercase;
-  background: linear-gradient(135deg, #e0f2fe, #cbd5e1);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  background-clip:text;
+  color: var(--sb-text);
+  line-height:1;
 }
 
 /* ===== NAV ===== */
@@ -386,9 +353,6 @@
     padding-inline: 6px;
     gap: 16px;
   }
-
-  .brand-text{ display:none; }
-
   .sidebar-submenu{
     margin-left: 10px;
     padding-left: 6px;
@@ -451,6 +415,74 @@
 /* DESKTOP besar */
 @media (min-width: 1440px){
   .sidebar{
-    width: 120px;
+    width: 155px;
   }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .sidebar {
+        width: 140px;
+        padding: 14px 8px;
+    }
+}
+
+/* =========================
+   ANIMASI BUKA / TUTUP SUBMENU
+========================= */
+.sb-collapse-enter-active,
+.sb-collapse-leave-active{
+  overflow: hidden;
+  transition:
+    max-height .22s ease,
+    opacity .18s ease,
+    transform .18s ease;
+  will-change: max-height, opacity, transform;
+}
+
+.sb-collapse-enter-from,
+.sb-collapse-leave-to{
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.sb-collapse-enter-to,
+.sb-collapse-leave-from{
+  max-height: 520px; /* cukup besar utk semua submenu */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =========================
+   ANIMASI ITEM SUBMENU (SAAT OPEN)
+========================= */
+@keyframes sbSubitemIn{
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* saat group open, subitem masuk dengan sedikit stagger */
+.sidebar-group.open .sidebar-subitem{
+  animation: sbSubitemIn .18s ease both;
+}
+
+.sidebar-group.open .sidebar-subitem:nth-child(1){ animation-delay: .02s; }
+.sidebar-group.open .sidebar-subitem:nth-child(2){ animation-delay: .04s; }
+.sidebar-group.open .sidebar-subitem:nth-child(3){ animation-delay: .06s; }
+.sidebar-group.open .sidebar-subitem:nth-child(4){ animation-delay: .08s; }
+.sidebar-group.open .sidebar-subitem:nth-child(5){ animation-delay: .10s; }
+.sidebar-group.open .sidebar-subitem:nth-child(6){ animation-delay: .12s; }
+.sidebar-group.open .sidebar-subitem:nth-child(7){ animation-delay: .14s; }
+.sidebar-group.open .sidebar-subitem:nth-child(8){ animation-delay: .16s; }
+
+/* =========================
+   ANIMASI FEELING PADA TOGGLE (OPSIONAL)
+========================= */
+.sidebar-group.open > .sidebar-item--toggle{
+  background: rgba(51,65,85,.55);
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+.sidebar-item--toggle:active{
+  transform: scale(.98);
 }

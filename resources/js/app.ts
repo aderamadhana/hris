@@ -66,6 +66,7 @@ import {
     faCalendarCheck,
     faCalendar,
     faArrowRight,
+    faShieldHalved
 
 } from '@fortawesome/free-solid-svg-icons'
 
@@ -124,6 +125,7 @@ library.add(
     faCalendarCheck,
     faCalendar,
     faArrowRight,
+    faShieldHalved
 )
 
 createInertiaApp({

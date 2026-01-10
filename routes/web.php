@@ -35,10 +35,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/stats', [DashboardController::class, 'getStats']);
     });
 
-    Route::prefix('karyawan')->group(function () {
-        Route::get('/all-karyawan', function () {
+    Route::prefix('hr')->group(function () {
+        Route::get('/karyawan', function () {
             return Inertia::render('admin/DataKaryawan');
         });
+        
+        Route::get('/pelamar', function () {
+            return Inertia::render('admin/DataPelamar');
+        });
+        
+        Route::get('/payroll', function () {
+            return Inertia::render('master/payroll_period/index');
+        });
+    });
+
+    Route::prefix('karyawan')->group(function () {
         Route::get('/tambah-karyawan', function () {
             return Inertia::render('admin/TambahKaryawan');
         });
@@ -52,17 +63,9 @@ Route::middleware('auth')->group(function () {
         });
     });
 
-    Route::prefix('pelamar')->group(function () {
-        Route::get('/all-pelamar', function () {
-            return Inertia::render('admin/DataPelamar');
-        });
-    });
 
     Route::prefix('master')->group(function () {
         Route::prefix('payroll-period')->group(function () {
-            Route::get('/all-data', function () {
-                return Inertia::render('master/payroll_period/index');
-            });
             Route::get('/', [PayrollPeriodController::class, 'index']);
             Route::get('/get-data/{id}', [PayrollPeriodController::class, 'getData']);
             Route::get('/create', [PayrollPeriodController::class, 'create']);
