@@ -562,45 +562,79 @@
 
                                 <div class="form-actions">
                                     <button
+                                        v-if="editPendidikanIndex !== null"
+                                        type="button"
+                                        class="btn btn-secondary"
+                                        @click="batalEditPendidikan"
+                                    >
+                                        Batal Edit
+                                    </button>
+
+                                    <button
+                                        v-else
                                         type="button"
                                         class="btn btn-secondary"
                                         @click="resetFormPendidikan"
                                     >
                                         Reset
                                     </button>
+
                                     <button
                                         type="submit"
                                         class="btn btn-primary"
                                     >
-                                        Tambah Pendidikan
+                                        {{
+                                            editPendidikanIndex !== null
+                                                ? 'Update Pendidikan'
+                                                : 'Tambah Pendidikan'
+                                        }}
                                     </button>
                                 </div>
                             </form>
 
+                            <!-- LIST (Pendidikan) -->
                             <div
-                                class="mt-4 education-list"
+                                class="entry-list"
                                 v-if="listPendidikan.length"
                             >
                                 <div
                                     v-for="(edu, i) in listPendidikan"
                                     :key="i"
-                                    class="edu-item"
+                                    class="entry-card entry-edu"
                                 >
-                                    <div class="edu-header">
-                                        <div>
-                                            <div class="edu-degree">
-                                                {{ edu.jenjang || '-' }}
-                                                {{ edu.jurusan || '' }}
-                                            </div>
-                                            <div class="edu-school">
-                                                {{ edu.sekolah || '-' }}
-                                            </div>
+                                    <div class="entry-main">
+                                        <div class="entry-title">
+                                            {{ edu.jenjang || '-' }}
+                                            <span class="muted">{{
+                                                edu.jurusan || ''
+                                            }}</span>
                                         </div>
-                                        <div class="edu-year">
-                                            Lulus {{ edu.tahun_lulus || '-' }}
+                                        <div class="entry-subtitle">
+                                            {{ edu.sekolah || '-' }}
+                                        </div>
+
+                                        <div class="entry-meta-row">
+                                            <span class="chip primary"
+                                                >Lulus
+                                                {{
+                                                    edu.tahun_lulus || '-'
+                                                }}</span
+                                            >
+                                        </div>
+                                    </div>
+
+                                    <div class="entry-side">
+                                        <div class="entry-actions">
                                             <button
-                                                class="btn-delete"
                                                 type="button"
+                                                class="btn-ghost"
+                                                @click="editPendidikan(i)"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="btn-danger-ghost"
                                                 @click="hapusPendidikan(i)"
                                             >
                                                 Hapus
@@ -610,7 +644,7 @@
                                 </div>
                             </div>
 
-                            <div v-else class="empty mt-4">
+                            <div v-else class="empty">
                                 Data pendidikan belum tersedia
                             </div>
                         </div>
@@ -787,24 +821,39 @@
 
                                 <div class="form-actions">
                                     <button
+                                        v-if="editPekerjaanIndex !== null"
+                                        type="button"
+                                        class="btn btn-secondary"
+                                        @click="batalEditPekerjaan"
+                                    >
+                                        Batal Edit
+                                    </button>
+
+                                    <button
+                                        v-else
                                         type="button"
                                         class="btn btn-secondary"
                                         @click="resetFormPekerjaan"
                                     >
                                         Reset
                                     </button>
+
                                     <button
                                         type="submit"
                                         class="btn btn-primary"
                                     >
-                                        Tambah Pekerjaan
+                                        {{
+                                            editPekerjaanIndex !== null
+                                                ? 'Update Pekerjaan'
+                                                : 'Tambah Pekerjaan'
+                                        }}
                                     </button>
                                 </div>
                             </form>
 
                             <div
                                 v-if="listPekerjaan.length"
-                                class="mt-4 timeline"
+                                class="entry-list timeline"
                             >
                                 <div
                                     v-for="(job, i) in listPekerjaan"
@@ -812,66 +861,125 @@
                                     class="timeline-item"
                                 >
                                     <div class="timeline-dot"></div>
-                                    <div class="timeline-body">
-                                        <div class="timeline-header">
-                                            <div>
-                                                <div class="job-title">
-                                                    {{ job.jabatan || '-' }}
-                                                </div>
-                                                <div class="job-company">
-                                                    {{ job.perusahaan || '-' }}
-                                                    – {{ job.bagian || '-' }}
-                                                </div>
-                                                <div class="job-meta">
-                                                    No. Kontrak:
-                                                    {{ job.no_kontrak || '-' }}
-                                                </div>
+
+                                    <div class="entry-card entry-job">
+                                        <div class="entry-main">
+                                            <div class="entry-title">
+                                                {{ job.jabatan || '-' }}
+                                            </div>
+                                            <div class="entry-subtitle">
+                                                {{ job.perusahaan || '-' }}
+                                                <span class="muted">—</span>
+                                                {{ job.bagian || '-' }}
                                             </div>
 
-                                            <div class="job-period">
-                                                {{ job.mulai || '-' }} –
-                                                {{ job.selesai || 'Sekarang' }}
-                                                <div>
-                                                    <button
-                                                        class="btn-delete"
-                                                        type="button"
-                                                        @click="
-                                                            hapusPekerjaan(i)
-                                                        "
-                                                    >
-                                                        Hapus
-                                                    </button>
+                                            <div class="entry-meta-row">
+                                                <span class="chip">{{
+                                                    job.jenis_kontrak || '-'
+                                                }}</span>
+                                                <span class="chip"
+                                                    >No. Kontrak:
+                                                    {{
+                                                        job.no_kontrak || '-'
+                                                    }}</span
+                                                >
+                                                <span
+                                                    class="chip"
+                                                    :class="
+                                                        statusChip(
+                                                            job.status_kontrak,
+                                                        )
+                                                    "
+                                                >
+                                                    Status:
+                                                    {{
+                                                        job.status_kontrak ||
+                                                        '-'
+                                                    }}
+                                                </span>
+                                            </div>
+
+                                            <div class="info-grid">
+                                                <div class="info-item">
+                                                    <div class="info-label">
+                                                        Jenis Kerja
+                                                    </div>
+                                                    <div class="info-value">
+                                                        {{
+                                                            job.jenis_kerja ||
+                                                            '-'
+                                                        }}
+                                                    </div>
+                                                </div>
+                                                <div class="info-item">
+                                                    <div class="info-label">
+                                                        Pola Kerja
+                                                    </div>
+                                                    <div class="info-value">
+                                                        {{
+                                                            job.pola_kerja ||
+                                                            '-'
+                                                        }}
+                                                    </div>
+                                                </div>
+                                                <div class="info-item">
+                                                    <div class="info-label">
+                                                        Hari Kerja
+                                                    </div>
+                                                    <div class="info-value">
+                                                        {{
+                                                            job.hari_kerja ||
+                                                            '-'
+                                                        }}
+                                                    </div>
+                                                </div>
+                                                <div class="info-item">
+                                                    <div class="info-label">
+                                                        Cost Center
+                                                    </div>
+                                                    <div class="info-value">
+                                                        {{
+                                                            job.cost_center ||
+                                                            '-'
+                                                        }}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div class="job-type">
-                                            {{ job.jenis_kontrak || '-' }}
-                                        </div>
+                                        <div class="entry-side">
+                                            <div class="entry-meta-right">
+                                                <span class="chip primary">
+                                                    {{ job.mulai || '-' }} –
+                                                    {{
+                                                        job.selesai ||
+                                                        'Sekarang'
+                                                    }}
+                                                </span>
+                                            </div>
 
-                                        <div class="job-extra">
-                                            <div>
-                                                Jenis Kerja:
-                                                {{ job.jenis_kerja || '-' }}
-                                            </div>
-                                            <div>
-                                                Pola Kerja:
-                                                {{ job.pola_kerja || '-' }}
-                                            </div>
-                                            <div>
-                                                Hari Kerja:
-                                                {{ job.hari_kerja || '-' }}
-                                            </div>
-                                            <div>
-                                                Status:
-                                                {{ job.status_kontrak || '-' }}
+                                            <div class="entry-actions">
+                                                <button
+                                                    type="button"
+                                                    class="btn-ghost"
+                                                    @click="editPekerjaan(i)"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="btn-danger-ghost"
+                                                    @click="hapusPekerjaan(i)"
+                                                >
+                                                    Hapus
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div v-else class="empty mt-4">
+                            <div v-else class="empty">
                                 Riwayat pekerjaan belum tersedia
                             </div>
                         </div>
@@ -947,56 +1055,83 @@
 
                                 <div class="form-actions">
                                     <button
+                                        v-if="editKeluargaIndex !== null"
+                                        type="button"
+                                        class="btn btn-secondary"
+                                        @click="batalEditKeluarga"
+                                    >
+                                        Batal Edit
+                                    </button>
+
+                                    <button
+                                        v-else
                                         type="button"
                                         class="btn btn-secondary"
                                         @click="resetFormKeluarga"
                                     >
                                         Reset
                                     </button>
+
                                     <button
                                         type="submit"
                                         class="btn btn-primary"
                                     >
-                                        Tambah Keluarga
+                                        {{
+                                            editKeluargaIndex !== null
+                                                ? 'Update Keluarga'
+                                                : 'Tambah Keluarga'
+                                        }}
                                     </button>
                                 </div>
                             </form>
 
-                            <div
-                                v-if="listKeluarga.length"
-                                class="mt-4 family-list"
-                            >
+                            <!-- LIST (Keluarga) -->
+                            <div v-if="listKeluarga.length" class="entry-list">
                                 <div
                                     v-for="(f, i) in listKeluarga"
                                     :key="i"
-                                    class="family-item"
+                                    class="entry-card entry-family"
                                 >
-                                    <div class="family-main">
-                                        <div>
-                                            <div class="family-name">
-                                                {{ f.nama || '-' }}
-                                            </div>
-                                            <div class="family-relation">
-                                                {{ f.hubungan || '-' }}
-                                            </div>
+                                    <div class="entry-main">
+                                        <div class="entry-title">
+                                            {{ f.nama || '-' }}
+                                        </div>
+                                        <div class="entry-subtitle">
+                                            {{ f.hubungan || '-' }}
+                                        </div>
+
+                                        <div class="entry-meta-row">
+                                            <span class="chip"
+                                                >TTL: {{ f.ttl || '-' }}</span
+                                            >
+                                            <span v-if="f.no_hp" class="chip"
+                                                >HP: {{ f.no_hp }}</span
+                                            >
                                         </div>
                                     </div>
 
-                                    <div class="family-detail">
-                                        <span>TTL: {{ f.ttl || '-' }}</span>
+                                    <div class="entry-side">
+                                        <div class="entry-actions">
+                                            <button
+                                                type="button"
+                                                class="btn-ghost"
+                                                @click="editKeluarga(i)"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="btn-danger-ghost"
+                                                @click="hapusKeluarga(i)"
+                                            >
+                                                Hapus
+                                            </button>
+                                        </div>
                                     </div>
-
-                                    <button
-                                        class="btn-delete"
-                                        type="button"
-                                        @click="hapusKeluarga(i)"
-                                    >
-                                        Hapus
-                                    </button>
                                 </div>
                             </div>
 
-                            <div v-else class="empty mt-4">
+                            <div v-else class="empty">
                                 Data keluarga belum tersedia
                             </div>
                         </div>
@@ -1355,6 +1490,7 @@
                                         <input
                                             type="file"
                                             class="form-input"
+                                            :data-key="doc.key"
                                             @change="
                                                 onFileChange($event, doc.key)
                                             "
@@ -1455,12 +1591,18 @@ export default {
                 { key: 'dokumen', id: 'dokumen', label: 'Kelengkapan Dokumen' },
             ],
 
+            // ===== EDIT MODE INDEX =====
+            editPendidikanIndex: null,
+            editPekerjaanIndex: null,
+            editKeluargaIndex: null,
+
             // ===== FORM STATE (EDIT) =====
             formEmployee: {
                 // Data utama employees table
                 nama: '',
                 nrp: '',
                 jk: '',
+                kk: '',
                 tempat_lahir: '',
                 tanggal_lahir: '',
                 perkawinan: '',
@@ -1589,8 +1731,6 @@ export default {
     methods: {
         // ====== HYDRATE (DETAIL -> FORM) ======
         hydrateFormsFromDetail() {
-            // kalau data berasal dari this.employee/dll, map ke form:
-            // ini aman meskipun objek kosong
             this.formEmployee = {
                 ...this.formEmployee,
                 ...this.employee,
@@ -1633,7 +1773,6 @@ export default {
         // ====== SUBMIT PER TAB (optional) ======
         async handleSubmitKaryawan() {
             try {
-                // Validasi data utama
                 if (
                     !this.formEmployee.nama ||
                     !this.formEmployee.nrp ||
@@ -1656,37 +1795,101 @@ export default {
             }
         },
 
+        // ============== PENDIDIKAN (ADD/EDIT) ==============
         async handleSubmitPendidikan() {
             if (!this.formPendidikan.jenjang && !this.formPendidikan.sekolah) {
                 triggerAlert('warning', 'Minimal isi jenjang atau sekolah');
                 return;
             }
 
-            this.listPendidikan.push({ ...this.formPendidikan });
+            const payload = { ...this.formPendidikan };
+
+            if (this.editPendidikanIndex !== null) {
+                this.listPendidikan.splice(
+                    this.editPendidikanIndex,
+                    1,
+                    payload,
+                );
+                this.editPendidikanIndex = null;
+                triggerAlert('success', 'Pendidikan diperbarui');
+            } else {
+                this.listPendidikan.push(payload);
+                triggerAlert('success', 'Pendidikan ditambahkan');
+            }
+
             this.resetFormPendidikan();
-            triggerAlert('success', 'Pendidikan ditambahkan');
         },
 
+        editPendidikan(i) {
+            this.editPendidikanIndex = i;
+            this.formPendidikan = { ...this.listPendidikan[i] };
+        },
+
+        batalEditPendidikan() {
+            this.editPendidikanIndex = null;
+            this.resetFormPendidikan();
+        },
+
+        // ============== PEKERJAAN (ADD/EDIT) ==============
         async handleSubmitPekerjaan() {
             if (!this.formPekerjaan.perusahaan && !this.formPekerjaan.jabatan) {
                 triggerAlert('warning', 'Minimal isi perusahaan atau jabatan');
                 return;
             }
 
-            this.listPekerjaan.push({ ...this.formPekerjaan });
+            const payload = { ...this.formPekerjaan };
+
+            if (this.editPekerjaanIndex !== null) {
+                this.listPekerjaan.splice(this.editPekerjaanIndex, 1, payload);
+                this.editPekerjaanIndex = null;
+                triggerAlert('success', 'Pekerjaan diperbarui');
+            } else {
+                this.listPekerjaan.push(payload);
+                triggerAlert('success', 'Pekerjaan ditambahkan');
+            }
+
             this.resetFormPekerjaan();
-            triggerAlert('success', 'Pekerjaan ditambahkan');
         },
 
+        editPekerjaan(i) {
+            this.editPekerjaanIndex = i;
+            this.formPekerjaan = { ...this.listPekerjaan[i] };
+        },
+
+        batalEditPekerjaan() {
+            this.editPekerjaanIndex = null;
+            this.resetFormPekerjaan();
+        },
+
+        // ============== KELUARGA (ADD/EDIT) ==============
         async handleSubmitKeluarga() {
             if (!this.formKeluarga.nama) {
                 triggerAlert('warning', 'Nama wajib diisi');
                 return;
             }
 
-            this.listKeluarga.push({ ...this.formKeluarga });
+            const payload = { ...this.formKeluarga };
+
+            if (this.editKeluargaIndex !== null) {
+                this.listKeluarga.splice(this.editKeluargaIndex, 1, payload);
+                this.editKeluargaIndex = null;
+                triggerAlert('success', 'Data keluarga diperbarui');
+            } else {
+                this.listKeluarga.push(payload);
+                triggerAlert('success', 'Data keluarga ditambahkan');
+            }
+
             this.resetFormKeluarga();
-            triggerAlert('success', 'Data keluarga ditambahkan');
+        },
+
+        editKeluarga(i) {
+            this.editKeluargaIndex = i;
+            this.formKeluarga = { ...this.listKeluarga[i] };
+        },
+
+        batalEditKeluarga() {
+            this.editKeluargaIndex = null;
+            this.resetFormKeluarga();
         },
 
         async handleSubmitKesehatan() {
@@ -1704,12 +1907,12 @@ export default {
         },
 
         // ================= HANDLE SUBMIT ALL =================
-
         async handleSubmitAll() {
             if (
                 !this.formEmployee.nama ||
                 !this.formEmployee.nrp ||
-                !this.formEmployee.jk
+                !this.formEmployee.jk ||
+                !this.formAlamat.ktp
             ) {
                 triggerAlert(
                     'warning',
@@ -1725,13 +1928,12 @@ export default {
             this.loading = true;
 
             try {
-                // Prepare FormData untuk upload file
                 const formData = new FormData();
 
                 // 1. Data Employees (table employees)
                 formData.append('nama', this.formEmployee.nama);
                 formData.append('nrp', this.formEmployee.nrp);
-                formData.append('kk', this.formEmployee.kk);
+                formData.append('kk', this.formEmployee.kk || '');
                 formData.append('jenis_kelamin', this.formEmployee.jk);
                 formData.append(
                     'tempat_lahir',
@@ -1811,7 +2013,6 @@ export default {
                 );
 
                 // 5. Data Pekerjaan (table employee_employment_histories) - JSON Array
-                // Cek apakah ada no_kontrak yang diisi untuk create user
                 const hasNoKontrak = this.listPekerjaan.some(
                     (job) => job.no_kontrak,
                 );
@@ -1836,7 +2037,6 @@ export default {
                     ),
                 );
 
-                // Flag untuk create user jika ada no_kontrak
                 formData.append('create_user', hasNoKontrak ? '1' : '0');
 
                 // 6. Data Keluarga (table employee_family_members) - JSON Array
@@ -1844,7 +2044,6 @@ export default {
                     'keluarga',
                     JSON.stringify(
                         this.listKeluarga.map((fam) => {
-                            // Parse TTL format "Jakarta, 01-01-2000"
                             const ttlParts = fam.ttl
                                 ? fam.ttl.split(',')
                                 : ['', ''];
@@ -1856,7 +2055,6 @@ export default {
                                 hubungan: fam.hubungan,
                                 tempat_lahir: tempatLahir,
                                 tanggal_lahir: tanggalLahir,
-                                // no_hp bisa disimpan di field lain jika perlu
                             };
                         }),
                     ),
@@ -1902,10 +2100,6 @@ export default {
                 formData.append('os', this.formKesehatan.os || '');
 
                 formData.append(
-                    'tanggal_mcu',
-                    this.formKesehatan.tanggal_mcu || '',
-                );
-                formData.append(
                     'kesimpulan_hasil_mcu',
                     this.formKesehatan.kesimpulan_hasil_mcu || '',
                 );
@@ -1928,29 +2122,21 @@ export default {
                     );
                 }
 
-                // Kirim ke backend
                 try {
-                    const response = await axios.post(
-                        '/employee/store',
-                        formData,
-                        {
-                            headers: {
-                                'Content-Type': 'multipart/form-data',
-                            },
+                    await axios.post('/employee/store', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
                         },
-                    );
+                    });
 
                     triggerAlert('success', 'Semua data berhasil disimpan!');
-
-                    router.visit(`/admin/karyawan`);
+                    router.visit(`/hr/karyawan`);
                 } catch (error) {
                     if (axios.isAxiosError(error) && error.response) {
-                        // VALIDATION ERROR (Laravel)
                         if (error.response.status === 422) {
                             const data = error.response.data || {};
                             const fieldErrors = data.errors || {};
 
-                            // flatten jadi array string: "nrp: The nrp has already been taken."
                             const errorsArr = Object.entries(
                                 fieldErrors,
                             ).flatMap(([field, msgs]) =>
@@ -1958,8 +2144,8 @@ export default {
                             );
 
                             const d = {
-                                total: errorsArr.length, // total error message
-                                success: 0, // karena submit ini gagal
+                                total: errorsArr.length,
+                                success: 0,
                                 failed: errorsArr.length,
                                 errors: errorsArr,
                             };
@@ -1967,7 +2153,6 @@ export default {
                             const html = `
                                 <div>
                                     <strong>Submit gagal karena validasi</strong>
-
                                     <strong>Detail Error:</strong>
                                     <ul>
                                         ${d.errors.map((e) => `<li>${e}</li>`).join('')}
@@ -1979,7 +2164,6 @@ export default {
                             return;
                         }
 
-                        // selain 422
                         triggerAlert(
                             'error',
                             error.response.data?.message ||
@@ -2000,7 +2184,6 @@ export default {
         },
 
         // ================= RESET FORMS =================
-
         resetFormKaryawan() {
             this.formEmployee = {
                 nama: '',
@@ -2097,18 +2280,15 @@ export default {
         },
 
         // ================= HANDLE DOKUMEN =================
-
         onFileChange(event, key) {
             const file = event.target.files[0];
             if (file) {
-                // Validasi ukuran file (max 5MB)
                 if (file.size > 5 * 1024 * 1024) {
                     triggerAlert('warning', 'Ukuran file maksimal 5MB');
                     event.target.value = '';
                     return;
                 }
 
-                // Validasi tipe file
                 const allowedTypes = [
                     'application/pdf',
                     'image/jpeg',
@@ -2130,7 +2310,6 @@ export default {
 
         removeSelectedFile(key) {
             delete this.formDokumen[key];
-            // Reset input file
             const input = document.querySelector(
                 `input[type="file"][data-key="${key}"]`,
             );
@@ -2138,9 +2317,7 @@ export default {
         },
 
         getExistingDocUrl(key) {
-            // Implementasi untuk mendapatkan URL dokumen yang sudah ada
-            // Misalnya dari data yang di-load saat edit
-            return null; // atau return URL jika ada
+            return null;
         },
 
         markDeleteExisting(key) {
@@ -2149,33 +2326,56 @@ export default {
             }
         },
 
-        // ================= HANDLE DELETE LIST =================
-
+        // ================= HANDLE DELETE LIST (AMAN DENGAN EDIT MODE) =================
         hapusPendidikan(index) {
             if (confirm('Hapus data pendidikan ini?')) {
                 this.listPendidikan.splice(index, 1);
+
+                if (this.editPendidikanIndex === index) {
+                    this.batalEditPendidikan();
+                } else if (
+                    this.editPendidikanIndex !== null &&
+                    index < this.editPendidikanIndex
+                ) {
+                    this.editPendidikanIndex -= 1;
+                }
             }
         },
 
         hapusPekerjaan(index) {
             if (confirm('Hapus data pekerjaan ini?')) {
                 this.listPekerjaan.splice(index, 1);
+
+                if (this.editPekerjaanIndex === index) {
+                    this.batalEditPekerjaan();
+                } else if (
+                    this.editPekerjaanIndex !== null &&
+                    index < this.editPekerjaanIndex
+                ) {
+                    this.editPekerjaanIndex -= 1;
+                }
             }
         },
 
         hapusKeluarga(index) {
             if (confirm('Hapus data keluarga ini?')) {
                 this.listKeluarga.splice(index, 1);
+
+                if (this.editKeluargaIndex === index) {
+                    this.batalEditKeluarga();
+                } else if (
+                    this.editKeluargaIndex !== null &&
+                    index < this.editKeluargaIndex
+                ) {
+                    this.editKeluargaIndex -= 1;
+                }
             }
         },
 
         // ================= HANDLE BATAL =================
-
         handleBatal() {
             if (confirm('Batalkan semua perubahan dan kembali?')) {
                 window.history.back();
-                // atau
-                // this.$router.push('/employees');
             }
         },
     },

@@ -56,7 +56,7 @@ export default {
         async getData() {
             try {
                 const { data } = await axios.get(
-                    `/master/client/get-data/${this.perusahaan.id}`,
+                    `/marketing/client/aktif/get-data/${this.perusahaan.id}`,
                 );
                 const p = data.data;
 
@@ -452,7 +452,7 @@ export default {
             this.processing = true;
 
             router.put(
-                `/master/client/update/${this.perusahaan.id}`,
+                `/marketing/client/aktif/update/${this.perusahaan.id}`,
                 this.form,
                 {
                     onSuccess: () => {
@@ -470,6 +470,8 @@ export default {
                     },
                     onFinish: () => {
                         this.processing = false;
+
+                        router.visit(`/marketing/client/aktif`);
                     },
                 },
             );
@@ -895,19 +897,32 @@ export default {
                 <div
                     class="gap-3 mt-8 bottom-0 bg-white py-4 sticky z-10 flex justify-end border-t"
                 >
-                    <Link href="/master/client/all" class="btn btn-secondary">
+                    <Link
+                        href="/marketing/client/aktif/all"
+                        class="btn btn-secondary"
+                    >
                         <i class="ti ti-x"></i>
                         Batal
                     </Link>
-
                     <button
                         type="submit"
                         class="btn btn-primary"
+                        :class="{ 'is-loading': processing }"
                         :disabled="processing"
                     >
-                        <i class="ti ti-check" v-if="!processing"></i>
-                        <i class="ti ti-loader animate-spin" v-else></i>
-                        {{ processing ? 'Menyimpan...' : 'Simpan Data' }}
+                        <template v-if="processing">
+                            <span class="btn-loading">
+                                <span
+                                    class="btn-spinner"
+                                    aria-hidden="true"
+                                ></span>
+                                <span class="btn-loading-text"
+                                    >Memproses...</span
+                                >
+                            </span>
+                        </template>
+
+                        <template v-else> Simpan </template>
                     </button>
                 </div>
             </form>

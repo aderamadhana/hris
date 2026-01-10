@@ -129,7 +129,7 @@
                                 </td>
                                 <td class="actions-cell">
                                     <Link
-                                        :href="`/master/client/edit/${item.id}`"
+                                        :href="`/marketing/client/aktif/edit/${item.id}`"
                                         class="action-btn primary"
                                     >
                                         <font-awesome-icon
@@ -251,7 +251,7 @@ export default {
         async fetchPerusahaan(page = 1) {
             this.loading = true;
             try {
-                const res = await axios.get('/master/client', {
+                const res = await axios.get('/marketing/client/aktif/all', {
                     params: {
                         search: this.search,
                         status: this.status,
@@ -277,14 +277,14 @@ export default {
         },
 
         tambahPerusahaan() {
-            this.$inertia.visit('/master/client/create');
+            this.$inertia.visit('/marketing/client/aktif/create');
         },
 
         async hapus(id) {
             if (!confirm('Hapus perusahaan ini?')) return;
 
             try {
-                await axios.delete(`/master/client/${id}`);
+                await axios.delete(`/marketing/client/aktif/${id}`);
                 triggerAlert('success', 'Perusahaan berhasil dihapus');
                 this.fetchPerusahaan(this.currentPage);
             } catch {
@@ -295,7 +295,9 @@ export default {
         async syncPerusahaan() {
             try {
                 this.isDownloading = true;
-                const { data } = await axios.get('/master/client/sync');
+                const { data } = await axios.get(
+                    '/marketing/client/aktif/sync',
+                );
 
                 // contoh: tampilkan hasil
                 console.log(data.stats);

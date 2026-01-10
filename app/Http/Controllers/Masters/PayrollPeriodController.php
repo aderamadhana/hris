@@ -72,7 +72,7 @@ class PayrollPeriodController extends Controller
 
     public function create()
     {
-        return Inertia::render('master/payroll_period/create');
+        return Inertia::render('admin/hr/payroll/add-payroll');
     }
 
     
@@ -112,14 +112,14 @@ class PayrollPeriodController extends Controller
         PayrollPeriod::create($validated);
 
         return redirect()
-            ->to('/master/payroll-period/all-data')
+            ->to('/hr/payroll')
             ->with('success', 'Payroll period berhasil disimpan');
     }
         
 
     public function edit(PayrollPeriod $payrollPeriod)
     {
-        return Inertia::render('master/payroll_period/edit', [
+        return Inertia::render('admin/hr/payroll/edit-payroll', [
             'period' => $payrollPeriod
         ]);
     }
@@ -138,7 +138,7 @@ class PayrollPeriodController extends Controller
         $payrollPeriod->update($validated);
 
         return redirect()
-            ->to('/master/payroll-period/all-data')
+            ->to('/hr/payroll')
             ->with('success', 'Payroll period berhasil diupdate');
     }
 

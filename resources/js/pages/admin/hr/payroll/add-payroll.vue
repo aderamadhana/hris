@@ -2,32 +2,25 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
 import { Link, router } from '@inertiajs/vue3';
-import axios from 'axios';
 
 export default {
-    props: {
-        period: {
-            type: Object,
-            required: true,
-        },
-    },
     components: {
         AppLayout,
         Link,
     },
-
     data() {
+        const now = new Date();
+
         return {
-            loading: false,
-            processing: false,
             form: {
-                judul_periode: this.period.judul_periode || '',
-                period_year: this.period.period_year,
-                period_month: this.period.period_month,
-                start_date: this.period.start_date,
-                end_date: this.period.end_date,
-                status: this.period.status,
+                judul_periode: '',
+                period_year: now.getFullYear(),
+                period_month: now.getMonth() + 1,
+                start_date: '',
+                end_date: '',
+                status: 'open',
             },
+            processing: false,
             errors: {},
             months: [
                 { value: 1, label: 'Januari' },
@@ -47,64 +40,24 @@ export default {
         };
     },
 
-    mounted() {
-        this.getDataPeriod();
-    },
-
     methods: {
-        async getDataPeriod() {
-            try {
-                this.loading = true;
-
-                const res = await axios.get(
-                    `/master/payroll-period/get-data/${this.period.id}`,
-                );
-
-                const period = res.data.data;
-
-                // isi form / state
-                this.form = {
-                    judul_periode: period.judul_periode ?? '',
-                    period_year: period.period_year,
-                    period_month: period.period_month,
-                    start_date: period.start_date,
-                    end_date: period.end_date,
-                    status: period.status,
-                };
-            } catch (error) {
-                console.error(error);
-                triggerAlert('error', 'Gagal mengambil data payroll period');
-            } finally {
-                this.loading = false;
-            }
-        },
         submitForm() {
             this.processing = true;
 
-            router.put(
-                `/master/payroll-period/update/${this.period.id}`,
-                this.form,
-                {
-                    onSuccess: () => {
-                        triggerAlert(
-                            'success',
-                            'Payroll period berhasil diupdate',
-                        );
-                    },
-
-                    onError: (errors) => {
-                        this.errors = errors;
-                        triggerAlert(
-                            'error',
-                            'Periksa kembali data yang diinput',
-                        );
-                    },
-
-                    onFinish: () => {
-                        this.processing = false;
-                    },
+            router.post('/hr/payroll/store', this.form, {
+                onSuccess: () => {
+                    triggerAlert('success', 'Payroll period berhasil disimpan');
                 },
-            );
+
+                onError: (errors) => {
+                    this.errors = errors;
+                    triggerAlert('error', 'Periksa kembali data yang diinput');
+                },
+
+                onFinish: () => {
+                    this.processing = false;
+                },
+            });
         },
     },
 };
@@ -114,7 +67,7 @@ export default {
     <AppLayout>
         <div class="page-container">
             <div class="page-header">
-                <h1 class="page-title">Edit Periode Gaji</h1>
+                <h1 class="page-title">Tambah Periode Gaji</h1>
             </div>
 
             <div class="card">
@@ -238,20 +191,25 @@ export default {
                     </div>
 
                     <div class="form-actions">
-                        <Link
-                            href="/master/payroll-period/all-data"
-                            class="btn btn-secondary"
-                        >
+                        <Link href="/hr/payroll" class="btn btn-secondary">
                             Batal
                         </Link>
-                        <button type="submit" class="btn btn-primary">
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                            :class="{ 'is-loading': processing }"
+                            :disabled="processing"
+                        >
                             <template v-if="processing">
-                                <span
-                                    class="spinner-border spinner-border-sm spinner"
-                                    role="status"
-                                    aria-hidden="true"
-                                ></span>
-                                <span>Memproses...</span>
+                                <span class="btn-loading">
+                                    <span
+                                        class="btn-spinner"
+                                        aria-hidden="true"
+                                    ></span>
+                                    <span class="btn-loading-text"
+                                        >Memproses...</span
+                                    >
+                                </span>
                             </template>
 
                             <template v-else> Simpan </template>

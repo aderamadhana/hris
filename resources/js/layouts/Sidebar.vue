@@ -198,21 +198,23 @@ const fiturBelumTersedia = () => {
                 <transition name="sb-collapse">
                     <div v-show="marketingOpen" class="sidebar-submenu">
                         <Link
-                            href="/master/client/aktif"
+                            href="/marketing/client/aktif"
                             class="sidebar-subitem"
                             :class="{
-                                active: path.startsWith('/master/client/aktif'),
+                                active: path.startsWith(
+                                    '/marketing/client/aktif',
+                                ),
                             }"
                         >
                             <span>Client Aktif</span>
                         </Link>
 
                         <Link
-                            href="/master/client/nonaktif"
+                            href="/marketing/client/non-aktif"
                             class="sidebar-subitem"
                             :class="{
                                 active: path.startsWith(
-                                    '/master/client/nonaktif',
+                                    '/marketing/client/nonaktif',
                                 ),
                             }"
                         >
@@ -238,7 +240,7 @@ const fiturBelumTersedia = () => {
                 <transition name="sb-collapse">
                     <div v-show="logOpen" class="sidebar-submenu">
                         <Link
-                            href="/logs/presensi/all"
+                            href="/logs/presensi"
                             class="sidebar-subitem"
                             :class="{
                                 active: path.startsWith('/logs/presensi'),
@@ -248,12 +250,11 @@ const fiturBelumTersedia = () => {
                         </Link>
 
                         <Link
-                            href="/logs/aktivitas/all"
+                            href="/logs/aktivitas"
                             class="sidebar-subitem"
                             :class="{
                                 active: path.startsWith('/logs/aktivitas'),
                             }"
-                            @click.prevent="fiturBelumTersedia"
                         >
                             <span>Data Aktivitas</span>
                         </Link>
@@ -286,7 +287,6 @@ const fiturBelumTersedia = () => {
                                     '/asuransi/bpjs-kesehatan',
                                 ),
                             }"
-                            @click.prevent="fiturBelumTersedia"
                         >
                             <span>BPJS Kesehatan</span>
                         </Link>
@@ -299,7 +299,6 @@ const fiturBelumTersedia = () => {
                                     '/asuransi/bpjs-ketenagakerjaan',
                                 ),
                             }"
-                            @click.prevent="fiturBelumTersedia"
                         >
                             <span>BPJS Ketenagakerjaan</span>
                         </Link>
@@ -312,7 +311,6 @@ const fiturBelumTersedia = () => {
                                     '/asuransi/kecelakaan-kerja',
                                 ),
                             }"
-                            @click.prevent="fiturBelumTersedia"
                         >
                             <span>Input Kecelakaan Kerja</span>
                         </Link>
@@ -351,18 +349,18 @@ const fiturBelumTersedia = () => {
             </Link>
 
             <Link
-                href="#"
+                href="/riwayat-kontrak"
                 class="sidebar-item"
-                @click.prevent="fiturBelumTersedia"
+                :class="{ active: path.startsWith('/riwayat-kontrak') }"
             >
                 <font-awesome-icon icon="file-contract" class="icon" />
                 <span class="label">Riwayat Kontrak</span>
             </Link>
 
             <Link
-                href="#"
+                href="/surat-peringatan"
                 class="sidebar-item"
-                @click.prevent="fiturBelumTersedia"
+                :class="{ active: path.startsWith('/surat-peringatan') }"
             >
                 <font-awesome-icon icon="triangle-exclamation" class="icon" />
                 <span class="label">Surat Peringatan</span>

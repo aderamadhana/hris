@@ -52,7 +52,7 @@ class PerusahaanController extends Controller
 
     public function create()
     {
-        return Inertia::render('master/client/add-client');
+        return Inertia::render('admin/marketing/client-aktif/add-client');
     }
 
     
@@ -109,7 +109,7 @@ class PerusahaanController extends Controller
 
     public function edit(Perusahaan $id)
     {
-        return Inertia::render('master/client/edit-client', [
+        return Inertia::render('admin/marketing/client-aktif/edit-client', [
             'perusahaan' => $id
         ]);
     }

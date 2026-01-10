@@ -768,7 +768,10 @@ export default {
                 <div
                     class="gap-3 mt-8 bottom-0 bg-white py-4 sticky z-10 flex justify-end border-t"
                 >
-                    <Link href="/master/client/all" class="btn btn-secondary">
+                    <Link
+                        href="/master/client/aktif/all"
+                        class="btn btn-secondary"
+                    >
                         <i class="ti ti-x"></i>
                         Batal
                     </Link>

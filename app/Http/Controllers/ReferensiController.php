@@ -6,7 +6,8 @@ use App\Models\{
     Employee,
     PayrollPeriod,
     PayrollSummary,
-    EmployeeEmployment
+    EmployeeEmployment,
+    Shift
 };
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -178,4 +179,42 @@ class ReferensiController extends Controller
         return $jam . ' jam ' . $sisaMenit . ' menit';
     }
 
+    public function getShiftOptions(Request $request)
+    {
+        $activeOnly = $request->has('active_only')
+            ? (string) $request->active_only !== '0'
+            : true;
+
+        $query = Shift::query()->select([
+            'id',
+            'nama_shift',
+            'kode_shift',
+            'jam_masuk',
+            'jam_pulang',
+            'toleransi_keterlambatan',
+            'durasi_kerja',
+            'is_active',
+            'keterangan',
+            'created_at',
+            'updated_at',
+        ]);
+
+        if ($activeOnly) {
+            $query->where('is_active', true);
+        }
+
+        if ($request->filled('q')) {
+            $q = trim($request->q);
+            $query->where(function ($w) use ($q) {
+                $w->where('nama_shift', 'like', "%{$q}%")
+                  ->orWhere('kode_shift', 'like', "%{$q}%");
+            });
+        }
+
+        $data = $query->orderBy('nama_shift')->get();
+
+        return response()->json([
+            'data' => $data,
+        ]);
+    }
 }

@@ -562,45 +562,78 @@
 
                                 <div class="form-actions">
                                     <button
+                                        v-if="editPendidikanIndex !== null"
+                                        type="button"
+                                        class="btn btn-secondary"
+                                        @click="batalEditPendidikan"
+                                    >
+                                        Batal Edit
+                                    </button>
+
+                                    <button
+                                        v-else
                                         type="button"
                                         class="btn btn-secondary"
                                         @click="resetFormPendidikan"
                                     >
                                         Reset
                                     </button>
+
                                     <button
                                         type="submit"
                                         class="btn btn-primary"
                                     >
-                                        Tambah Pendidikan
+                                        {{
+                                            editPendidikanIndex !== null
+                                                ? 'Update Pendidikan'
+                                                : 'Tambah Pendidikan'
+                                        }}
                                     </button>
                                 </div>
                             </form>
 
                             <div
-                                class="mt-4 education-list"
+                                class="entry-list"
                                 v-if="listPendidikan.length"
                             >
                                 <div
                                     v-for="(edu, i) in listPendidikan"
                                     :key="i"
-                                    class="edu-item"
+                                    class="entry-card entry-edu"
                                 >
-                                    <div class="edu-header">
-                                        <div>
-                                            <div class="edu-degree">
-                                                {{ edu.jenjang || '-' }}
-                                                {{ edu.jurusan || '' }}
-                                            </div>
-                                            <div class="edu-school">
-                                                {{ edu.sekolah || '-' }}
-                                            </div>
+                                    <div class="entry-main">
+                                        <div class="entry-title">
+                                            {{ edu.jenjang || '-' }}
+                                            <span class="muted">{{
+                                                edu.jurusan || ''
+                                            }}</span>
                                         </div>
-                                        <div class="edu-year">
-                                            Lulus {{ edu.tahun_lulus || '-' }}
+                                        <div class="entry-subtitle">
+                                            {{ edu.sekolah || '-' }}
+                                        </div>
+
+                                        <div class="entry-meta-row">
+                                            <span class="chip primary"
+                                                >Lulus
+                                                {{
+                                                    edu.tahun_lulus || '-'
+                                                }}</span
+                                            >
+                                        </div>
+                                    </div>
+
+                                    <div class="entry-side">
+                                        <div class="entry-actions">
                                             <button
-                                                class="btn-delete"
                                                 type="button"
+                                                class="btn-ghost"
+                                                @click="editPendidikan(i)"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="btn-danger-ghost"
                                                 @click="hapusPendidikan(i)"
                                             >
                                                 Hapus
@@ -610,7 +643,7 @@
                                 </div>
                             </div>
 
-                            <div v-else class="empty mt-4">
+                            <div v-else class="empty">
                                 Data pendidikan belum tersedia
                             </div>
                         </div>
@@ -787,24 +820,39 @@
 
                                 <div class="form-actions">
                                     <button
+                                        v-if="editPekerjaanIndex !== null"
+                                        type="button"
+                                        class="btn btn-secondary"
+                                        @click="batalEditPekerjaan"
+                                    >
+                                        Batal Edit
+                                    </button>
+
+                                    <button
+                                        v-else
                                         type="button"
                                         class="btn btn-secondary"
                                         @click="resetFormPekerjaan"
                                     >
                                         Reset
                                     </button>
+
                                     <button
                                         type="submit"
                                         class="btn btn-primary"
                                     >
-                                        Tambah Pekerjaan
+                                        {{
+                                            editPekerjaanIndex !== null
+                                                ? 'Update Pekerjaan'
+                                                : 'Tambah Pekerjaan'
+                                        }}
                                     </button>
                                 </div>
                             </form>
 
                             <div
                                 v-if="listPekerjaan.length"
-                                class="mt-4 timeline"
+                                class="entry-list timeline"
                             >
                                 <div
                                     v-for="(job, i) in listPekerjaan"
@@ -812,66 +860,125 @@
                                     class="timeline-item"
                                 >
                                     <div class="timeline-dot"></div>
-                                    <div class="timeline-body">
-                                        <div class="timeline-header">
-                                            <div>
-                                                <div class="job-title">
-                                                    {{ job.jabatan || '-' }}
-                                                </div>
-                                                <div class="job-company">
-                                                    {{ job.perusahaan || '-' }}
-                                                    – {{ job.bagian || '-' }}
-                                                </div>
-                                                <div class="job-meta">
-                                                    No. Kontrak:
-                                                    {{ job.no_kontrak || '-' }}
-                                                </div>
+
+                                    <div class="entry-card entry-job">
+                                        <div class="entry-main">
+                                            <div class="entry-title">
+                                                {{ job.jabatan || '-' }}
+                                            </div>
+                                            <div class="entry-subtitle">
+                                                {{ job.perusahaan || '-' }}
+                                                <span class="muted">—</span>
+                                                {{ job.bagian || '-' }}
                                             </div>
 
-                                            <div class="job-period">
-                                                {{ job.mulai || '-' }} –
-                                                {{ job.selesai || 'Sekarang' }}
-                                                <div>
-                                                    <button
-                                                        class="btn-delete"
-                                                        type="button"
-                                                        @click="
-                                                            hapusPekerjaan(i)
-                                                        "
-                                                    >
-                                                        Hapus
-                                                    </button>
+                                            <div class="entry-meta-row">
+                                                <span class="chip">{{
+                                                    job.jenis_kontrak || '-'
+                                                }}</span>
+                                                <span class="chip"
+                                                    >No. Kontrak:
+                                                    {{
+                                                        job.no_kontrak || '-'
+                                                    }}</span
+                                                >
+                                                <span
+                                                    class="chip"
+                                                    :class="
+                                                        statusChip(
+                                                            job.status_kontrak,
+                                                        )
+                                                    "
+                                                >
+                                                    Status:
+                                                    {{
+                                                        job.status_kontrak ||
+                                                        '-'
+                                                    }}
+                                                </span>
+                                            </div>
+
+                                            <div class="info-grid">
+                                                <div class="info-item">
+                                                    <div class="info-label">
+                                                        Jenis Kerja
+                                                    </div>
+                                                    <div class="info-value">
+                                                        {{
+                                                            job.jenis_kerja ||
+                                                            '-'
+                                                        }}
+                                                    </div>
+                                                </div>
+                                                <div class="info-item">
+                                                    <div class="info-label">
+                                                        Pola Kerja
+                                                    </div>
+                                                    <div class="info-value">
+                                                        {{
+                                                            job.pola_kerja ||
+                                                            '-'
+                                                        }}
+                                                    </div>
+                                                </div>
+                                                <div class="info-item">
+                                                    <div class="info-label">
+                                                        Hari Kerja
+                                                    </div>
+                                                    <div class="info-value">
+                                                        {{
+                                                            job.hari_kerja ||
+                                                            '-'
+                                                        }}
+                                                    </div>
+                                                </div>
+                                                <div class="info-item">
+                                                    <div class="info-label">
+                                                        Cost Center
+                                                    </div>
+                                                    <div class="info-value">
+                                                        {{
+                                                            job.cost_center ||
+                                                            '-'
+                                                        }}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div class="job-type">
-                                            {{ job.jenis_kontrak || '-' }}
-                                        </div>
+                                        <div class="entry-side">
+                                            <div class="entry-meta-right">
+                                                <span class="chip primary">
+                                                    {{ job.mulai || '-' }} –
+                                                    {{
+                                                        job.selesai ||
+                                                        'Sekarang'
+                                                    }}
+                                                </span>
+                                            </div>
 
-                                        <div class="job-extra">
-                                            <div>
-                                                Jenis Kerja:
-                                                {{ job.jenis_kerja || '-' }}
-                                            </div>
-                                            <div>
-                                                Pola Kerja:
-                                                {{ job.pola_kerja || '-' }}
-                                            </div>
-                                            <div>
-                                                Hari Kerja:
-                                                {{ job.hari_kerja || '-' }}
-                                            </div>
-                                            <div>
-                                                Status:
-                                                {{ job.status_kontrak || '-' }}
+                                            <div class="entry-actions">
+                                                <button
+                                                    type="button"
+                                                    class="btn-ghost"
+                                                    @click="editPekerjaan(i)"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="btn-danger-ghost"
+                                                    @click="hapusPekerjaan(i)"
+                                                >
+                                                    Hapus
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div v-else class="empty mt-4">
+                            <div v-else class="empty">
                                 Riwayat pekerjaan belum tersedia
                             </div>
                         </div>
@@ -947,56 +1054,82 @@
 
                                 <div class="form-actions">
                                     <button
+                                        v-if="editKeluargaIndex !== null"
+                                        type="button"
+                                        class="btn btn-secondary"
+                                        @click="batalEditKeluarga"
+                                    >
+                                        Batal Edit
+                                    </button>
+
+                                    <button
+                                        v-else
                                         type="button"
                                         class="btn btn-secondary"
                                         @click="resetFormKeluarga"
                                     >
                                         Reset
                                     </button>
+
                                     <button
                                         type="submit"
                                         class="btn btn-primary"
                                     >
-                                        Tambah Keluarga
+                                        {{
+                                            editKeluargaIndex !== null
+                                                ? 'Update Keluarga'
+                                                : 'Tambah Keluarga'
+                                        }}
                                     </button>
                                 </div>
                             </form>
 
-                            <div
-                                v-if="listKeluarga.length"
-                                class="mt-4 family-list"
-                            >
+                            <div v-if="listKeluarga.length" class="entry-list">
                                 <div
                                     v-for="(f, i) in listKeluarga"
                                     :key="i"
-                                    class="family-item"
+                                    class="entry-card entry-family"
                                 >
-                                    <div class="family-main">
-                                        <div>
-                                            <div class="family-name">
-                                                {{ f.nama || '-' }}
-                                            </div>
-                                            <div class="family-relation">
-                                                {{ f.hubungan || '-' }}
-                                            </div>
+                                    <div class="entry-main">
+                                        <div class="entry-title">
+                                            {{ f.nama || '-' }}
+                                        </div>
+                                        <div class="entry-subtitle">
+                                            {{ f.hubungan || '-' }}
+                                        </div>
+
+                                        <div class="entry-meta-row">
+                                            <span class="chip"
+                                                >TTL: {{ f.ttl || '-' }}</span
+                                            >
+                                            <span v-if="f.no_hp" class="chip"
+                                                >HP: {{ f.no_hp }}</span
+                                            >
                                         </div>
                                     </div>
 
-                                    <div class="family-detail">
-                                        <span>TTL: {{ f.ttl || '-' }}</span>
+                                    <div class="entry-side">
+                                        <div class="entry-actions">
+                                            <button
+                                                type="button"
+                                                class="btn-ghost"
+                                                @click="editKeluarga(i)"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="btn-danger-ghost"
+                                                @click="hapusKeluarga(i)"
+                                            >
+                                                Hapus
+                                            </button>
+                                        </div>
                                     </div>
-
-                                    <button
-                                        class="btn-delete"
-                                        type="button"
-                                        @click="hapusKeluarga(i)"
-                                    >
-                                        Hapus
-                                    </button>
                                 </div>
                             </div>
 
-                            <div v-else class="empty mt-4">
+                            <div v-else class="empty">
                                 Data keluarga belum tersedia
                             </div>
                         </div>
@@ -1355,6 +1488,7 @@
                                         <input
                                             type="file"
                                             class="form-input"
+                                            :data-key="doc.key"
                                             @change="
                                                 onFileChange($event, doc.key)
                                             "
@@ -1439,16 +1573,12 @@ export default {
             user: page.props.auth.user,
             loading: true,
 
-            // sumber data detail (optional dipakai kalau kamu masih fetch dari API)
-            employee: {},
-            alamat: {},
-            pendidikan: [],
-            pekerjaan: [],
-            keluarga: [],
-            kesehatan: {},
-            dokumen: {},
+            // snapshot untuk tombol reset (restore ke data awal load)
+            initialSnapshot: null,
 
-            // tabs: SAMAKAN SLOT KEY -> pakai id
+            // sumber data (raw)
+            dokumenRaw: {}, // data.documents asli dari API
+
             tabs: [
                 { key: 'karyawan', id: 'karyawan', label: 'Data Karyawan' },
                 { key: 'pendidikan', id: 'pendidikan', label: 'Pendidikan' },
@@ -1458,12 +1588,17 @@ export default {
                 { key: 'dokumen', id: 'dokumen', label: 'Kelengkapan Dokumen' },
             ],
 
-            // ===== FORM STATE (EDIT) =====
+            // ===== EDIT MODE INDEX (untuk pendidikan/pekerjaan/keluarga) =====
+            editPendidikanIndex: null,
+            editPekerjaanIndex: null,
+            editKeluargaIndex: null,
+
+            // ===== FORM STATE =====
             formEmployee: {
-                // Data utama employees table
                 nama: '',
                 nrp: '',
                 jk: '',
+                kk: '',
                 tempat_lahir: '',
                 tanggal_lahir: '',
                 perkawinan: '',
@@ -1471,7 +1606,6 @@ export default {
                 kewarganegaraan: '',
                 status: '1',
 
-                // Data dari employee_personals table
                 no_wa: '',
                 bpjs_tk: '',
                 bpjs_kes: '',
@@ -1545,16 +1679,20 @@ export default {
                 os: '',
             },
 
+            /**
+             * formDokumen DIKHUSUSKAN untuk file baru (File object)
+             * jangan isi boolean di sini, karena akan ke-append sebagai "true" ke FormData.
+             */
             formDokumen: {
-                pas_foto: false,
-                ktp: false,
-                kk: false,
-                lisensi: false,
-                form_bpjs_tk: false,
-                form_bpjs_kes: false,
-                paklaring: false,
-                ijazah_terakhir: false,
-                skck: false,
+                pas_foto: null,
+                ktp: null,
+                kk: null,
+                lisensi: null,
+                form_bpjs_tk: null,
+                form_bpjs_kes: null,
+                paklaring: null,
+                ijazah_terakhir: null,
+                skck: null,
             },
 
             dokumenMeta: [
@@ -1568,226 +1706,273 @@ export default {
                     key: 'paklaring',
                     label: 'Surat Pengalaman Kerja / Paklaring',
                 },
-                {
-                    key: 'ijazah_terakhir',
-                    label: 'Ijazah Terakhir',
-                },
-                {
-                    key: 'skck',
-                    label: 'SKCK',
-                },
+                { key: 'ijazah_terakhir', label: 'Ijazah Terakhir' },
+                { key: 'skck', label: 'SKCK' },
             ],
 
-            deleteExistingDokumen: {},
             dokumenToDelete: [],
         };
     },
 
     mounted() {
-        // TODO: ganti ini dengan fetch data kamu (props inertia / axios)
-        // simulasi: setelah data ada, panggil hydrateFormsFromDetail()
         this.getDataKaryawan();
-        console.log(this.employee_id);
-        this.loading = false;
     },
 
     methods: {
-        // ====== HYDRATE (DETAIL -> FORM) ======
+        // ====== LOAD DATA ======
         async getDataKaryawan() {
-            await axios
-                .get(`/employee/${this.employee_id}`)
-                .then(({ data }) => {
-                    /* ===============================
-             | FORM EMPLOYEE
-             ===============================*/
-                    Object.assign(this.formEmployee, {
-                        nama: data.nama ?? '',
-                        nrp: data.nrp ?? '',
-                        jk: data.jenis_kelamin ?? '',
-                        kk: data.no_kk ?? '',
-                        tempat_lahir: data.tempat_lahir ?? '',
-                        tanggal_lahir: data.tanggal_lahir ?? '',
-                        perkawinan: data.status_perkawinan ?? '',
-                        agama: data.agama ?? '',
-                        kewarganegaraan: data.kewarganegaraan ?? '',
-                        status: data.status_active ?? '1',
-
-                        // Data dari employee_personals table
-                        no_wa: data.no_wa ?? '',
-                        bpjs_tk: data.bpjs_tk ?? '',
-                        bpjs_kes: data.bpjs_kes ?? '',
-                        jenis_bpjs_tk: data.jenis_bpjs_tk ?? '',
-                        nama_faskes: data.nama_faskes ?? '',
-                        status_bpjs_ks: data.status_bpjs_ks ?? '',
-                        email: data.email ?? '',
-                        no_skck: data.no_skck ?? '',
-                        masa_berlaku_skck: data.masa_berlaku_skck ?? '',
-                        jenis_lisensi: data.jenis_lisensi ?? '',
-                        no_lisensi: data.no_lisensi ?? '',
-                        masa_berlaku_lisensi: data.masa_berlaku_lisensi ?? '',
-                    });
-
-                    /* ===============================
-             | FORM ALAMAT
-             ===============================*/
-                    Object.assign(this.formAlamat, {
-                        ktp: data.no_ktp ?? '',
-                        phone: data.no_wa ?? '',
-                        domisili: data.alamat_lengkap_domisili ?? '',
-                        kota: data.kota_domisili ?? '',
-                    });
-
-                    /* ===============================
-             | PENDIDIKAN
-             ===============================*/
-                    this.listPendidikan = (data.educations ?? []).map((p) => ({
-                        jenjang: p.jenjang ?? '',
-                        jurusan: p.jurusan ?? '',
-                        sekolah: p.institusi ?? p.sekolah_asal ?? '',
-                        tahun_lulus: p.tahun_lulus ?? '',
-                    }));
-
-                    /* ===============================
-             | PEKERJAAN
-             ===============================*/
-                    this.listPekerjaan = (data.employmentss ?? []).map((j) => ({
-                        jabatan: j.jabatan ?? j.job_roll ?? '',
-                        perusahaan: j.perusahaan ?? '',
-                        bagian: j.penempatan ?? '',
-                        no_kontrak: j.no_kontrak ?? '',
-                        cost_center: j.cost_center ?? '',
-                        jenis_kontrak: j.jenis_kontrak ?? '',
-                        mulai: j.tgl_awal_kerja ?? '',
-                        selesai: j.tgl_akhir_kerja ?? '',
-                        jenis_kerja: j.jenis_kerja ?? '',
-                        pola_kerja: j.pola_kerja ?? '',
-                        hari_kerja: j.hari_kerja ?? '',
-                        status_kontrak: j.status ?? j.keterangan_status ?? '',
-                    }));
-
-                    /* ===============================
-             | KELUARGA
-             ===============================*/
-                    this.listKeluarga = (data.families ?? []).map((f) => ({
-                        nama: f.nama ?? '',
-                        hubungan: f.hubungan ?? '',
-                        ttl:
-                            f.tempat_lahir && f.tanggal_lahir
-                                ? `${f.tempat_lahir}, ${f.tanggal_lahir}`
-                                : '',
-                        no_hp: f.no_hp ?? '',
-                    }));
-
-                    /* ===============================
-             | KESEHATAN
-             ===============================*/
-                    if (data.health) {
-                        Object.assign(this.formKesehatan, {
-                            tinggi_badan: data.health.tinggi_badan ?? '',
-                            berat_badan: data.health.berat_badan ?? '',
-                            gol_darah: data.health.gol_darah ?? '',
-                            buta_warna: !!data.health.buta_warna,
-                            riwayat_penyakit:
-                                data.health.riwayat_penyakit ?? '',
-                            tanggal_mcu: data.health.tanggal_mcu ?? '',
-                            kesimpulan_hasil_mcu:
-                                data.health.kesimpulan_hasil_mcu ?? '',
-                            darah: data.health.darah ?? '',
-                            urine: data.health.urine ?? '',
-                            f_hati: data.health.f_hati ?? '',
-                            gula_darah: data.health.gula_darah ?? '',
-                            ginjal: data.health.ginjal ?? '',
-                            thorax: data.health.thorax ?? '',
-                            tensi: data.health.tensi ?? '',
-                            nadi: data.health.nadi ?? '',
-                            od: data.health.od ?? '',
-                            os: data.health.os ?? '',
-                        });
-                    }
-
-                    /* ===============================
-             | DOKUMEN (CHECKLIST)
-             ===============================*/
-                    if (data.documents) {
-                        Object.assign(this.formDokumen, {
-                            pas_foto: !!data.documents.pas_foto,
-                            ktp: !!data.documents.dokumen_ktp,
-                            kk: !!data.documents.dokumen_kk,
-                            lisensi: !!data.documents.dokumen_lisensi,
-                            form_bpjs_tk:
-                                !!data.documents.dokumen_bpjs_ketenagakerjaan,
-                            form_bpjs_kes:
-                                !!data.documents
-                                    .dokumen_formulir_bpjs_kesehatan,
-                            paklaring:
-                                !!data.documents.dokumen_surat_pengalaman_kerja,
-                            ijazah_terakhir:
-                                !!data.documents.dokumen_ijazah_terakhir,
-                            skck: !!data.documents.dokumen_skck,
-                        });
-                    }
-                })
-                .finally(() => {
-                    this.loading = false;
-                });
-        },
-        // ====== SUBMIT PER TAB (optional) ======
-        async handleSubmitKaryawan() {
+            this.loading = true;
             try {
-                // Validasi data utama
-                if (
-                    !this.formEmployee.nama ||
-                    !this.formEmployee.nrp ||
-                    !this.formEmployee.jk
-                ) {
-                    triggerAlert(
-                        'warning',
-                        'Nama, NRP, dan Jenis Kelamin wajib diisi!',
-                    );
-                    return;
+                const { data } = await axios.get(
+                    `/employee/${this.employee_id}`,
+                );
+
+                // ===============================
+                // FORM EMPLOYEE
+                // ===============================
+                Object.assign(this.formEmployee, {
+                    nama: data.nama ?? '',
+                    nrp: data.nrp ?? '',
+                    jk: data.jenis_kelamin ?? '',
+                    kk: data.no_kk ?? '',
+                    tempat_lahir: data.tempat_lahir ?? '',
+                    tanggal_lahir: data.tanggal_lahir ?? '',
+                    perkawinan: data.status_perkawinan ?? '',
+                    agama: data.agama ?? '',
+                    kewarganegaraan: data.kewarganegaraan ?? '',
+                    status: String(data.status_active ?? '1'),
+
+                    no_wa: data.no_wa ?? '',
+                    bpjs_tk: data.bpjs_tk ?? '',
+                    bpjs_kes: data.bpjs_kes ?? '',
+                    jenis_bpjs_tk: data.jenis_bpjs_tk ?? '',
+                    nama_faskes: data.nama_faskes ?? '',
+                    status_bpjs_ks: data.status_bpjs_ks ?? '',
+                    email: data.email ?? '',
+                    no_skck: data.no_skck ?? '',
+                    masa_berlaku_skck: data.masa_berlaku_skck ?? '',
+                    jenis_lisensi: data.jenis_lisensi ?? '',
+                    no_lisensi: data.no_lisensi ?? '',
+                    masa_berlaku_lisensi: data.masa_berlaku_lisensi ?? '',
+                });
+
+                // ===============================
+                // FORM ALAMAT
+                // ===============================
+                Object.assign(this.formAlamat, {
+                    ktp: data.no_ktp ?? '',
+                    phone: data.no_wa ?? '',
+                    domisili: data.alamat_lengkap_domisili ?? '',
+                    kota: data.kota_domisili ?? '',
+                });
+
+                // ===============================
+                // PENDIDIKAN
+                // ===============================
+                this.listPendidikan = (data.educations ?? []).map((p) => ({
+                    jenjang: p.jenjang ?? '',
+                    jurusan: p.jurusan ?? '',
+                    sekolah: p.institusi ?? p.sekolah_asal ?? '',
+                    tahun_lulus: p.tahun_lulus ?? '',
+                }));
+
+                // ===============================
+                // PEKERJAAN (support key typo: employmentss/employments)
+                // ===============================
+                const employments = data.employmentss ?? data.employments ?? [];
+                this.listPekerjaan = employments.map((j) => ({
+                    jabatan: j.jabatan ?? j.job_roll ?? '',
+                    perusahaan: j.perusahaan ?? '',
+                    bagian: j.penempatan ?? '',
+                    no_kontrak: j.no_kontrak ?? '',
+                    cost_center: j.cost_center ?? '',
+                    jenis_kontrak: j.jenis_kontrak ?? '',
+                    mulai: j.tgl_awal_kerja ?? '',
+                    selesai: j.tgl_akhir_kerja ?? '',
+                    jenis_kerja: j.jenis_kerja ?? '',
+                    pola_kerja: j.pola_kerja ?? '',
+                    hari_kerja: j.hari_kerja ?? '',
+                    status_kontrak: j.status ?? j.keterangan_status ?? '',
+                }));
+
+                // ===============================
+                // KELUARGA
+                // ===============================
+                this.listKeluarga = (data.families ?? []).map((f) => ({
+                    nama: f.nama ?? '',
+                    hubungan: f.hubungan ?? '',
+                    ttl:
+                        f.tempat_lahir && f.tanggal_lahir
+                            ? `${f.tempat_lahir}, ${f.tanggal_lahir}`
+                            : '',
+                    no_hp: f.no_hp ?? '',
+                }));
+
+                // ===============================
+                // KESEHATAN
+                // ===============================
+                if (data.health) {
+                    Object.assign(this.formKesehatan, {
+                        tinggi_badan: data.health.tinggi_badan ?? '',
+                        berat_badan: data.health.berat_badan ?? '',
+                        gol_darah: data.health.gol_darah ?? '',
+                        buta_warna: !!data.health.buta_warna,
+                        riwayat_penyakit: data.health.riwayat_penyakit ?? '',
+                        tanggal_mcu: data.health.tanggal_mcu ?? '',
+                        kesimpulan_hasil_mcu:
+                            data.health.kesimpulan_hasil_mcu ?? '',
+                        darah: data.health.darah ?? '',
+                        urine: data.health.urine ?? '',
+                        f_hati: data.health.f_hati ?? '',
+                        gula_darah: data.health.gula_darah ?? '',
+                        ginjal: data.health.ginjal ?? '',
+                        thorax: data.health.thorax ?? '',
+                        tensi: data.health.tensi ?? '',
+                        nadi: data.health.nadi ?? '',
+                        od: data.health.od ?? '',
+                        os: data.health.os ?? '',
+                    });
                 }
 
-                triggerAlert(
-                    'success',
-                    'Data karyawan berhasil disimpan sementara. Klik "Simpan Semua Perubahan" untuk menyimpan ke database.',
+                // ===============================
+                // DOKUMEN RAW (untuk link existing)
+                // ===============================
+                this.dokumenRaw = data.documents ?? {};
+
+                // reset state dokumen
+                this.resetFormDokumen();
+
+                // simpan snapshot awal untuk tombol reset (karyawan & kesehatan)
+                this.initialSnapshot = JSON.parse(
+                    JSON.stringify({
+                        formEmployee: this.formEmployee,
+                        formAlamat: this.formAlamat,
+                        formKesehatan: this.formKesehatan,
+                    }),
                 );
-            } catch (error) {
-                console.error('Error submit karyawan:', error);
-                triggerAlert('error', 'Gagal menyimpan data karyawan');
+            } catch (e) {
+                console.error(e);
+                triggerAlert('error', 'Gagal memuat data karyawan');
+            } finally {
+                this.loading = false;
             }
         },
 
+        // ====== SUBMIT PER TAB (optional) ======
+        async handleSubmitKaryawan() {
+            if (
+                !this.formEmployee.nama ||
+                !this.formEmployee.nrp ||
+                !this.formEmployee.jk
+            ) {
+                triggerAlert(
+                    'warning',
+                    'Nama, NRP, dan Jenis Kelamin wajib diisi!',
+                );
+                return;
+            }
+
+            triggerAlert(
+                'success',
+                'Data karyawan berhasil disimpan sementara. Klik "Simpan Semua Perubahan" untuk menyimpan ke database.',
+            );
+        },
+
+        // ================= PENDIDIKAN (ADD/EDIT) =================
         async handleSubmitPendidikan() {
             if (!this.formPendidikan.jenjang && !this.formPendidikan.sekolah) {
                 triggerAlert('warning', 'Minimal isi jenjang atau sekolah');
                 return;
             }
 
-            this.listPendidikan.push({ ...this.formPendidikan });
+            const payload = { ...this.formPendidikan };
+
+            if (this.editPendidikanIndex !== null) {
+                this.listPendidikan.splice(
+                    this.editPendidikanIndex,
+                    1,
+                    payload,
+                );
+                this.editPendidikanIndex = null;
+                triggerAlert('success', 'Pendidikan diperbarui');
+            } else {
+                this.listPendidikan.push(payload);
+                triggerAlert('success', 'Pendidikan ditambahkan');
+            }
+
             this.resetFormPendidikan();
-            triggerAlert('success', 'Pendidikan ditambahkan');
         },
 
+        editPendidikan(i) {
+            this.editPendidikanIndex = i;
+            this.formPendidikan = { ...this.listPendidikan[i] };
+        },
+
+        batalEditPendidikan() {
+            this.editPendidikanIndex = null;
+            this.resetFormPendidikan();
+        },
+
+        // ================= PEKERJAAN (ADD/EDIT) =================
         async handleSubmitPekerjaan() {
             if (!this.formPekerjaan.perusahaan && !this.formPekerjaan.jabatan) {
                 triggerAlert('warning', 'Minimal isi perusahaan atau jabatan');
                 return;
             }
 
-            this.listPekerjaan.push({ ...this.formPekerjaan });
+            const payload = { ...this.formPekerjaan };
+
+            if (this.editPekerjaanIndex !== null) {
+                this.listPekerjaan.splice(this.editPekerjaanIndex, 1, payload);
+                this.editPekerjaanIndex = null;
+                triggerAlert('success', 'Pekerjaan diperbarui');
+            } else {
+                this.listPekerjaan.push(payload);
+                triggerAlert('success', 'Pekerjaan ditambahkan');
+            }
+
             this.resetFormPekerjaan();
-            triggerAlert('success', 'Pekerjaan ditambahkan');
         },
 
+        editPekerjaan(i) {
+            this.editPekerjaanIndex = i;
+            this.formPekerjaan = { ...this.listPekerjaan[i] };
+        },
+
+        batalEditPekerjaan() {
+            this.editPekerjaanIndex = null;
+            this.resetFormPekerjaan();
+        },
+
+        // ================= KELUARGA (ADD/EDIT) =================
         async handleSubmitKeluarga() {
             if (!this.formKeluarga.nama) {
                 triggerAlert('warning', 'Nama wajib diisi');
                 return;
             }
 
-            this.listKeluarga.push({ ...this.formKeluarga });
+            const payload = { ...this.formKeluarga };
+
+            if (this.editKeluargaIndex !== null) {
+                this.listKeluarga.splice(this.editKeluargaIndex, 1, payload);
+                this.editKeluargaIndex = null;
+                triggerAlert('success', 'Data keluarga diperbarui');
+            } else {
+                this.listKeluarga.push(payload);
+                triggerAlert('success', 'Data keluarga ditambahkan');
+            }
+
             this.resetFormKeluarga();
-            triggerAlert('success', 'Data keluarga ditambahkan');
+        },
+
+        editKeluarga(i) {
+            this.editKeluargaIndex = i;
+            this.formKeluarga = { ...this.listKeluarga[i] };
+        },
+
+        batalEditKeluarga() {
+            this.editKeluargaIndex = null;
+            this.resetFormKeluarga();
         },
 
         async handleSubmitKesehatan() {
@@ -1805,12 +1990,12 @@ export default {
         },
 
         // ================= HANDLE SUBMIT ALL =================
-
         async handleSubmitAll() {
             if (
                 !this.formEmployee.nama ||
                 !this.formEmployee.nrp ||
-                !this.formEmployee.jk
+                !this.formEmployee.jk ||
+                !this.formAlamat.ktp
             ) {
                 triggerAlert(
                     'warning',
@@ -1819,20 +2004,18 @@ export default {
                 return;
             }
 
-            if (!confirm('Apakah Anda yakin ingin menyimpan semua data?')) {
+            if (!confirm('Apakah Anda yakin ingin menyimpan semua data?'))
                 return;
-            }
 
             this.loading = true;
 
             try {
-                // Prepare FormData untuk upload file
                 const formData = new FormData();
 
-                // 1. Data Employees (table employees)
+                // 1. Data Employees
                 formData.append('nama', this.formEmployee.nama);
                 formData.append('nrp', this.formEmployee.nrp);
-                formData.append('kk', this.formEmployee.kk);
+                formData.append('kk', this.formEmployee.kk || '');
                 formData.append('jenis_kelamin', this.formEmployee.jk);
                 formData.append(
                     'tempat_lahir',
@@ -1853,12 +2036,11 @@ export default {
                 );
                 formData.append('status_active', this.formEmployee.status);
 
-                // 2. Data Employee Personals (table employee_personals)
+                // 2. Employee personals
                 formData.append('no_ktp', this.formAlamat.ktp || '');
                 formData.append('no_wa', this.formEmployee.no_wa || '');
                 formData.append('bpjs_tk', this.formEmployee.bpjs_tk || '');
                 formData.append('bpjs_kes', this.formEmployee.bpjs_kes || '');
-
                 formData.append(
                     'jenis_bpjs_tk',
                     this.formEmployee.jenis_bpjs_tk || '',
@@ -1890,7 +2072,7 @@ export default {
                     this.formEmployee.masa_berlaku_lisensi || '',
                 );
 
-                // 3. Data Address (table employee_addresses)
+                // 3. Address
                 formData.append(
                     'alamat_lengkap_domisili',
                     this.formAlamat.domisili || '',
@@ -1898,32 +2080,30 @@ export default {
                 formData.append('kota_domisili', this.formAlamat.kota || '');
                 formData.append('tipe', 'Domisili');
 
-                // 4. Data Pendidikan (table employee_educations) - JSON Array
+                // 4. Pendidikan
                 formData.append(
                     'pendidikan',
                     JSON.stringify(
                         this.listPendidikan.map((edu) => ({
                             jenjang: edu.jenjang,
                             jurusan: edu.jurusan,
-                            institusi: edu.sekolah, // sekolah -> institusi
+                            institusi: edu.sekolah,
                             tahun_lulus: edu.tahun_lulus,
                         })),
                     ),
                 );
 
-                // 5. Data Pekerjaan (table employee_employment_histories) - JSON Array
-                // Cek apakah ada no_kontrak yang diisi untuk create user
+                // 5. Pekerjaan
                 const hasNoKontrak = this.listPekerjaan.some(
                     (job) => job.no_kontrak,
                 );
-
                 formData.append(
                     'pekerjaan',
                     JSON.stringify(
                         this.listPekerjaan.map((job) => ({
                             perusahaan: job.perusahaan,
                             jabatan: job.jabatan,
-                            penempatan: job.bagian, // bagian -> penempatan
+                            penempatan: job.bagian,
                             no_kontrak: job.no_kontrak,
                             cost_center: job.cost_center,
                             jenis_kontrak: job.jenis_kontrak,
@@ -1936,16 +2116,13 @@ export default {
                         })),
                     ),
                 );
-
-                // Flag untuk create user jika ada no_kontrak
                 formData.append('create_user', hasNoKontrak ? '1' : '0');
 
-                // 6. Data Keluarga (table employee_family_members) - JSON Array
+                // 6. Keluarga
                 formData.append(
                     'keluarga',
                     JSON.stringify(
                         this.listKeluarga.map((fam) => {
-                            // Parse TTL format "Jakarta, 01-01-2000"
                             const ttlParts = fam.ttl
                                 ? fam.ttl.split(',')
                                 : ['', ''];
@@ -1957,13 +2134,12 @@ export default {
                                 hubungan: fam.hubungan,
                                 tempat_lahir: tempatLahir,
                                 tanggal_lahir: tanggalLahir,
-                                // no_hp bisa disimpan di field lain jika perlu
                             };
                         }),
                     ),
                 );
 
-                // 7. Data Kesehatan (table employee_health_records)
+                // 7. Kesehatan
                 formData.append(
                     'tinggi_badan',
                     this.formKesehatan.tinggi_badan || '',
@@ -1988,6 +2164,10 @@ export default {
                     'tanggal_mcu',
                     this.formKesehatan.tanggal_mcu || '',
                 );
+                formData.append(
+                    'kesimpulan_hasil_mcu',
+                    this.formKesehatan.kesimpulan_hasil_mcu || '',
+                );
                 formData.append('darah', this.formKesehatan.darah || '');
                 formData.append('urine', this.formKesehatan.urine || '');
                 formData.append('f_hati', this.formKesehatan.f_hati || '');
@@ -2002,26 +2182,15 @@ export default {
                 formData.append('od', this.formKesehatan.od || '');
                 formData.append('os', this.formKesehatan.os || '');
 
-                formData.append(
-                    'tanggal_mcu',
-                    this.formKesehatan.tanggal_mcu || '',
-                );
-                formData.append(
-                    'kesimpulan_hasil_mcu',
-                    this.formKesehatan.kesimpulan_hasil_mcu || '',
-                );
-
-                // 8. Upload Files (Dokumen)
+                // 8. Upload file baru saja (File only)
                 for (const doc of this.dokumenMeta) {
-                    if (this.formDokumen[doc.key]) {
-                        formData.append(
-                            `dokumen_${doc.key}`,
-                            this.formDokumen[doc.key],
-                        );
+                    const file = this.formDokumen[doc.key];
+                    if (file instanceof File) {
+                        formData.append(`dokumen_${doc.key}`, file);
                     }
                 }
 
-                // 9. Dokumen yang akan dihapus
+                // 9. Dokumen existing yang diminta hapus
                 if (this.dokumenToDelete.length > 0) {
                     formData.append(
                         'dokumen_to_delete',
@@ -2029,80 +2198,75 @@ export default {
                     );
                 }
 
-                // Kirim ke backend
-                try {
-                    const response = await axios.post(
-                        '/employee/store-edit/' + this.employee_id,
-                        formData,
-                        {
-                            headers: {
-                                'Content-Type': 'multipart/form-data',
-                            },
-                        },
-                    );
+                await axios.post(
+                    `/employee/store-edit/${this.employee_id}`,
+                    formData,
+                    {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    },
+                );
 
-                    triggerAlert('success', 'Semua data berhasil disimpan!');
+                triggerAlert('success', 'Semua data berhasil disimpan!');
+                router.visit(`/hr/karyawan`);
+            } catch (error) {
+                if (axios.isAxiosError(error) && error.response) {
+                    if (error.response.status === 422) {
+                        const data = error.response.data || {};
+                        const fieldErrors = data.errors || {};
 
-                    router.visit(`/admin/karyawan`);
-                } catch (error) {
-                    if (axios.isAxiosError(error) && error.response) {
-                        // VALIDATION ERROR (Laravel)
-                        if (error.response.status === 422) {
-                            const data = error.response.data || {};
-                            const fieldErrors = data.errors || {};
-
-                            // flatten jadi array string: "nrp: The nrp has already been taken."
-                            const errorsArr = Object.entries(
-                                fieldErrors,
-                            ).flatMap(([field, msgs]) =>
+                        const errorsArr = Object.entries(fieldErrors).flatMap(
+                            ([field, msgs]) =>
                                 (msgs || []).map((m) => `${field}: ${m}`),
-                            );
-
-                            const d = {
-                                total: errorsArr.length, // total error message
-                                success: 0, // karena submit ini gagal
-                                failed: errorsArr.length,
-                                errors: errorsArr,
-                            };
-
-                            const html = `
-                                <div>
-                                    <strong>Submit gagal karena validasi</strong>
-
-                                    <strong>Detail Error:</strong>
-                                    <ul>
-                                        ${d.errors.map((e) => `<li>${e}</li>`).join('')}
-                                    </ul>
-                                 </div>
-                            `;
-
-                            triggerAlert('warning', html, 15000, true);
-                            return;
-                        }
-
-                        // selain 422
-                        triggerAlert(
-                            'error',
-                            error.response.data?.message ||
-                                `Gagal menyimpan data (HTTP ${error.response.status})`,
                         );
+
+                        const html = `
+                            <div>
+                                <strong>Submit gagal karena validasi</strong>
+                                <strong>Detail Error:</strong>
+                                <ul>
+                                    ${errorsArr.map((e) => `<li>${e}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+
+                        triggerAlert('warning', html, 15000, true);
                         return;
                     }
 
-                    console.error(error);
-                    triggerAlert('error', 'Gagal menyimpan data');
+                    triggerAlert(
+                        'error',
+                        error.response.data?.message ||
+                            `Gagal menyimpan data (HTTP ${error.response.status})`,
+                    );
+                    return;
                 }
-            } catch (error) {
-                console.error('Error submit all:', error);
-                triggerAlert('error', 'Gagal menyimpan data: ' + error.message);
+
+                console.error(error);
+                triggerAlert('error', 'Gagal menyimpan data');
             } finally {
                 this.loading = false;
             }
         },
 
         // ================= RESET FORMS =================
-
         resetFormKaryawan() {
+            // di halaman edit, reset seharusnya restore data awal (bukan mengosongkan)
+            if (
+                this.initialSnapshot?.formEmployee &&
+                this.initialSnapshot?.formAlamat
+            ) {
+                this.formEmployee = {
+                    ...this.formEmployee,
+                    ...this.initialSnapshot.formEmployee,
+                };
+                this.formAlamat = {
+                    ...this.formAlamat,
+                    ...this.initialSnapshot.formAlamat,
+                };
+                return;
+            }
+
+            // fallback (kalau snapshot belum ada)
             this.formEmployee = {
                 nama: '',
                 nrp: '',
@@ -2127,12 +2291,7 @@ export default {
                 no_lisensi: '',
                 masa_berlaku_lisensi: '',
             };
-            this.formAlamat = {
-                ktp: '',
-                phone: '',
-                domisili: '',
-                kota: '',
-            };
+            this.formAlamat = { ktp: '', phone: '', domisili: '', kota: '' };
         },
 
         resetFormPendidikan() {
@@ -2171,6 +2330,13 @@ export default {
         },
 
         resetFormKesehatan() {
+            if (this.initialSnapshot?.formKesehatan) {
+                this.formKesehatan = {
+                    ...this.formKesehatan,
+                    ...this.initialSnapshot.formKesehatan,
+                };
+                return;
+            }
             this.formKesehatan = {
                 tinggi_badan: null,
                 berat_badan: null,
@@ -2193,45 +2359,41 @@ export default {
         },
 
         resetFormDokumen() {
-            this.formDokumen = {};
+            // reset hanya pilihan file baru + daftar delete
+            Object.keys(this.formDokumen).forEach(
+                (k) => (this.formDokumen[k] = null),
+            );
             this.dokumenToDelete = [];
         },
 
         // ================= HANDLE DOKUMEN =================
-
         onFileChange(event, key) {
-            const file = event.target.files[0];
-            if (file) {
-                // Validasi ukuran file (max 5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    triggerAlert('warning', 'Ukuran file maksimal 5MB');
-                    event.target.value = '';
-                    return;
-                }
+            const file = event.target.files?.[0];
+            if (!file) return;
 
-                // Validasi tipe file
-                const allowedTypes = [
-                    'application/pdf',
-                    'image/jpeg',
-                    'image/jpg',
-                    'image/png',
-                ];
-                if (!allowedTypes.includes(file.type)) {
-                    triggerAlert(
-                        'warning',
-                        'Format file harus PDF, JPG, atau PNG',
-                    );
-                    event.target.value = '';
-                    return;
-                }
-
-                this.formDokumen[key] = file;
+            if (file.size > 5 * 1024 * 1024) {
+                triggerAlert('warning', 'Ukuran file maksimal 5MB');
+                event.target.value = '';
+                return;
             }
+
+            const allowedTypes = [
+                'application/pdf',
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+            ];
+            if (!allowedTypes.includes(file.type)) {
+                triggerAlert('warning', 'Format file harus PDF, JPG, atau PNG');
+                event.target.value = '';
+                return;
+            }
+
+            this.formDokumen[key] = file;
         },
 
         removeSelectedFile(key) {
-            delete this.formDokumen[key];
-            // Reset input file
+            this.formDokumen[key] = null;
             const input = document.querySelector(
                 `input[type="file"][data-key="${key}"]`,
             );
@@ -2239,44 +2401,96 @@ export default {
         },
 
         getExistingDocUrl(key) {
-            // Implementasi untuk mendapatkan URL dokumen yang sudah ada
-            // Misalnya dari data yang di-load saat edit
-            return null; // atau return URL jika ada
+            // mapping key UI -> field backend (sesuai mapping kamu)
+            const map = {
+                pas_foto: 'pas_foto',
+                ktp: 'dokumen_ktp',
+                kk: 'dokumen_kk',
+                lisensi: 'dokumen_lisensi',
+                form_bpjs_tk: 'dokumen_bpjs_ketenagakerjaan',
+                form_bpjs_kes: 'dokumen_formulir_bpjs_kesehatan',
+                paklaring: 'dokumen_surat_pengalaman_kerja',
+                ijazah_terakhir: 'dokumen_ijazah_terakhir',
+                skck: 'dokumen_skck',
+            };
+
+            const rawKey = map[key];
+            const val = rawKey ? this.dokumenRaw?.[rawKey] : null;
+
+            // kalau backend kasih URL string -> tampilkan
+            if (typeof val === 'string' && val.trim()) return val;
+
+            // kalau backend cuma boolean/1 -> tidak bisa "lihat file", jadi null
+            return null;
         },
 
         markDeleteExisting(key) {
+            const url = this.getExistingDocUrl(key);
+            if (!url) {
+                triggerAlert(
+                    'warning',
+                    'Dokumen tidak ditemukan / tidak ada link file.',
+                );
+                return;
+            }
+
             if (confirm('Hapus dokumen yang sudah tersimpan?')) {
-                this.dokumenToDelete.push(key);
+                if (!this.dokumenToDelete.includes(key)) {
+                    this.dokumenToDelete.push(key);
+                }
             }
         },
 
-        // ================= HANDLE DELETE LIST =================
-
+        // ================= HANDLE DELETE LIST (AMAN SAAT EDIT) =================
         hapusPendidikan(index) {
-            if (confirm('Hapus data pendidikan ini?')) {
-                this.listPendidikan.splice(index, 1);
+            if (!confirm('Hapus data pendidikan ini?')) return;
+
+            this.listPendidikan.splice(index, 1);
+
+            if (this.editPendidikanIndex === index) {
+                this.batalEditPendidikan();
+            } else if (
+                this.editPendidikanIndex !== null &&
+                index < this.editPendidikanIndex
+            ) {
+                this.editPendidikanIndex -= 1;
             }
         },
 
         hapusPekerjaan(index) {
-            if (confirm('Hapus data pekerjaan ini?')) {
-                this.listPekerjaan.splice(index, 1);
+            if (!confirm('Hapus data pekerjaan ini?')) return;
+
+            this.listPekerjaan.splice(index, 1);
+
+            if (this.editPekerjaanIndex === index) {
+                this.batalEditPekerjaan();
+            } else if (
+                this.editPekerjaanIndex !== null &&
+                index < this.editPekerjaanIndex
+            ) {
+                this.editPekerjaanIndex -= 1;
             }
         },
 
         hapusKeluarga(index) {
-            if (confirm('Hapus data keluarga ini?')) {
-                this.listKeluarga.splice(index, 1);
+            if (!confirm('Hapus data keluarga ini?')) return;
+
+            this.listKeluarga.splice(index, 1);
+
+            if (this.editKeluargaIndex === index) {
+                this.batalEditKeluarga();
+            } else if (
+                this.editKeluargaIndex !== null &&
+                index < this.editKeluargaIndex
+            ) {
+                this.editKeluargaIndex -= 1;
             }
         },
 
         // ================= HANDLE BATAL =================
-
         handleBatal() {
             if (confirm('Batalkan semua perubahan dan kembali?')) {
                 window.history.back();
-                // atau
-                // this.$router.push('/employees');
             }
         },
     },

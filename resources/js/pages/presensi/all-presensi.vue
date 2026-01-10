@@ -442,7 +442,7 @@ export default {
         async fetchAbsensi(page = 1) {
             this.loading = true;
             try {
-                const res = await axios.get('/logs/presensi', {
+                const res = await axios.get('/logs/presensi/all', {
                     params: {
                         search: this.search,
                         status: this.status,

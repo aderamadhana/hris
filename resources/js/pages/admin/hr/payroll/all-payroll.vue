@@ -102,7 +102,7 @@
                                 </td>
                                 <td class="actions-cell">
                                     <Link
-                                        :href="`/master/payroll-period/${period.id}/edit`"
+                                        :href="`/hr/payroll/${period.id}/edit`"
                                         class="action-btn emoji primary"
                                         title="Edit"
                                     >
@@ -250,7 +250,7 @@ export default {
             this.loadingPeriods = true;
 
             try {
-                const res = await axios.get('/master/payroll-period', {
+                const res = await axios.get('/hr/payroll/all', {
                     params: {
                         search: this.search,
                         status: this.status,
@@ -276,11 +276,11 @@ export default {
                 return;
 
             try {
-                await axios.delete(`/master/payroll-period/delete/${id}`);
+                await axios.delete(`/hr/payroll/delete/${id}`);
 
                 triggerAlert('success', 'Periode payroll berhasil dihapus');
 
-                this.$inertia.visit('/master/payroll-period/all-data');
+                this.$inertia.visit('/hr/payroll');
             } catch (error) {
                 console.error(error);
                 triggerAlert('error', 'Gagal menghapus periode payroll');
@@ -324,7 +324,7 @@ export default {
             return months[month] || '';
         },
         tambahPeriode() {
-            this.$inertia.visit('/master/payroll-period/create');
+            this.$inertia.visit('/hr/payroll/create');
         },
     },
 
