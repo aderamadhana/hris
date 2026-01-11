@@ -1,0 +1,66 @@
+name: Deploy to Development Server
+
+on:
+  push:
+    branches:
+      - development
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Setup SSH agent
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # 3. Add server to known_hosts
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H 202.155.157.251 >> ~/.ssh/known_hosts
+
+      # 4. Deploy to server (FAIL FAST)
+      - name: Deploy to server
+        run: |
+          ssh root@202.155.157.251 << 'ENDSSH'
+            set -e
+            set -o pipefail
+
+            echo "===> Entering project directory"
+            cd /var/www/hris.aderamadhana.com
+
+            echo "===> Pulling latest code"
+            git fetch origin
+            git reset --hard origin/development
+
+            echo "===> PHP & Composer"
+            php -v
+            composer -V
+            composer install --no-dev --optimize-autoloader --no-interaction
+
+            echo "===> Node & NPM"
+            node -v
+            npm -v
+            npm ci
+
+            echo "===> Build frontend assets"
+            npm run build
+
+            echo "===> Laravel optimize & migrate"
+            php artisan migrate --force
+            php artisan optimize:clear
+            php artisan optimize
+
+            echo "===> Permissions"
+            chown -R www-data:www-data .
+            chmod -R 755 storage bootstrap/cache
+
+            echo "===> Deployment finished successfully"
+          ENDSSH

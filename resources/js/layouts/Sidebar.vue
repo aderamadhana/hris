@@ -1,136 +1,370 @@
 <script setup>
+import { triggerAlert } from '@/utils/alert';
 import { Link, usePage } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
+
 const page = usePage();
+const user = computed(() => page.props.auth?.user);
+
+// pakai path tanpa query biar active-state tidak ke-distract ?page=...
+const path = computed(() => (page.url ?? '').split('?')[0]);
+
+// open/close state per group
+const hrOpen = ref(false);
+const marketingOpen = ref(false);
+const logOpen = ref(false);
+const insuranceOpen = ref(false);
+
+// ACTIVE matchers (ubah prefix sesuai routing project kamu)
+const isHrActive = computed(() => {
+    return (
+        path.value.startsWith('/hr/karyawan') || // ✅ tambah ini
+        path.value.startsWith('/hr/pelamar') || // kalau ada
+        path.value.startsWith('/karyawan') || // kalau masih dipakai
+        path.value.startsWith('/pelamar') || // kalau masih dipakai
+        path.value.startsWith('/hr/payroll') ||
+        path.value.startsWith('/hr/surat-peringatan') ||
+        path.value.startsWith('/hr/lowongan-kerja')
+    );
+});
+
+const isMarketingActive = computed(() => {
+    return (
+        path.value.startsWith('/master/client') ||
+        path.value.startsWith('/marketing')
+    );
+});
+
+const isLogActive = computed(() => {
+    return path.value.startsWith('/logs');
+});
+
+const isInsuranceActive = computed(() => {
+    return (
+        path.value.startsWith('/asuransi') ||
+        path.value.startsWith('/insurance') ||
+        path.value.startsWith('/bpjs')
+    );
+});
+
+// helper: tutup semua group
+const closeAllGroups = () => {
+    hrOpen.value = false;
+    marketingOpen.value = false;
+    logOpen.value = false;
+    insuranceOpen.value = false;
+};
+
+// sinkronisasi open state saat route berubah (hanya 1 yang boleh open)
+const syncOpenStates = () => {
+    closeAllGroups();
+
+    if (isHrActive.value) hrOpen.value = true;
+    else if (isMarketingActive.value) marketingOpen.value = true;
+    else if (isLogActive.value) logOpen.value = true;
+    else if (isInsuranceActive.value) insuranceOpen.value = true;
+};
+
+syncOpenStates();
+watch(path, syncOpenStates);
+
+// actions (accordion: toggle satu, lainnya auto close)
+const toggleHr = () => {
+    const next = !hrOpen.value;
+    closeAllGroups();
+    hrOpen.value = next;
+};
+
+const toggleMarketing = () => {
+    const next = !marketingOpen.value;
+    closeAllGroups();
+    marketingOpen.value = next;
+};
+
+const toggleLog = () => {
+    const next = !logOpen.value;
+    closeAllGroups();
+    logOpen.value = next;
+};
+
+const toggleInsurance = () => {
+    const next = !insuranceOpen.value;
+    closeAllGroups();
+    insuranceOpen.value = next;
+};
+
+const fiturBelumTersedia = () => {
+    triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
+};
 </script>
 
 <template>
     <aside class="sidebar">
         <div class="brand">
-            <div class="brand-logo">M</div>
-            <span class="brand-text">TAB</span>
-
-            <!-- <div class="logo-image-sidebar">
-                <img
-                    src="assets/images/logo_kecil.png"
-                    alt="HRIS Logo"
-                    loading="lazy"
-                />
-            </div> -->
+            <span class="brand-title">Menu</span>
         </div>
 
-        <nav class="sidebar-nav" v-if="user.role_id == 1">
+        <!-- ADMIN -->
+        <nav class="sidebar-nav" v-if="user?.role_id == 1">
+            <!-- Dashboard -->
             <Link
                 href="/dashboard"
                 class="sidebar-item"
-                :class="{ active: page.url === '/dashboard' }"
+                :class="{ active: path === '/dashboard' }"
             >
-                <span class="icon">🏠</span>
+                <font-awesome-icon icon="house" class="icon" />
                 <span class="label">Dashboard</span>
             </Link>
 
-            <Link
-                href="/karyawan/all-karyawan"
-                class="sidebar-item"
-                :class="{
-                    active: page.url.startsWith('/karyawan/all-karyawan'),
-                }"
-            >
-                <span class="icon">🧑‍💼</span>
-                <span class="label">Data Karyawan</span>
-            </Link>
+            <!-- Human Resource -->
+            <div class="sidebar-group" :class="{ open: hrOpen }">
+                <button
+                    type="button"
+                    class="sidebar-item sidebar-item--toggle"
+                    :class="{ active: isHrActive }"
+                    @click="toggleHr"
+                >
+                    <font-awesome-icon icon="folder-open" class="icon" />
+                    <span class="label">Human Resource</span>
+                    <span class="caret" :class="{ open: hrOpen }">▾</span>
+                </button>
 
-            <Link
-                href="/pelamar/all-pelamar"
-                class="sidebar-item"
-                :class="{
-                    active: page.url.startsWith('/pelamar/all-pelamar'),
-                }"
-            >
-                <span class="icon">📝</span>
-                <span class="label">Data Pelamar</span>
-            </Link>
-            <Link
-                @click="fiturBelumTersedia()"
-                class="sidebar-item"
-                :class="{ active: page.url.startsWith('/admin/master-client') }"
-            >
-                <span class="icon">🏢</span>
-                <span class="label">Master Client</span>
-            </Link>
+                <transition name="sb-collapse">
+                    <div v-show="hrOpen" class="sidebar-submenu">
+                        <Link
+                            href="/hr/karyawan"
+                            class="sidebar-subitem"
+                            :class="{ active: path.startsWith('/hr/karyawan') }"
+                        >
+                            <span>Karyawan</span>
+                        </Link>
 
-            <Link
-                href="/master/payroll-period/all-data"
-                class="sidebar-item"
-                :class="{
-                    active: page.url.startsWith('/master/payroll-period'),
-                }"
-            >
-                <span class="icon">📅</span>
-                <span class="label">Master Periode Gaji</span>
-            </Link>
+                        <Link
+                            href="/hr/pelamar"
+                            class="sidebar-subitem"
+                            :class="{ active: path.startsWith('/hr/pelamar') }"
+                        >
+                            <span>Pelamar</span>
+                        </Link>
+
+                        <Link
+                            href="/hr/payroll"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith('/hr/payroll'),
+                            }"
+                        >
+                            <span>Payroll</span>
+                        </Link>
+
+                        <Link
+                            href="/hr/surat-peringatan"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith('/hr/surat-peringatan'),
+                            }"
+                        >
+                            <span>Surat Peringatan</span>
+                        </Link>
+
+                        <Link
+                            href="/hr/lowongan-kerja"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith('/hr/lowongan-kerja'),
+                            }"
+                        >
+                            <span>Lowongan Kerja</span>
+                        </Link>
+                    </div>
+                </transition>
+            </div>
+
+            <!-- Marketing -->
+            <div class="sidebar-group" :class="{ open: marketingOpen }">
+                <button
+                    type="button"
+                    class="sidebar-item sidebar-item--toggle"
+                    :class="{ active: isMarketingActive }"
+                    @click="toggleMarketing"
+                >
+                    <font-awesome-icon icon="layer-group" class="icon" />
+                    <span class="label">Marketing</span>
+                    <span class="caret" :class="{ open: marketingOpen }"
+                        >▾</span
+                    >
+                </button>
+
+                <transition name="sb-collapse">
+                    <div v-show="marketingOpen" class="sidebar-submenu">
+                        <Link
+                            href="/marketing/client/aktif"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith(
+                                    '/marketing/client/aktif',
+                                ),
+                            }"
+                        >
+                            <span>Client Aktif</span>
+                        </Link>
+
+                        <Link
+                            href="/marketing/client/non-aktif"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith(
+                                    '/marketing/client/nonaktif',
+                                ),
+                            }"
+                        >
+                            <span>Client Nonaktif</span>
+                        </Link>
+                    </div>
+                </transition>
+            </div>
+
+            <!-- Log Data -->
+            <div class="sidebar-group" :class="{ open: logOpen }">
+                <button
+                    type="button"
+                    class="sidebar-item sidebar-item--toggle"
+                    :class="{ active: isLogActive }"
+                    @click="toggleLog"
+                >
+                    <font-awesome-icon icon="clock-rotate-left" class="icon" />
+                    <span class="label">Log Data</span>
+                    <span class="caret" :class="{ open: logOpen }">▾</span>
+                </button>
+
+                <transition name="sb-collapse">
+                    <div v-show="logOpen" class="sidebar-submenu">
+                        <Link
+                            href="/logs/presensi"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith('/logs/presensi'),
+                            }"
+                        >
+                            <span>Data Presensi</span>
+                        </Link>
+
+                        <Link
+                            href="/logs/aktivitas"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith('/logs/aktivitas'),
+                            }"
+                        >
+                            <span>Data Aktivitas</span>
+                        </Link>
+                    </div>
+                </transition>
+            </div>
+
+            <!-- Asuransi -->
+            <div class="sidebar-group" :class="{ open: insuranceOpen }">
+                <button
+                    type="button"
+                    class="sidebar-item sidebar-item--toggle"
+                    :class="{ active: isInsuranceActive }"
+                    @click="toggleInsurance"
+                >
+                    <font-awesome-icon icon="shield-halved" class="icon" />
+                    <span class="label">Asuransi</span>
+                    <span class="caret" :class="{ open: insuranceOpen }"
+                        >▾</span
+                    >
+                </button>
+
+                <transition name="sb-collapse">
+                    <div v-show="insuranceOpen" class="sidebar-submenu">
+                        <Link
+                            href="/asuransi/bpjs-kesehatan"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith(
+                                    '/asuransi/bpjs-kesehatan',
+                                ),
+                            }"
+                        >
+                            <span>BPJS Kesehatan</span>
+                        </Link>
+
+                        <Link
+                            href="/asuransi/bpjs-ketenagakerjaan"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith(
+                                    '/asuransi/bpjs-ketenagakerjaan',
+                                ),
+                            }"
+                        >
+                            <span>BPJS Ketenagakerjaan</span>
+                        </Link>
+
+                        <Link
+                            href="/asuransi/kecelakaan-kerja"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith(
+                                    '/asuransi/kecelakaan-kerja',
+                                ),
+                            }"
+                        >
+                            <span>Input Kecelakaan Kerja</span>
+                        </Link>
+                    </div>
+                </transition>
+            </div>
         </nav>
-        <nav class="sidebar-nav" v-if="user.role_id == 2">
+
+        <!-- KARYAWAN -->
+        <nav class="sidebar-nav" v-if="user?.role_id == 2">
             <Link
                 href="/dashboard"
                 class="sidebar-item"
-                :class="{ active: page.url === '/dashboard' }"
+                :class="{ active: path === '/dashboard' }"
             >
-                <span class="icon">🏠</span>
+                <font-awesome-icon icon="house" class="icon" />
                 <span class="label">Dashboard</span>
             </Link>
 
             <Link
                 href="/attendance"
                 class="sidebar-item"
-                :class="{ active: page.url.startsWith('/attendance') }"
+                :class="{ active: path.startsWith('/attendance') }"
             >
-                <span class="icon">🕒</span>
+                <font-awesome-icon icon="clock" class="icon" />
                 <span class="label">Absensi</span>
             </Link>
 
             <Link
                 href="/salary"
                 class="sidebar-item"
-                :class="{ active: page.url.startsWith('/salary') }"
+                :class="{ active: path.startsWith('/salary') }"
             >
-                <span class="icon">🧾</span>
+                <font-awesome-icon icon="file-invoice-dollar" class="icon" />
                 <span class="label">Slip Gaji</span>
             </Link>
 
             <Link
-                @click="fiturBelumTersedia()"
+                href="/riwayat-kontrak"
                 class="sidebar-item"
-                :class="{ active: page.url.startsWith('/contracts') }"
+                :class="{ active: path.startsWith('/riwayat-kontrak') }"
             >
-                <span class="icon">📄</span>
+                <font-awesome-icon icon="file-contract" class="icon" />
                 <span class="label">Riwayat Kontrak</span>
             </Link>
 
             <Link
-                @click="fiturBelumTersedia()"
+                href="/surat-peringatan"
                 class="sidebar-item"
-                :class="{ active: page.url.startsWith('/warnings') }"
+                :class="{ active: path.startsWith('/surat-peringatan') }"
             >
-                <span class="icon">⚠️</span>
+                <font-awesome-icon icon="triangle-exclamation" class="icon" />
                 <span class="label">Surat Peringatan</span>
             </Link>
         </nav>
     </aside>
 </template>
-<script>
-import { triggerAlert } from '@/utils/alert';
-
-export default {
-    data() {
-        const page = usePage();
-        return {
-            user: page.props.auth.user,
-        };
-    },
-    methods: {
-        fiturBelumTersedia() {
-            triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
-        },
-    },
-};
-</script>

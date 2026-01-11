@@ -1,7 +1,13 @@
 <template>
     <header class="header" ref="headerRef">
-        <!-- LEFT: LOGO / BRAND + CABANG -->
         <div class="header-left">
+            <button
+                class="sidebar-toggle"
+                type="button"
+                @click="$emit('toggle-sidebar')"
+            >
+                <font-awesome-icon icon="bars" />
+            </button>
             <div class="logo-image-sidebar">
                 <img
                     src="/assets/images/logo_baru.png"
@@ -12,26 +18,6 @@
 
             <!-- SWITCH CABANG -->
             <div class="branch-wrapper" v-if="user.role_id == 1">
-                <!-- <button
-                    type="button"
-                    class="branch-pill"
-                    @click.stop="toggleBranchMenu"
-                >
-                    <div class="branch-icon">🏢</div>
-                    <div class="branch-info">
-                        <div class="branch-label">Cabang</div>
-                        <div class="branch-name">
-                            {{ activeBranch.name }}
-                        </div>
-                    </div>
-                    <span
-                        class="branch-chevron"
-                        :class="{ open: branchMenuOpen }"
-                    >
-                        ▾
-                    </span>
-                </button> -->
-
                 <!-- MENU CABANG -->
                 <div v-if="branchMenuOpen" class="branch-menu">
                     <button
@@ -86,7 +72,7 @@
                     class="user-menu-item"
                     @click.prevent="goProfile"
                 >
-                    <span>👤</span>
+                    <font-awesome-icon icon="user" />
                     <span>Profile</span>
                 </Link>
 
@@ -95,7 +81,7 @@
                     class="user-menu-item"
                     @click.prevent="goChangePassword"
                 >
-                    <span>🔑</span>
+                    <font-awesome-icon icon="key" />
                     <span>Ganti Password</span>
                 </Link>
 
@@ -105,7 +91,7 @@
                     as="button"
                     class="user-menu-item danger"
                 >
-                    <span>🚪</span>
+                    <font-awesome-icon icon="right-from-bracket" />
                     <span>Logout</span>
                 </Link>
             </div>

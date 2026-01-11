@@ -8,7 +8,7 @@
             <div class="auth-left">
                 <div class="brand-center">
                     <img
-                        src="/assets/images/logo_baru.png"
+                        src="/assets/images/hris.png"
                         alt="PT Mitra Wira Mas"
                         class="brand-logo-login"
                     />
@@ -18,6 +18,11 @@
             <!-- RIGHT: login -->
             <div class="auth-right">
                 <div class="login-card">
+                    <img
+                        src="/assets/images/logo_baru.png"
+                        alt="PT Mitra Wira Mas"
+                        class="brand-logo-login"
+                    />
                     <h2>Masuk ke akun Anda</h2>
                     <p class="subtitle">
                         Gunakan NIK dan kata sandi yang sudah didaftarkan.
@@ -49,12 +54,18 @@
                                     :class="{ 'has-error': errors.password }"
                                     required
                                 />
+
                                 <button
                                     type="button"
                                     class="toggle-password"
                                     @click="showPassword = !showPassword"
+                                    aria-label="Toggle password visibility"
                                 >
-                                    {{ showPassword ? '🙈' : '👁️' }}
+                                    <font-awesome-icon
+                                        :icon="
+                                            showPassword ? 'eye-slash' : 'eye'
+                                        "
+                                    />
                                 </button>
                             </div>
 
@@ -62,10 +73,10 @@
                                 {{ errors.password[0] }}
                             </small>
 
-                            <div class="helper-row">
+                            <!-- <div class="helper-row">
                                 <small>* minimal 5 karakter</small>
                                 <a class="forgot" href="#">Lupa Kata Sandi?</a>
-                            </div>
+                            </div> -->
                         </div>
 
                         <button
@@ -82,7 +93,10 @@
                     </form>
 
                     <p class="footer-note">
-                        Butuh bantuan? <a href="#">Hubungi admin HR</a>
+                        Butuh bantuan?
+                        <a href="https://wa.me/628813123960" target="_blank"
+                            >Hubungi admin HR</a
+                        >
                     </p>
                 </div>
             </div>
@@ -610,5 +624,23 @@ small {
     to {
         transform: rotate(360deg);
     }
+}
+.password {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+}
+
+.toggle-password:hover {
+    color: #000;
 }
 </style>

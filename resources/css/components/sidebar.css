@@ -1,0 +1,488 @@
+/* =====================
+   SIDEBAR (Vue) — COMPACT VERSION
+   - Base layout
+   - Brand
+   - Nav items + hover/active premium
+   - Master collapse submenu
+   - Sticky + scroll
+   - Responsive + width tuning (iPad/desktop)
+===================== */
+
+/* ===== TOKENS ===== */
+:root{
+  --header-h: 64px;
+
+  --sb-bg1: rgba(15, 23, 42, 0.97);
+  --sb-bg2: rgba(30, 41, 59, 0.95);
+
+  --sb-text: #f9fafb;
+  --sb-muted: #cbd5e1;
+
+  --sb-border: rgba(148, 163, 184, 0.12);
+  --sb-border-2: rgba(148, 163, 184, 0.22);
+
+  --sb-accent: #0ea5e9;
+  --sb-accent2: #6366f1;
+  --sb-success: #22c55e;
+}
+
+/* ===== BASE ===== */
+.sidebar{
+  width: 90px;
+  background: linear-gradient(
+    180deg,
+    var(--sb-bg1) 0%,
+    var(--sb-bg2) 50%,
+    var(--sb-bg1) 100%
+  );
+  backdrop-filter: blur(20px);
+
+  padding: 16px 8px;
+  color: var(--sb-text);
+
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap: 20px;
+
+  box-shadow:
+    4px 0 24px rgba(15, 23, 42, 0.4),
+    inset -1px 0 0 rgba(148, 163, 184, 0.1);
+
+  position: sticky;
+  top: var(--header-h);
+  height: calc(100dvh - var(--header-h));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+/* background glow top */
+.sidebar::before{
+  content:"";
+  position:absolute;
+  top:0; left:0; right:0;
+  height:120px;
+  background: radial-gradient(ellipse at top, rgba(14,165,233,.16), transparent);
+  pointer-events:none;
+}
+
+/* ===== BRAND ===== */
+.brand{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 8px 0 12px;
+  position:relative;
+}
+
+.brand::after{
+  content:"";
+  position:absolute;
+  bottom:0;
+  left:50%;
+  transform: translateX(-50%);
+  width:60%;
+  height:1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(148,163,184,.30),
+    transparent
+  );
+}
+
+.brand-title{
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  color: var(--sb-text);
+  line-height:1;
+}
+
+/* ===== NAV ===== */
+.sidebar-nav{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:4px;
+}
+
+/* parent item */
+.sidebar-item{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+
+  padding: 12px 8px;
+  min-height: 68px;
+
+  text-decoration:none;
+  color: var(--sb-muted);
+
+  border-radius: 14px;
+  font-size: 10px;
+
+  background: rgba(51,65,85,.30);
+  border: 1px solid var(--sb-border);
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease,
+    background-color .18s ease;
+
+  overflow:hidden;
+}
+
+/* soft layer for hover/active */
+.sidebar-item::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: linear-gradient(135deg, rgba(14,165,233,.14), rgba(99,102,241,.12));
+  opacity:0;
+  transition: opacity .18s ease;
+}
+
+.sidebar-item .icon{
+  font-size:24px;
+  line-height:1;
+  position:relative;
+  z-index:1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.30));
+  transition: transform .18s ease, filter .18s ease;
+}
+
+.sidebar-item .label{
+  font-size:10px;
+  letter-spacing:.02em;
+  font-weight:700;
+  position:relative;
+  z-index:1;
+  text-align:center;
+  line-height:1.25;
+  max-width:100%;
+  word-wrap:break-word;
+  white-space:normal;
+  overflow-wrap:break-word;
+}
+
+/* ===== HOVER ===== */
+.sidebar-item:hover{
+  background: rgba(51,65,85,.55);
+  border-color: var(--sb-border-2);
+  color: #f0f9ff;
+  transform: translateX(2px);
+  box-shadow: -4px 8px 18px rgba(14,165,233,.12);
+}
+.sidebar-item:hover::before{ opacity:1; }
+.sidebar-item:hover .icon{ transform: scale(1.10); }
+
+/* ===== ACTIVE ===== */
+.sidebar-item.active{
+  background: linear-gradient(135deg, rgba(14,165,233,.30) 0%, rgba(99,102,241,.22) 100%);
+  border-color: rgba(59,130,246,.55);
+  color:#fff;
+
+  box-shadow:
+    0 16px 34px rgba(14,165,233,.22),
+    inset 0 1px 0 rgba(255,255,255,.14);
+
+  transform: translateX(2px);
+}
+
+.sidebar-item.active::before{ opacity:1; }
+
+/* accent bar kiri */
+.sidebar-item.active::after{
+  content:"";
+  position:absolute;
+  left:0;
+  top:10px;
+  bottom:10px;
+  width:4px;
+  border-radius:999px;
+  background: linear-gradient(180deg, var(--sb-success), var(--sb-accent));
+  box-shadow: 0 0 16px rgba(34,197,94,.35);
+}
+
+.sidebar-item.active .icon{
+  transform: scale(1.08);
+  filter: drop-shadow(0 8px 16px rgba(14,165,233,.45));
+}
+
+/* ===== GROUP / COLLAPSE ===== */
+.sidebar-group{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* parent collapse button: gunakan juga class sidebar-item */
+.sidebar-item--toggle{
+  border:none;
+  cursor:pointer;
+  padding-right: 32px;
+}
+
+/* caret */
+.caret{
+  position:absolute;
+  right:10px;
+  top:12px;
+  font-size:11px;
+  color: rgba(226,232,240,.85);
+  z-index:2;
+  transition: transform .18s ease, opacity .18s ease;
+  opacity:.85;
+}
+.caret.open{
+  transform: rotate(180deg);
+  opacity:1;
+}
+
+/* submenu */
+.sidebar-submenu{
+  margin-top: 6px;
+  margin-left: 14px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(148,163,184,.18);
+
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+/* submenu item */
+.sidebar-subitem{
+  position:relative;
+  display:flex;
+  align-items:center;
+
+  padding: 9px 8px 9px 16px;
+  border-radius: 11px;
+
+  text-decoration:none;
+  color: rgba(226,232,240,.92);
+  font-size:11px;
+  font-weight:700;
+  line-height:1.2;
+
+  background: transparent;
+  border: 1px solid transparent;
+
+  transition:
+    background-color .16s ease,
+    border-color .16s ease,
+    transform .16s ease,
+    box-shadow .16s ease;
+}
+
+/* dot */
+.sidebar-subitem::before{
+  content:"";
+  position:absolute;
+  left:7px;
+  width:5px;
+  height:5px;
+  border-radius:999px;
+  background: rgba(203,213,225,.65);
+}
+
+.sidebar-subitem:hover{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(148,163,184,.16);
+  transform: translateX(2px);
+}
+
+.sidebar-subitem.active{
+  background: linear-gradient(135deg, rgba(14,165,233,.18), rgba(99,102,241,.12));
+  border-color: rgba(59,130,246,.38);
+  color:#fff;
+  box-shadow: 0 12px 24px rgba(2,6,23,.18);
+}
+.sidebar-subitem.active::before{
+  background: var(--sb-success);
+  box-shadow:
+    0 0 0 4px rgba(34,197,94,.18),
+    0 0 14px rgba(34,197,94,.45);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes sidebar-shimmer{
+  0%,100%{ transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+  50%{ transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+.sidebar-shell{ width: auto; }  /* desktop normal */
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px){
+  .sidebar-shell {
+    width: 30% !important;
+  }
+}
+
+/* tablet portrait */
+@media (max-width: 1024px){
+  .sidebar{
+    width: 90px;
+    padding: 14px 8px;
+  }
+  .brand-logo{
+    width:34px;
+    height:34px;
+    font-size:16px;
+  }
+  .sidebar-item{
+    padding: 10px 8px;
+    min-height: 64px;
+  }
+  .sidebar-item .icon{ font-size:22px; }
+}
+
+/* mobile: tetap usable */
+@media (max-width: 640px){
+  .sidebar{
+    width: 72px;
+    padding-inline: 6px;
+    gap: 16px;
+  }
+  .sidebar-submenu{
+    margin-left: 10px;
+    padding-left: 6px;
+    gap: 5px;
+    border-left-width: 1px;
+  }
+
+  .sidebar-subitem{
+    padding: 7px 6px 7px 12px;
+    font-size: 10px;
+    border-radius: 10px;
+  }
+
+  .sidebar-subitem::before{
+    left: 5px;
+    width: 4px;
+    height: 4px;
+  }
+
+  .sidebar-item{
+    min-height: 62px;
+    border-radius: 12px;
+    padding: 10px 6px;
+  }
+  .sidebar-item .icon{ font-size: 20px; }
+  .sidebar-item .label{ font-size: 9.5px; }
+}
+
+/* =====================================
+   SIDEBAR WIDTH FIX (iPad 820 & Desktop)
+===================================== */
+
+/* TABLET (iPad Air 820px) */
+@media (min-width: 769px) and (max-width: 1024px){
+  .sidebar{
+    width: 130px;
+    padding: 14px 8px;
+  }
+
+  /* sub menu sedikit lebih mepet (biar gak "ngambang") */
+  .sidebar-submenu{
+    margin-left: 12px;
+    padding-left: 7px;
+  }
+  .sidebar-subitem{
+    padding-left: 16px;
+  }
+  .sidebar-subitem::before{
+    left: 6px;
+  }
+}
+
+/* DESKTOP normal */
+@media (min-width: 1025px) and (max-width: 1439px){
+  .sidebar{
+    width: 110px;
+  }
+}
+
+/* DESKTOP besar */
+@media (min-width: 1440px){
+  .sidebar{
+    width: 155px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .sidebar {
+        width: 140px;
+        padding: 14px 8px;
+    }
+}
+
+/* =========================
+   ANIMASI BUKA / TUTUP SUBMENU
+========================= */
+.sb-collapse-enter-active,
+.sb-collapse-leave-active{
+  overflow: hidden;
+  transition:
+    max-height .22s ease,
+    opacity .18s ease,
+    transform .18s ease;
+  will-change: max-height, opacity, transform;
+}
+
+.sb-collapse-enter-from,
+.sb-collapse-leave-to{
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.sb-collapse-enter-to,
+.sb-collapse-leave-from{
+  max-height: 520px; /* cukup besar utk semua submenu */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =========================
+   ANIMASI ITEM SUBMENU (SAAT OPEN)
+========================= */
+@keyframes sbSubitemIn{
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* saat group open, subitem masuk dengan sedikit stagger */
+.sidebar-group.open .sidebar-subitem{
+  animation: sbSubitemIn .18s ease both;
+}
+
+.sidebar-group.open .sidebar-subitem:nth-child(1){ animation-delay: .02s; }
+.sidebar-group.open .sidebar-subitem:nth-child(2){ animation-delay: .04s; }
+.sidebar-group.open .sidebar-subitem:nth-child(3){ animation-delay: .06s; }
+.sidebar-group.open .sidebar-subitem:nth-child(4){ animation-delay: .08s; }
+.sidebar-group.open .sidebar-subitem:nth-child(5){ animation-delay: .10s; }
+.sidebar-group.open .sidebar-subitem:nth-child(6){ animation-delay: .12s; }
+.sidebar-group.open .sidebar-subitem:nth-child(7){ animation-delay: .14s; }
+.sidebar-group.open .sidebar-subitem:nth-child(8){ animation-delay: .16s; }
+
+/* =========================
+   ANIMASI FEELING PADA TOGGLE (OPSIONAL)
+========================= */
+.sidebar-group.open > .sidebar-item--toggle{
+  background: rgba(51,65,85,.55);
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+.sidebar-item--toggle:active{
+  transform: scale(.98);
+}

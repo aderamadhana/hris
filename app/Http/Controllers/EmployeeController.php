@@ -103,6 +103,8 @@ class EmployeeController extends Controller
                 'name' => $e->nama,
                 'nrp' => $e->nrp,
                 'nik' => $e->no_ktp ?? '-',
+                'shift_id' => $e->shift_id,
+                'shift' => $e->shift,
 
                 'tanggal_lahir' => $e->tanggal_lahir
                     ? \Carbon\Carbon::parse($e->tanggal_lahir)->format('d/m/Y')
@@ -164,8 +166,6 @@ class EmployeeController extends Controller
         ]);
     }
 
-
-
     public function profil($id)
     {
         $user = Auth::user()->load([
@@ -173,7 +173,7 @@ class EmployeeController extends Controller
             'role',
         ]);
         
-        return Inertia::render('employee/Profil', [
+        return Inertia::render('admin/hr/karyawan/profil', [
             'user' => $user,
         ]);
     } 
@@ -544,13 +544,32 @@ class EmployeeController extends Controller
                     }
                 }
             }
-            
 
-            // 2. Create Employee (semua data langsung di table employees)
+            // 2. Create user DULU jika memenuhi syarat (SEBELUM create employee)
+            if ($shouldCreateUser && $request->no_ktp) {
+                $existingUser = User::where('no_ktp', $request->no_ktp)->first();
+                
+                if (!$existingUser) {
+                    $user = User::create([
+                        'name' => $request->nama,
+                        'email' => $request->email,
+                        'no_ktp' => $request->no_ktp,
+                        'employee_id' => null, // Akan di-update setelah employee dibuat
+                        'password' => Hash::make($request->no_ktp),
+                        'role_id' => '2',
+                        'email_verified_at' => now(),
+                    ]);
+                    $userId = $user->id;
+                } else {
+                    $userId = $existingUser->id;
+                }
+            }
+
+            // 3. Create Employee (dengan user_id yang sudah ada)
             $employee = Employee::create([
                 // Data utama
                 'nrp' => $request->nrp,
-                'user_id' => $userId,
+                'user_id' => $userId, // Sekarang sudah ada nilai jika shouldCreateUser = true
                 'nama' => $request->nama,
                 'jenis_kelamin' => $request->jenis_kelamin,
                 'tempat_lahir' => $request->tempat_lahir,
@@ -581,27 +600,12 @@ class EmployeeController extends Controller
                 'kota_domisili' => $request->kota_domisili,
             ]);
 
-            // Create user jika memenuhi syarat
-            if ($shouldCreateUser && $request->no_ktp) {
-                $existingUser = User::where('no_ktp', $request->no_ktp)->first();
-                
-                if (!$existingUser) {
-                    $user = User::create([
-                        'name' => $request->nama,
-                        'email' => $request->email,
-                        'no_ktp' => $request->no_ktp,
-                        'employee_id' => $employee->id,
-                        'password' => Hash::make($request->no_ktp),
-                        'role_id' => '2',
-                        'email_verified_at' => now(),
-                    ]);
-                    $userId = $user->id;
-                } else {
-                    $userId = $existingUser->id;
-                }
+            // 4. Update employee_id di user jika user baru dibuat
+            if ($userId && isset($user)) {
+                $user->update(['employee_id' => $employee->id]);
             }
 
-            // 3. Create Employee Education Records
+            // 5. Create Employee Education Records
             if ($request->pendidikan) {
                 $pendidikanList = json_decode($request->pendidikan, true);
                 
@@ -618,7 +622,7 @@ class EmployeeController extends Controller
                 }
             }
 
-            // 4. Create Employee Employment History
+            // 6. Create Employee Employment History
             if ($request->pekerjaan) {
                 $pekerjaanList = json_decode($request->pekerjaan, true);
                 
@@ -643,7 +647,7 @@ class EmployeeController extends Controller
                 }
             }
 
-            // 5. Create Employee Family Members
+            // 7. Create Employee Family Members
             if ($request->keluarga) {
                 $keluargaList = json_decode($request->keluarga, true);
                 
@@ -665,7 +669,7 @@ class EmployeeController extends Controller
                 }
             }
 
-            // 6. Create Employee Health Record
+            // 8. Create Employee Health Record
             EmployeeHealth::create([
                 'employee_id' => $employee->id,
                 'tinggi_badan' => $request->tinggi_badan,
@@ -689,7 +693,7 @@ class EmployeeController extends Controller
                 'kesimpulan_hasil_mcu' => $request->kesimpulan_hasil_mcu,
             ]);
 
-            // 7. Handle Document Uploads
+            // 9. Handle Document Uploads
             $this->handleDocumentUploads($request, $employee->id);
 
             DB::commit();
@@ -720,7 +724,7 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
 
-        return Inertia::render('admin/EditKaryawan', [
+        return Inertia::render('admin/hr/karyawan/edit-karyawan', [
             'employee_id' => $employee->id
         ]);
 
