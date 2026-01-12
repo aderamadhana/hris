@@ -28,9 +28,10 @@
             </div>
 
             <!-- Toolbar -->
-            <div class="dt-toolbar">
-                <div class="dt-length">
-                    <label>
+            <div class="dt-toolbar-mobile">
+                <!-- Row 1: Length & Search -->
+                <div class="dt-row-main">
+                    <label class="dt-length-compact">
                         Tampil
                         <select v-model.number="perPage" @change="fetchAbsensi">
                             <option :value="5">5</option>
@@ -39,297 +40,324 @@
                         </select>
                         data
                     </label>
-                </div>
 
-                <div class="dt-search">
-                    <input
-                        v-model="search"
-                        type="search"
-                        placeholder="Cari nama / kode perusahaan"
-                    />
-                </div>
-            </div>
-
-            <div class="card">
-                <!-- Filter -->
-                <div class="filter-bar">
-                    <div class="filter-right">
-                        <label for="">Filter Perusahaan</label>
-                        <Select2
-                            v-model="filtered_perusahaan"
-                            :settings="{ width: '100%' }"
-                        >
-                            <option value="">Semua Perusahaan</option>
-                            <option
-                                v-for="value in data_filtered_perusahaan"
-                                :value="value"
-                            >
-                                {{ value }}
-                            </option>
-                        </Select2>
-                    </div>
-                    <div class="filter-right">
-                        <label for="">Filter Divisi / Departemen</label>
-                        <Select2
-                            v-model="filtered_jabatan"
-                            :settings="{ width: '100%' }"
-                        >
-                            <option value="">Semua Divisi / Departemen</option>
-                            <option
-                                v-for="value in data_filtered_jabatan"
-                                :value="value"
-                            >
-                                {{ value }}
-                            </option>
-                        </Select2>
-                    </div>
-                    <div class="filter-right">
-                        <label for="">Filter Tanggal Absen</label>
+                    <div class="dt-search-compact">
                         <input
-                            type="date"
-                            v-model="filtered_tanggal_absen"
-                            class="form-control"
+                            v-model="search"
+                            type="search"
+                            placeholder="Cari nama / kode perusahaan"
                         />
                     </div>
-                    <div class="filter-right">
-                        <Button
-                            variant="secondary"
-                            class="filter-btn"
-                            @click="filteredData"
-                        >
-                            <font-awesome-icon
-                                icon="filter"
-                                class="filter-icon"
-                            />
-                            <span>Filter</span>
-                        </Button>
-                    </div>
                 </div>
 
-                <!-- Table -->
-                <div class="table-responsive-custom">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Tanggal Absen</th>
-                                <th>Nama</th>
-                                <th>Perusahaan - Divisi / Departemen</th>
-                                <th>Data Presensi</th>
-                                <th>Status Kehadiran</th>
-                            </tr>
-                        </thead>
+                <!-- Row 2: Filters (collapsible) -->
+                <div class="dt-filters-wrapper">
+                    <button
+                        class="filter-toggle-btn"
+                        @click="showFilters = !showFilters"
+                    >
+                        <font-awesome-icon icon="filter" />
+                        <span>Filter</span>
+                        <font-awesome-icon
+                            :icon="showFilters ? 'chevron-up' : 'chevron-down'"
+                            class="toggle-icon"
+                        />
+                    </button>
 
-                        <tbody>
-                            <tr v-if="loading">
-                                <td colspan="6" class="loading-row">
-                                    <div class="table-spinner">
-                                        <span class="spinner"></span>
-                                        <span class="spinner-text"
-                                            >Memuat data...</span
-                                        >
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <tr v-else-if="items.length === 0">
-                                <td colspan="6" class="empty-row">
-                                    Tidak ada data
-                                </td>
-                            </tr>
-
-                            <tr
-                                v-else
-                                v-for="(item, index) in items"
-                                :key="item.id"
+                    <div class="dt-filters" :class="{ show: showFilters }">
+                        <div class="form-group">
+                            <label for="">Perusahaan</label>
+                            <Select2
+                                v-model="filtered_perusahaan"
+                                :settings="{ width: '100%' }"
                             >
-                                <td>{{ startIndex + index + 1 }}</td>
-                                <td>{{ item.tanggal }}</td>
-                                <td>{{ item.nama_karyawan }}</td>
-                                <td>
-                                    {{ item.nama_perusahaan }} -
-                                    {{ item.nama_divisi }}
-                                </td>
-                                <td>
-                                    <div class="presensi-cell">
-                                        <div>
-                                            <div>
-                                                Shift:
-                                                {{
-                                                    item.data_presensi
-                                                        ?.nama_shift || '-'
-                                                }}
-                                                <template
-                                                    v-if="
-                                                        toHHMM(
-                                                            item.data_presensi
-                                                                ?.jam_masuk,
-                                                        ) &&
-                                                        toHHMM(
-                                                            item.data_presensi
-                                                                ?.jam_pulang,
-                                                        )
-                                                    "
-                                                >
-                                                    ({{
-                                                        toHHMM(
-                                                            item.data_presensi
-                                                                .jam_masuk,
-                                                        )
-                                                    }}
-                                                    -
-                                                    {{
-                                                        toHHMM(
-                                                            item.data_presensi
-                                                                .jam_pulang,
-                                                        )
-                                                    }})
-                                                </template>
-                                                <span
-                                                    v-if="
-                                                        item.data_presensi
-                                                            ?.jam_shift_masuk &&
-                                                        item.data_presensi
-                                                            ?.jam_shift_pulang
-                                                    "
-                                                >
-                                                    ({{
-                                                        item.data_presensi
-                                                            .jam_shift_masuk
-                                                    }}
-                                                    -
-                                                    {{
-                                                        item.data_presensi
-                                                            .jam_shift_pulang
-                                                    }})
-                                                </span>
-                                            </div>
+                                <option value="">Semua Perusahaan</option>
+                                <option
+                                    v-for="value in data_filtered_perusahaan"
+                                    :key="value"
+                                    :value="value"
+                                >
+                                    {{ value }}
+                                </option>
+                            </Select2>
+                        </div>
+                        <div class="form-group">
+                            <label for="">Divisi / Dept</label>
+                            <Select2
+                                v-model="filtered_jabatan"
+                                :settings="{ width: '100%' }"
+                            >
+                                <option value="">Semua Divisi / Dept</option>
+                                <option
+                                    v-for="value in data_filtered_jabatan"
+                                    :key="value"
+                                    :value="value"
+                                >
+                                    {{ value }}
+                                </option>
+                            </Select2>
+                        </div>
+                        <div class="form-group">
+                            <label for="">Tanggal Absen</label>
 
-                                            <div>
-                                                In:
-                                                {{
-                                                    item.data_presensi
-                                                        ?.clock_in || '-'
-                                                }}
-                                            </div>
-                                            <div>
-                                                Out:
-                                                {{
-                                                    item.data_presensi
-                                                        ?.clock_out || '-'
-                                                }}
-                                            </div>
+                            <input
+                                type="date"
+                                v-model="filtered_tanggal_absen"
+                                class="form-control"
+                            />
+                        </div>
 
-                                            <div>
-                                                Durasi:
-                                                <span
-                                                    v-if="
-                                                        item.data_presensi
-                                                            ?.total_jam_kerja_hhmm
-                                                    "
-                                                >
-                                                    {{
-                                                        item.data_presensi
-                                                            .total_jam_kerja_hhmm
-                                                    }}
-                                                </span>
-                                                <span v-else>
-                                                    {{
-                                                        item.data_presensi
-                                                            ?.durasi_label ||
-                                                        '-'
-                                                    }}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div class="presensi-photos">
-                                            <img
-                                                v-if="
-                                                    item.data_presensi
-                                                        ?.foto_masuk_url
-                                                "
-                                                :src="
-                                                    item.data_presensi
-                                                        .foto_masuk_url
-                                                "
-                                                class="thumb"
-                                            />
-                                            <img
-                                                v-if="
-                                                    item.data_presensi
-                                                        ?.foto_pulang_url
-                                                "
-                                                :src="
-                                                    item.data_presensi
-                                                        .foto_pulang_url
-                                                "
-                                                class="thumb"
-                                            />
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style="text-align: center">
-                                    <span
-                                        class="status-pill"
-                                        :class="
-                                            item.status_kehadiran === 'valid'
-                                                ? 'status-open'
-                                                : 'status-closed'
-                                        "
-                                    >
-                                        {{
-                                            item.status_kehadiran ===
-                                            'tidak_valid'
-                                                ? 'Tidak Valid'
-                                                : 'Aktif'
-                                        }}
-                                    </span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                        <div class="form-group filter-actions">
+                            <label class="filter-label">&nbsp;</label>
+                            <Button
+                                variant="secondary"
+                                class="filter-apply-btn"
+                                @click="filteredData"
+                            >
+                                <font-awesome-icon icon="filter" />
+                                Terapkan Filter
+                            </Button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- FOOTER DATATABLE: INFO + PAGINATION -->
-                <div class="dt-footer" v-if="!loading">
-                    <div class="dt-info">
-                        Menampilkan
-                        <strong v-if="totalItems">{{ startIndex + 1 }}</strong>
-                        <strong v-else>0</strong>
-                        &nbsp;–&nbsp;
-                        <strong>{{ endIndex }}</strong>
-                        dari
-                        <strong>{{ totalItems }}</strong>
-                        karyawan
+                <!-- TABLE CARD -->
+                <div class="table-card card">
+                    <div class="table-responsive-custom">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Tanggal Absen</th>
+                                    <th>Nama</th>
+                                    <th>Perusahaan - Divisi / Departemen</th>
+                                    <th>Data Presensi</th>
+                                    <th>Status Kehadiran</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr v-if="loading">
+                                    <td colspan="6" class="loading-row">
+                                        <div class="table-spinner">
+                                            <span class="spinner"></span>
+                                            <span class="spinner-text"
+                                                >Memuat data...</span
+                                            >
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr v-else-if="items.length === 0">
+                                    <td colspan="6" class="empty-row">
+                                        Tidak ada data
+                                    </td>
+                                </tr>
+
+                                <tr
+                                    v-else
+                                    v-for="(item, index) in items"
+                                    :key="item.id"
+                                >
+                                    <td>{{ startIndex + index + 1 }}</td>
+                                    <td>{{ item.tanggal }}</td>
+                                    <td>{{ item.nama_karyawan }}</td>
+                                    <td>
+                                        {{ item.nama_perusahaan }} -
+                                        {{ item.nama_divisi }}
+                                    </td>
+
+                                    <td>
+                                        <div class="presensi-cell">
+                                            <div>
+                                                <div>
+                                                    Shift:
+                                                    {{
+                                                        item.data_presensi
+                                                            ?.nama_shift || '-'
+                                                    }}
+                                                    <template
+                                                        v-if="
+                                                            toHHMM(
+                                                                item
+                                                                    .data_presensi
+                                                                    ?.jam_masuk,
+                                                            ) &&
+                                                            toHHMM(
+                                                                item
+                                                                    .data_presensi
+                                                                    ?.jam_pulang,
+                                                            )
+                                                        "
+                                                    >
+                                                        ({{
+                                                            toHHMM(
+                                                                item
+                                                                    .data_presensi
+                                                                    .jam_masuk,
+                                                            )
+                                                        }}
+                                                        -
+                                                        {{
+                                                            toHHMM(
+                                                                item
+                                                                    .data_presensi
+                                                                    .jam_pulang,
+                                                            )
+                                                        }})
+                                                    </template>
+
+                                                    <span
+                                                        v-if="
+                                                            item.data_presensi
+                                                                ?.jam_shift_masuk &&
+                                                            item.data_presensi
+                                                                ?.jam_shift_pulang
+                                                        "
+                                                    >
+                                                        ({{
+                                                            item.data_presensi
+                                                                .jam_shift_masuk
+                                                        }}
+                                                        -
+                                                        {{
+                                                            item.data_presensi
+                                                                .jam_shift_pulang
+                                                        }})
+                                                    </span>
+                                                </div>
+
+                                                <div>
+                                                    In:
+                                                    {{
+                                                        item.data_presensi
+                                                            ?.clock_in || '-'
+                                                    }}
+                                                </div>
+                                                <div>
+                                                    Out:
+                                                    {{
+                                                        item.data_presensi
+                                                            ?.clock_out || '-'
+                                                    }}
+                                                </div>
+
+                                                <div>
+                                                    Durasi:
+                                                    <span
+                                                        v-if="
+                                                            item.data_presensi
+                                                                ?.total_jam_kerja_hhmm
+                                                        "
+                                                    >
+                                                        {{
+                                                            item.data_presensi
+                                                                .total_jam_kerja_hhmm
+                                                        }}
+                                                    </span>
+                                                    <span v-else>
+                                                        {{
+                                                            item.data_presensi
+                                                                ?.durasi_label ||
+                                                            '-'
+                                                        }}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div class="presensi-photos">
+                                                <img
+                                                    v-if="
+                                                        item.data_presensi
+                                                            ?.foto_masuk_url
+                                                    "
+                                                    :src="
+                                                        item.data_presensi
+                                                            .foto_masuk_url
+                                                    "
+                                                    class="thumb"
+                                                />
+                                                <img
+                                                    v-if="
+                                                        item.data_presensi
+                                                            ?.foto_pulang_url
+                                                    "
+                                                    :src="
+                                                        item.data_presensi
+                                                            .foto_pulang_url
+                                                    "
+                                                    class="thumb"
+                                                />
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td style="text-align: center">
+                                        <span
+                                            class="status-pill"
+                                            :class="
+                                                item.status_kehadiran ===
+                                                'valid'
+                                                    ? 'status-open'
+                                                    : 'status-closed'
+                                            "
+                                        >
+                                            {{
+                                                item.status_kehadiran ===
+                                                'tidak_valid'
+                                                    ? 'Tidak Valid'
+                                                    : 'Aktif'
+                                            }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
-                    <div class="dt-pagination">
-                        <button
-                            class="dt-page-btn"
-                            :disabled="currentPage === 1"
-                            @click="goToPage(currentPage - 1)"
-                        >
-                            «
-                        </button>
-                        <button
-                            v-for="page in pages"
-                            :key="page"
-                            class="dt-page-btn"
-                            :class="{ active: page === currentPage }"
-                            @click="goToPage(page)"
-                        >
-                            {{ page }}
-                        </button>
-                        <button
-                            class="dt-page-btn"
-                            :disabled="
-                                currentPage === totalPages || totalPages === 0
-                            "
-                            @click="goToPage(currentPage + 1)"
-                        >
-                            »
-                        </button>
+                    <!-- FOOTER -->
+                    <div class="dt-footer" v-if="!loading">
+                        <div class="dt-info">
+                            Menampilkan
+                            <strong v-if="totalItems">{{
+                                startIndex + 1
+                            }}</strong>
+                            <strong v-else>0</strong>
+                            &nbsp;–&nbsp;
+                            <strong>{{ endIndex }}</strong>
+                            dari <strong>{{ totalItems }}</strong> presensi
+                        </div>
+
+                        <div class="dt-pagination">
+                            <button
+                                class="dt-page-btn"
+                                :disabled="currentPage === 1"
+                                @click="goToPage(currentPage - 1)"
+                            >
+                                «
+                            </button>
+
+                            <button
+                                v-for="page in pages"
+                                :key="page"
+                                class="dt-page-btn"
+                                :class="{ active: page === currentPage }"
+                                @click="goToPage(page)"
+                            >
+                                {{ page }}
+                            </button>
+
+                            <button
+                                class="dt-page-btn"
+                                :disabled="
+                                    currentPage === totalPages ||
+                                    totalPages === 0
+                                "
+                                @click="goToPage(currentPage + 1)"
+                            >
+                                »
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -367,6 +395,7 @@ export default {
             filtered_jabatan: '',
             filtered_perusahaan: '',
             filtered_tanggal_absen: '',
+            showFilters: false,
         };
     },
 
@@ -390,10 +419,12 @@ export default {
             );
         },
         pages() {
+            if (this.totalPages <= 1) return [];
+            const range = 2;
             const pages = [];
-            for (let i = 1; i <= this.totalPages; i++) {
-                pages.push(i);
-            }
+            const start = Math.max(1, this.currentPage - range);
+            const end = Math.min(this.totalPages, this.currentPage + range);
+            for (let i = start; i <= end; i++) pages.push(i);
             return pages;
         },
     },

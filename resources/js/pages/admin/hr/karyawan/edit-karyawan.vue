@@ -672,24 +672,61 @@
                                         <label class="field-label"
                                             >Perusahaan</label
                                         >
-                                        <input
-                                            type="text"
+                                        <Select2
                                             v-model="formPekerjaan.perusahaan"
-                                            class="form-input"
-                                            placeholder="Contoh: PT Maju Jaya Sejahtera"
-                                        />
+                                            :settings="{ width: '100%' }"
+                                        >
+                                            <option value="">
+                                                Pilih Perusahaan
+                                            </option>
+                                            <option
+                                                v-for="perusahaan in data_perusahaan"
+                                                :key="perusahaan.id"
+                                                :value="
+                                                    perusahaan.nama_perusahaan
+                                                "
+                                            >
+                                                {{ perusahaan.nama_perusahaan }}
+                                            </option>
+                                        </Select2>
                                     </div>
 
                                     <div class="form-group">
                                         <label class="field-label"
                                             >Divisi / Departemen</label
                                         >
-                                        <input
-                                            type="text"
+                                        <Select2
                                             v-model="formPekerjaan.bagian"
-                                            class="form-input"
-                                            placeholder="Contoh: Operasional / HR / Finance"
-                                        />
+                                            :settings="{ width: '100%' }"
+                                            :disabled="
+                                                !formPekerjaan.perusahaan
+                                            "
+                                        >
+                                            <option value="">
+                                                {{
+                                                    !formPekerjaan.perusahaan
+                                                        ? 'Pilih perusahaan terlebih dahulu'
+                                                        : 'Pilih Divisi'
+                                                }}
+                                            </option>
+                                            <option
+                                                v-for="divisi in data_divisi"
+                                                :key="divisi.id"
+                                                :value="divisi.nama_divisi"
+                                            >
+                                                {{ divisi.nama_divisi }}
+                                            </option>
+                                        </Select2>
+                                        <small
+                                            v-if="
+                                                data_divisi.length === 0 &&
+                                                formPekerjaan.perusahaan
+                                            "
+                                            class="text-muted"
+                                        >
+                                            Tidak ada divisi aktif untuk
+                                            perusahaan ini
+                                        </small>
                                     </div>
 
                                     <div class="form-group">
@@ -1555,6 +1592,7 @@
 </template>
 
 <script>
+import Select2 from '@/components/Select2.vue';
 import Tabs from '@/components/Tabs.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
@@ -1565,7 +1603,7 @@ export default {
     props: {
         employee_id: String,
     },
-    components: { AppLayout, Tabs },
+    components: { AppLayout, Tabs, Select2 },
 
     setup() {
         const statusChip = (status) => {
@@ -1722,14 +1760,74 @@ export default {
             ],
 
             dokumenToDelete: [],
+            data_perusahaan: [],
+            data_divisi: [],
+            all_data: [],
         };
     },
 
     mounted() {
+        this.getFPerusahaanDanDivisi();
         this.getDataKaryawan();
     },
-
+    watch: {
+        'formPekerjaan.perusahaan'(newVal, oldVal) {
+            console.log('Perusahaan berubah dari', oldVal, 'ke', newVal);
+            this.onPerusahaanChange();
+        },
+    },
     methods: {
+        async getFPerusahaanDanDivisi() {
+            try {
+                const res = await axios.get('/referensi/perusahaan-divisi');
+                this.data_perusahaan = res.data.data || [];
+                this.all_data = res.data.data;
+            } catch (err) {
+                console.error(err);
+                triggerAlert(
+                    'error',
+                    'Gagal memuat filter perusahaan/jabatan.',
+                );
+            }
+        },
+        onPerusahaanChange() {
+            console.log('Perusahaan dipilih:', this.formPekerjaan.perusahaan);
+            console.log('Data perusahaan:', this.data_perusahaan);
+
+            // Reset divisi
+            this.formPekerjaan.bagian = '';
+            this.data_divisi = [];
+
+            // Jika tidak ada perusahaan dipilih, stop
+            if (!this.formPekerjaan.perusahaan) {
+                console.log('Tidak ada perusahaan dipilih');
+                return;
+            }
+
+            // Filter perusahaan yang dipilih dari data_perusahaan
+            const perusahaanSelected = this.data_perusahaan.find(
+                (p) => p.nama_perusahaan === this.formPekerjaan.perusahaan,
+            );
+
+            console.log('Perusahaan selected:', perusahaanSelected);
+
+            // Ambil divisi dari perusahaan yang dipilih
+            if (perusahaanSelected) {
+                if (
+                    perusahaanSelected.divisi &&
+                    perusahaanSelected.divisi.length > 0
+                ) {
+                    this.data_divisi = perusahaanSelected.divisi.filter(
+                        (d) => d.status === 'aktif',
+                    );
+                    console.log('Divisi ditemukan:', this.data_divisi);
+                } else {
+                    console.log('Perusahaan tidak memiliki divisi');
+                }
+            } else {
+                console.log('Perusahaan tidak ditemukan dalam data');
+            }
+        },
         // ====== LOAD DATA ======
         async getDataKaryawan() {
             this.loading = true;

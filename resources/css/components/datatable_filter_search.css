@@ -1,0 +1,805 @@
+/* =========================================================
+   FULL CSS — Toolbar + Filters + Table Card + Table + Buttons + Pagination
+   Replace your existing CSS with this file.
+   ========================================================= */
+
+/* ------------------------- Design tokens -------------------------- */
+:root {
+    --surface: #ffffff;
+    --surface-2: #f7f9fc;
+    --surface-3: #f2f6ff;
+    --border: #e6eaf0;
+    --border-2: #dde3ec;
+    --text: #111827;
+    --muted: #6b7280;
+
+    --primary: #2563eb;
+    --primary-2: #1d4ed8;
+
+    --danger: #ef4444;
+    --danger-2: #dc2626;
+
+    --success: #16a34a;
+    --success-2: #15803d;
+
+    --ring: rgba(37, 99, 235, 0.18);
+
+    --r: 14px;
+    --r2: 12px;
+    --h: 40px;
+
+    --shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    --shadow-2: 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   TOOLBAR (Length + Search + Filters)
+   ========================================================= */
+.dt-toolbar-mobile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+/* Row 1 */
+.dt-row-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: linear-gradient(180deg, var(--surface), var(--surface-2));
+}
+
+/* Length chip */
+.dt-length-compact {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+}
+
+.dt-length-compact select {
+    height: calc(var(--h) - 10px);
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 6px 28px 6px 10px;
+    background-color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+}
+
+/* Search */
+.dt-search-compact {
+    flex: 1;
+    min-width: 260px;
+}
+
+.dt-search-compact input {
+    height: var(--h);
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 14px;
+    color: var(--text);
+    background-color: #fff;
+    padding: 0 14px 0 40px;
+    transition:
+        box-shadow 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.15s ease;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 14px center;
+}
+
+.dt-search-compact input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--ring);
+}
+
+/* Filters wrapper */
+.dt-filters-wrapper {
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+}
+
+/* Filter toggle (mobile) */
+.filter-toggle-btn {
+    display: none;
+    width: 100%;
+    padding: 12px 16px;
+    background: #fff;
+    border: 0;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    gap: 10px;
+    align-items: center;
+}
+
+.filter-toggle-btn:hover {
+    background: var(--surface-2);
+}
+
+.toggle-icon {
+    margin-left: auto;
+    opacity: 0.7;
+}
+
+/* =========================================================
+   Filters grid (desktop) — FULL WIDTH + tombol sejajar (5 kolom)
+   4 filter + 1 tombol
+   ========================================================= */
+.dt-filters {
+    display: grid;
+    gap: 12px;
+    align-items: end;
+    padding: 14px 16px 16px;
+    background: #fff;
+
+    /* 4 filter stretch, tombol auto */
+    grid-template-columns: repeat(4, minmax(220px, 1fr)) max-content;
+    width: 100%;
+}
+
+/* Label in filters */
+.dt-filters .form-group > label {
+    display: inline-block;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 600;
+    color: #475569;
+    margin: 0;
+}
+
+/* filter actions area */
+.dt-filters .filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+
+    /* tombol fix di kolom terakhir */
+    grid-column: 5;
+    justify-self: end;
+}
+
+/* Apply button */
+.filter-apply-btn {
+    height: var(--h);
+    padding: 0 16px;
+    border-radius: var(--r2);
+    border: 1px solid transparent;
+    background: linear-gradient(180deg, var(--primary), var(--primary-2));
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        filter 0.15s ease,
+        box-shadow 0.15s ease;
+    box-shadow: 0 10px 18px rgba(37, 99, 235, 0.18);
+    white-space: nowrap;
+
+    width: auto;
+    min-width: 150px;
+}
+
+.filter-apply-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.02);
+}
+
+.filter-apply-btn:active {
+    transform: translateY(0);
+}
+
+/* =========================================================
+   Select2 normalize (height + focus)
+   ========================================================= */
+.select2-container--default .select2-selection--single {
+    height: var(--h) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--r2) !important;
+    display: flex !important;
+    align-items: center !important;
+    background: #fff !important;
+}
+
+.select2-container--default
+    .select2-selection--single
+    .select2-selection__rendered {
+    line-height: var(--h) !important;
+    color: var(--text) !important;
+    padding-left: 12px !important;
+    padding-right: 34px !important;
+    font-size: 14px !important;
+}
+
+.select2-container--default
+    .select2-selection--single
+    .select2-selection__arrow {
+    height: var(--h) !important;
+    right: 10px !important;
+}
+
+.select2-container--default.select2-container--focus
+    .select2-selection--single {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 4px var(--ring) !important;
+}
+
+/* =========================================================
+   TABLE CARD + HINT
+   ========================================================= */
+.table-card {
+    background: var(--surface);
+    border-radius: var(--r);
+    overflow: hidden;
+    padding: 0 20px;
+}
+
+.table-hint {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: linear-gradient(180deg, var(--surface), var(--surface-3));
+    border-bottom: 1px solid var(--border);
+}
+
+.table-hint__icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
+    flex: 0 0 auto;
+}
+
+.table-hint__icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.table-hint__body {
+    min-width: 0;
+}
+
+.table-hint__title {
+    font-weight: 800;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-hint__badge {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--primary);
+    background: rgba(37, 99, 235, 0.1);
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(37, 99, 235, 0.15);
+}
+
+.table-hint__text {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.table-hint__actions {
+    margin-left: auto;
+}
+
+/* =========================================================
+   TABLE WRAPPER
+   ========================================================= */
+.table-responsive-custom {
+    width: 100%;
+    overflow: auto;
+}
+
+.table-card .table {
+    width: 100%;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Header */
+.table-card .table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f3f6fb;
+    color: #334155;
+    font-weight: 800;
+    font-size: 12.5px;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 12px;
+    white-space: nowrap;
+}
+
+/* Body cells */
+.table-card .table tbody td {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 12px;
+    vertical-align: middle;
+    color: var(--text);
+    background: #fff;
+}
+
+/* Zebra + hover */
+.table-card .table tbody tr:nth-child(even) td {
+    background: #fbfdff;
+}
+
+.table-card .table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.table-card .table tbody tr:hover td {
+    background: #f6f9ff;
+}
+
+/* Column sizing */
+.col-no {
+    width: 56px;
+}
+.col-nik {
+    width: 140px;
+}
+.col-status {
+    width: 140px;
+}
+
+/* SUPPORT BOTH: .col-action and .col-actions (people often mismatch) */
+.col-action,
+.col-actions {
+    width: 180px;
+}
+
+/* =========================================================
+   CELL: USER BUTTON (Nama + avatar + badge)
+   ========================================================= */
+.cell-user-btn {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+}
+
+.cell-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cell-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
+    display: grid;
+    place-items: center;
+    font-weight: 900;
+    flex: 0 0 auto;
+}
+
+.cell-user-text {
+    min-width: 0;
+}
+
+.cell-name {
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.cell-badge {
+    font-size: 12px;
+    font-weight: 800;
+    color: #0f172a;
+    background: rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+.cell-dept {
+    margin-top: 2px;
+    font-size: 12.5px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.cell-hint {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary);
+    opacity: 0.75;
+    transition: opacity 0.15s ease;
+}
+
+.cell-user-btn:hover .cell-hint {
+    opacity: 1;
+}
+
+.cell-user-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--ring);
+    border-radius: 12px;
+}
+
+/* Simple text cells */
+.cell-nik,
+.cell-perusahaan {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* =========================================================
+   LOADING / EMPTY ROW
+   ========================================================= */
+.loading-row,
+.empty-row {
+    padding: 18px 12px !important;
+    text-align: center;
+    color: var(--muted);
+}
+
+.table-spinner {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    border: 2px solid rgba(17, 24, 39, 0.15);
+    border-top-color: rgba(37, 99, 235, 0.9);
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinner-text {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* =========================================================
+   ACTION COLUMN — GUARANTEED CENTER
+   ========================================================= */
+.table-card .table th.col-actions,
+.table-card .table td.col-actions,
+.table-card .table th.col-action,
+.table-card .table td.col-action {
+    vertical-align: middle;
+    text-align: center;
+    padding: 8px 10px;
+}
+
+.table-card .table td.col-actions .actions-wrap,
+.table-card .table td.col-action .actions-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+    opacity: 0.92;
+
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        background 0.15s ease,
+        border-color 0.15s ease,
+        filter 0.15s ease;
+}
+
+.action-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.table-card .table tbody tr:hover .action-btn {
+    opacity: 1;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 16px rgba(15, 23, 42, 0.1);
+}
+
+.action-btn:active {
+    transform: translateY(0);
+}
+
+.action-btn.primary {
+    border-color: rgba(37, 99, 235, 0.25);
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--primary);
+}
+.action-btn.primary:hover {
+    background: rgba(37, 99, 235, 0.12);
+    border-color: rgba(37, 99, 235, 0.35);
+}
+
+.action-btn.danger {
+    border-color: rgba(239, 68, 68, 0.25);
+    background: rgba(239, 68, 68, 0.08);
+    color: var(--danger);
+}
+.action-btn.danger:hover {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.35);
+}
+
+.action-btn.success {
+    border-color: rgba(22, 163, 74, 0.25);
+    background: rgba(22, 163, 74, 0.08);
+    color: var(--success);
+}
+.action-btn.success:hover {
+    background: rgba(22, 163, 74, 0.12);
+    border-color: rgba(22, 163, 74, 0.35);
+}
+
+/* =========================================================
+   DATATABLE FOOTER: INFO + PAGINATION
+   ========================================================= */
+.dt-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, var(--surface), var(--surface-2));
+    border-top: 1px solid var(--border);
+}
+
+.dt-info {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.dt-info strong {
+    color: var(--text);
+    font-weight: 900;
+}
+
+.dt-pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dt-page-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+    cursor: pointer;
+    font-weight: 800;
+    color: #334155;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        border-color 0.15s ease,
+        background 0.15s ease;
+}
+
+.dt-page-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 16px rgba(15, 23, 42, 0.08);
+}
+
+.dt-page-btn.active {
+    border-color: rgba(37, 99, 235, 0.35);
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
+}
+
+.dt-page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+@media (min-width: 769px) {
+    .dt-filters {
+        display: grid;
+    }
+}
+
+@media (max-width: 768px) {
+    .filter-toggle-btn {
+        display: flex;
+    }
+
+    .dt-row-main {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .dt-search-compact {
+        min-width: 0;
+    }
+
+    .dt-filters {
+        grid-template-columns: 1fr;
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        padding: 0 16px;
+        gap: 10px;
+        pointer-events: none;
+        transition:
+            max-height 0.25s ease,
+            opacity 0.2s ease,
+            padding 0.2s ease;
+    }
+
+    .dt-filters.show {
+        max-height: 520px;
+        opacity: 1;
+        padding: 12px 16px 16px;
+        pointer-events: auto;
+    }
+
+    .dt-filters .filter-actions {
+        width: 100%;
+        grid-column: auto;
+        justify-self: stretch;
+    }
+
+    .filter-apply-btn {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .dt-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .dt-toolbar-mobile {
+        margin-bottom: 12px;
+    }
+
+    .dt-row-main {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .dt-filters {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .filter-toggle-btn {
+        padding: 12px;
+        font-size: 13px;
+    }
+
+    .table-hint {
+        padding: 12px;
+    }
+}
+
+.cell-konfig {
+    width: 100%;
+    text-align: left;
+
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    padding: 8px 12px;
+    border-radius: 12px;
+
+    transition:
+        background 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.cell-konfig__title {
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.cell-konfig__hint {
+    margin-top: 2px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--primary);
+    opacity: 0.75;
+    transition: opacity 0.15s ease;
+}
+
+/* hover biru muda seperti contoh */
+.cell-konfig:hover {
+    background: rgba(37, 99, 235, 0.08);
+}
+
+.cell-konfig:hover .cell-konfig__hint {
+    opacity: 1;
+}
+
+/* fokus keyboard */
+.cell-konfig:focus-visible {
+    outline: none;
+    background: rgba(37, 99, 235, 0.08);
+    box-shadow: 0 0 0 4px var(--ring);
+}

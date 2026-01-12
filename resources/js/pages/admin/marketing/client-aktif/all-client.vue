@@ -28,9 +28,10 @@
             </div>
 
             <!-- Toolbar -->
-            <div class="dt-toolbar">
-                <div class="dt-length">
-                    <label>
+            <div class="dt-toolbar-mobile">
+                <!-- Row 1: Length & Search -->
+                <div class="dt-row-main">
+                    <label class="dt-length-compact">
                         Tampil
                         <select
                             v-model.number="perPage"
@@ -42,151 +43,171 @@
                         </select>
                         data
                     </label>
-                </div>
 
-                <div class="dt-search">
-                    <input
-                        v-model="search"
-                        type="search"
-                        placeholder="Cari nama / kode perusahaan"
-                    />
-                </div>
-            </div>
-
-            <div class="card">
-                <!-- Filter -->
-                <div class="filter-bar">
-                    <div class="filter-right">
-                        <label>Status</label>
-                        <select v-model="status" class="filter-input">
-                            <option value="">Semua Status</option>
-                            <option value="aktif">Aktif</option>
-                            <option value="tidak_aktif">Tidak Aktif</option>
-                        </select>
+                    <div class="dt-search-compact">
+                        <input
+                            v-model="search"
+                            type="search"
+                            placeholder="Cari nama / kode perusahaan"
+                        />
                     </div>
                 </div>
 
-                <!-- Table -->
-                <div class="table-responsive-custom">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Kode</th>
-                                <th>Nama Perusahaan</th>
-                                <th>Alamat</th>
-                                <th>Awal MOU</th>
-                                <th>Akhir MOU</th>
-                                <th>Status</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
+                <!-- Row 2: Filters (collapsible) -->
+                <div class="dt-filters-wrapper">
+                    <button
+                        class="filter-toggle-btn"
+                        @click="showFilters = !showFilters"
+                    >
+                        <font-awesome-icon icon="filter" />
+                        <span>Filter</span>
+                        <font-awesome-icon
+                            :icon="showFilters ? 'chevron-up' : 'chevron-down'"
+                            class="toggle-icon"
+                        />
+                    </button>
 
-                        <tbody>
-                            <tr v-if="loading">
-                                <td colspan="8" class="loading-row">
-                                    <div class="table-spinner">
-                                        <span class="spinner"></span>
-                                        <span class="spinner-text"
-                                            >Memuat data...</span
+                    <div class="dt-filters" :class="{ show: showFilters }">
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select v-model="status" class="filter-input">
+                                <option value="">Semua Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="tidak_aktif">Tidak Aktif</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLE CARD -->
+                <div class="table-card card">
+                    <div class="table-responsive-custom">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Kode</th>
+                                    <th>Nama Perusahaan</th>
+                                    <th>Alamat</th>
+                                    <th>Awal MOU</th>
+                                    <th>Akhir MOU</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr v-if="loading">
+                                    <td colspan="8" class="loading-row">
+                                        <div class="table-spinner">
+                                            <span class="spinner"></span>
+                                            <span class="spinner-text"
+                                                >Memuat data...</span
+                                            >
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr v-else-if="items.length === 0">
+                                    <td colspan="8" class="empty-row">
+                                        Tidak ada data
+                                    </td>
+                                </tr>
+
+                                <tr
+                                    v-else
+                                    v-for="(item, index) in items"
+                                    :key="item.id"
+                                >
+                                    <td>{{ startIndex + index + 1 }}</td>
+                                    <td>{{ item.kode_perusahaan }}</td>
+                                    <td>{{ item.nama_perusahaan }}</td>
+                                    <td>{{ item.alamat || '-' }}</td>
+                                    <td>{{ item.tanggal_awal_mou || '-' }}</td>
+                                    <td>{{ item.tanggal_akhir_mou || '-' }}</td>
+                                    <td>
+                                        <span
+                                            class="status-pill"
+                                            :class="
+                                                item.status === 'aktif'
+                                                    ? 'status-open'
+                                                    : 'status-closed'
+                                            "
                                         >
-                                    </div>
-                                </td>
-                            </tr>
+                                            {{
+                                                item.status === 'aktif'
+                                                    ? 'Aktif'
+                                                    : 'Tidak Aktif'
+                                            }}
+                                        </span>
+                                    </td>
+                                    <td class="actions-cell">
+                                        <Link
+                                            :href="`/marketing/client/aktif/edit/${item.id}`"
+                                            class="action-btn primary"
+                                            title="Edit"
+                                        >
+                                            <font-awesome-icon
+                                                icon="pen-to-square"
+                                            />
+                                        </Link>
 
-                            <tr v-else-if="items.length === 0">
-                                <td colspan="8" class="empty-row">
-                                    Tidak ada data
-                                </td>
-                            </tr>
-
-                            <tr
-                                v-else
-                                v-for="(item, index) in items"
-                                :key="item.id"
-                            >
-                                <td>{{ startIndex + index + 1 }}</td>
-                                <td>{{ item.kode_perusahaan }}</td>
-                                <td>{{ item.nama_perusahaan }}</td>
-                                <td>{{ item.alamat || '-' }}</td>
-                                <td>{{ item.tanggal_awal_mou || '-' }}</td>
-                                <td>{{ item.tanggal_akhir_mou || '-' }}</td>
-                                <td>
-                                    <span
-                                        class="status-pill"
-                                        :class="
-                                            item.status === 'aktif'
-                                                ? 'status-open'
-                                                : 'status-closed'
-                                        "
-                                    >
-                                        {{
-                                            item.status === 'aktif'
-                                                ? 'Aktif'
-                                                : 'Tidak Aktif'
-                                        }}
-                                    </span>
-                                </td>
-                                <td class="actions-cell">
-                                    <Link
-                                        :href="`/marketing/client/aktif/edit/${item.id}`"
-                                        class="action-btn primary"
-                                    >
-                                        <font-awesome-icon
-                                            icon="pen-to-square"
-                                        />
-                                    </Link>
-                                    <button
-                                        class="action-btn danger"
-                                        @click="hapus(item.id)"
-                                    >
-                                        <font-awesome-icon icon="trash" />
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- FOOTER DATATABLE: INFO + PAGINATION -->
-                <div class="dt-footer" v-if="!loadingUsers">
-                    <div class="dt-info">
-                        Menampilkan
-                        <strong v-if="totalItems">{{ startIndex + 1 }}</strong>
-                        <strong v-else>0</strong>
-                        &nbsp;–&nbsp;
-                        <strong>{{ endIndex }}</strong>
-                        dari
-                        <strong>{{ totalItems }}</strong>
-                        karyawan
+                                        <button
+                                            class="action-btn danger"
+                                            title="Hapus"
+                                            @click="hapus(item.id)"
+                                        >
+                                            <font-awesome-icon icon="trash" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
-                    <div class="dt-pagination">
-                        <button
-                            class="dt-page-btn"
-                            :disabled="currentPage === 1"
-                            @click="goToPage(currentPage - 1)"
-                        >
-                            «
-                        </button>
-                        <button
-                            v-for="page in pages"
-                            :key="page"
-                            class="dt-page-btn"
-                            :class="{ active: page === currentPage }"
-                            @click="goToPage(page)"
-                        >
-                            {{ page }}
-                        </button>
-                        <button
-                            class="dt-page-btn"
-                            :disabled="
-                                currentPage === totalPages || totalPages === 0
-                            "
-                            @click="goToPage(currentPage + 1)"
-                        >
-                            »
-                        </button>
+                    <!-- FOOTER DATATABLE: INFO + PAGINATION -->
+                    <div class="dt-footer" v-if="!loading">
+                        <div class="dt-info">
+                            Menampilkan
+                            <strong v-if="totalItems">{{
+                                startIndex + 1
+                            }}</strong>
+                            <strong v-else>0</strong>
+                            &nbsp;–&nbsp;
+                            <strong>{{ endIndex }}</strong>
+                            dari <strong>{{ totalItems }}</strong> perusahaan
+                        </div>
+
+                        <div class="dt-pagination">
+                            <button
+                                class="dt-page-btn"
+                                :disabled="currentPage === 1"
+                                @click="goToPage(currentPage - 1)"
+                            >
+                                «
+                            </button>
+
+                            <button
+                                v-for="page in pages"
+                                :key="page"
+                                class="dt-page-btn"
+                                :class="{ active: page === currentPage }"
+                                @click="goToPage(page)"
+                            >
+                                {{ page }}
+                            </button>
+
+                            <button
+                                class="dt-page-btn"
+                                :disabled="
+                                    currentPage === totalPages ||
+                                    totalPages === 0
+                                "
+                                @click="goToPage(currentPage + 1)"
+                            >
+                                »
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

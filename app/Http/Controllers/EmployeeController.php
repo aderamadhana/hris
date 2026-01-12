@@ -46,10 +46,11 @@ class EmployeeController extends Controller
         // ✅ new: 7 / 30 (hari)
         $contractExpiring = $request->query('contract_expiring'); // '7' | '30' | null
         $contractExpiring = in_array((string) $contractExpiring, ['7', '30'], true) ? (int) $contractExpiring : null;
+        $contractExpired = $request->boolean('contract_expired');
 
         $id_dummy = [1, 2];
 
-        $employees = Employee::with(['employments'])
+        $employees = Employee::with(['employments','currentEmployment'])
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('nrp', 'like', "%{$search}%")
@@ -58,6 +59,15 @@ class EmployeeController extends Controller
                         ->orWhereHas('employments', function ($qe) use ($search) {
                             $qe->where('jabatan', 'like', "%{$search}%");
                         });
+                });
+            })
+
+            ->when($contractExpired, function ($query) {
+                $today = now()->startOfDay();
+
+                $query->whereHas('currentEmployment', function ($qe) use ($today) {
+                    $qe->whereNotNull('tgl_akhir_kerja')
+                    ->where('tgl_akhir_kerja', '<', $today);
                 });
             })
 
@@ -97,7 +107,8 @@ class EmployeeController extends Controller
             // kalau employments itu hasMany, optional($e->employments) bakal aneh.
             // asumsi kamu memang punya accessor/relationship single. Kalau hasMany, ambil ->first().
             $emp = is_iterable($e->employments) ? $e->employments->first() : $e->employments;
-
+            $emp = $e->currentEmployment;
+            
             return [
                 'id' => $e->id,
                 'name' => $e->nama,
@@ -151,6 +162,18 @@ class EmployeeController extends Controller
                 ->count();
         }
 
+        $baseActiveQuery = Employee::query()
+            ->whereNotIn('id', $id_dummy)
+            ->where('status_active', 1);
+
+        $today = now()->startOfDay();
+                $totalContractExpired = (clone $baseActiveQuery)
+            ->whereHas('currentEmployment', function ($qe) use ($today) {
+                $qe->whereNotNull('tgl_akhir_kerja')
+                ->where('tgl_akhir_kerja', '<', $today);
+            })
+        ->count();
+
         return response()->json([
             'data' => $data,
             'meta' => [
@@ -160,6 +183,7 @@ class EmployeeController extends Controller
                 'last_page' => $employees->lastPage(),
             ],
             // ✅ tambahan
+            'total_contract_expired' => $totalContractExpired,
             'total_all_active' => $totalAllActive,
             'total_contract_expiring' => $totalContractExpiring, // null kalau contract_expiring tidak dikirim
             'contract_expiring_days' => $contractExpiring,        // 7/30/null (biar FE jelas)

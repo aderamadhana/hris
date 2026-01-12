@@ -275,6 +275,7 @@ Route::prefix('referensi')->group(function () {
     Route::get('/get-filter_perusahaan_dan_jabatan', [ReferensiController::class, 'getFilterPerusahaanDanJabatan']);
     Route::get('/get-payroll-periods-by-employee-id/{id}', [ReferensiController::class, 'getPayrollPeriodByEmployeeId']);
     Route::get('/perusahaan-terakhir/{employeeId}', [ReferensiController::class, 'getPerusahaanTerakhir']);
+    Route::get('/perusahaan-divisi', [ReferensiController::class, 'getPerusahaanDanDivisi']);
     Route::get('/get-shift-options', [ReferensiController::class, 'getShiftOptions']);
     
 });

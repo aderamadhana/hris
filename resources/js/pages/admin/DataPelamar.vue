@@ -26,10 +26,10 @@
                 </div>
             </div>
 
-            <!-- TOOLBAR -->
-            <div class="dt-toolbar">
-                <div class="dt-length">
-                    <label>
+            <div class="dt-toolbar-mobile">
+                <!-- Row 1: Length & Search -->
+                <div class="dt-row-main">
+                    <label class="dt-length-compact">
                         Tampil
                         <select v-model.number="perPage">
                             <option :value="5">5</option>
@@ -38,149 +38,164 @@
                         </select>
                         data
                     </label>
-                </div>
 
-                <div class="dt-search">
-                    <label>
+                    <div class="dt-search-compact">
                         <input
                             v-model="search"
                             type="search"
                             placeholder="Cari Nama, NIK, atau jabatan..."
                         />
-                    </label>
+                    </div>
                 </div>
-            </div>
 
-            <!-- TABLE -->
-            <div class="table-card">
-                <div class="table-responsive-custom">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Nama</th>
-                                <th>NIK</th>
-                                <th>Tanggal Melamar</th>
-                                <th>Perusahaan</th>
-                                <th>Jabatan</th>
-                                <th>Status</th>
-                                <th>Detail</th>
-                            </tr>
-                        </thead>
+                <!-- TABLE CARD -->
+                <div class="table-card">
+                    <div class="table-responsive-custom">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th class="col-no">#</th>
+                                    <th class="col-name">Nama</th>
+                                    <th class="col-nik">NIK</th>
+                                    <th class="col-status">Tanggal Melamar</th>
+                                    <th class="col-perusahaan">Perusahaan</th>
+                                    <th class="col-position">Jabatan</th>
+                                    <th class="col-status">Status</th>
+                                    <th class="col-action">Detail</th>
+                                </tr>
+                            </thead>
 
-                        <tbody>
-                            <!-- LOADING -->
-                            <tr v-if="loadingUsers">
-                                <td colspan="8" class="loading-row">
-                                    <div class="table-spinner">
-                                        <span class="spinner"></span>
-                                        <span class="spinner-text"
-                                            >Memuat data...</span
+                            <tbody>
+                                <!-- LOADING -->
+                                <tr v-if="loadingUsers">
+                                    <td colspan="8" class="loading-row">
+                                        <div class="table-spinner">
+                                            <span class="spinner"></span>
+                                            <span class="spinner-text"
+                                                >Memuat data...</span
+                                            >
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- EMPTY -->
+                                <tr v-else-if="users.length === 0">
+                                    <td colspan="8" class="empty-row">
+                                        Tidak ada data ...
+                                    </td>
+                                </tr>
+
+                                <!-- DATA -->
+                                <tr
+                                    v-else
+                                    v-for="(u, index) in users"
+                                    :key="u.id"
+                                >
+                                    <td>{{ startIndex + index + 1 }}</td>
+
+                                    <td>
+                                        <div class="cell-user">
+                                            <div class="cell-avatar">
+                                                {{ (u.name || '').charAt(0) }}
+                                            </div>
+                                            <div class="cell-user-text">
+                                                <div class="cell-name">
+                                                    {{ u.name }}
+                                                </div>
+                                                <div class="cell-dept">
+                                                    NRP: {{ u.nrp }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <span class="cell-nik">{{
+                                            u.nik
+                                        }}</span>
+                                    </td>
+
+                                    <!-- Pastikan field ini memang ada di data pelamar -->
+                                    <td>{{ u.tanggal_melamar }}</td>
+
+                                    <td>
+                                        <span class="cell-perusahaan">{{
+                                            u.perusahaan
+                                        }}</span>
+                                    </td>
+
+                                    <td>{{ u.position }}</td>
+
+                                    <td>
+                                        <span
+                                            class="status-pill"
+                                            :class="{
+                                                'status-active':
+                                                    u.status === 'Aktif',
+                                                'status-inactive':
+                                                    u.status !== 'Aktif',
+                                            }"
                                         >
-                                    </div>
-                                </td>
-                            </tr>
+                                            {{ u.status }}
+                                        </span>
+                                    </td>
 
-                            <!-- EMPTY -->
-                            <tr v-else-if="users.length === 0">
-                                <td colspan="8" class="empty-row">
-                                    Tidak ada data ...
-                                </td>
-                            </tr>
-
-                            <!-- DATA -->
-                            <tr v-else v-for="(u, index) in users" :key="u.id">
-                                <td>{{ startIndex + index + 1 }}</td>
-
-                                <td>
-                                    <div class="cell-user">
-                                        <div class="cell-avatar">
-                                            {{ u.name.charAt(0) }}
-                                        </div>
-                                        <div class="cell-user-text">
-                                            <div class="cell-name">
-                                                {{ u.name }}
-                                            </div>
-                                            <div class="cell-dept">
-                                                NRP: {{ u.nrp }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <td>{{ u.nik }}</td>
-                                <td>{{ u.tanggal_lahir }}</td>
-                                <td>{{ u.perusahaan }}</td>
-                                <td>{{ u.position }}</td>
-
-                                <td>
-                                    <span
-                                        class="status-pill"
-                                        :class="{
-                                            'status-active':
-                                                u.status === 'Aktif',
-                                            'status-inactive':
-                                                u.status !== 'Aktif',
-                                        }"
-                                    >
-                                        {{ u.status }}
-                                    </span>
-                                </td>
-
-                                <td class="actions-cell">
-                                    <button
-                                        class="action-btn primary"
-                                        title="Lihat Detail Pelamar"
-                                        @click="openDetail(u.id)"
-                                    >
-                                        <font-awesome-icon icon="eye" />
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- FOOTER -->
-                <div class="dt-footer" v-if="!loadingUsers">
-                    <div class="dt-info">
-                        Menampilkan
-                        <strong>{{ totalItems ? startIndex + 1 : 0 }}</strong>
-                        –
-                        <strong>{{ endIndex }}</strong>
-                        dari
-                        <strong>{{ totalItems }}</strong>
-                        pelamar
+                                    <td class="actions-cell">
+                                        <button
+                                            class="action-btn primary"
+                                            title="Lihat Detail Pelamar"
+                                            @click="openDetail(u.id)"
+                                        >
+                                            <font-awesome-icon icon="eye" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
-                    <div class="dt-pagination">
-                        <button
-                            class="dt-page-btn"
-                            :disabled="currentPage === 1"
-                            @click="goToPage(currentPage - 1)"
-                        >
-                            «
-                        </button>
+                    <!-- FOOTER -->
+                    <div class="dt-footer" v-if="!loadingUsers">
+                        <div class="dt-info">
+                            Menampilkan
+                            <strong>{{
+                                totalItems ? startIndex + 1 : 0
+                            }}</strong>
+                            &nbsp;–&nbsp;
+                            <strong>{{ endIndex }}</strong>
+                            dari <strong>{{ totalItems }}</strong> pelamar
+                        </div>
 
-                        <button
-                            v-for="page in pages"
-                            :key="page"
-                            class="dt-page-btn"
-                            :class="{ active: page === currentPage }"
-                            @click="goToPage(page)"
-                        >
-                            {{ page }}
-                        </button>
+                        <div class="dt-pagination">
+                            <button
+                                class="dt-page-btn"
+                                :disabled="currentPage === 1"
+                                @click="goToPage(currentPage - 1)"
+                            >
+                                «
+                            </button>
 
-                        <button
-                            class="dt-page-btn"
-                            :disabled="
-                                currentPage === totalPages || totalPages === 0
-                            "
-                            @click="goToPage(currentPage + 1)"
-                        >
-                            »
-                        </button>
+                            <button
+                                v-for="page in pages"
+                                :key="page"
+                                class="dt-page-btn"
+                                :class="{ active: page === currentPage }"
+                                @click="goToPage(page)"
+                            >
+                                {{ page }}
+                            </button>
+
+                            <button
+                                class="dt-page-btn"
+                                :disabled="
+                                    currentPage === totalPages ||
+                                    totalPages === 0
+                                "
+                                @click="goToPage(currentPage + 1)"
+                            >
+                                »
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -220,6 +235,8 @@ export default {
 
             showImportGajiModal: false,
             showImportKaryawanModal: false,
+
+            showFilters: false,
         };
     },
 

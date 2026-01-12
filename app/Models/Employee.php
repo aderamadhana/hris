@@ -24,6 +24,12 @@ class Employee extends Model
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
+    public function currentEmployment()
+    {
+        return $this->hasOne(EmployeeEmployment::class, 'employee_id')
+            ->latestOfMany('tgl_awal_kerja'); // atau created_at kalau lebih tepat
+    }
+
     public function educations()
     {
         return $this->hasMany(EmployeeEducation::class);

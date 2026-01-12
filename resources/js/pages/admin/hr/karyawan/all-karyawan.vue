@@ -14,7 +14,7 @@
                 </div>
 
                 <div class="page-actions">
-                    <DropdownButton label="Upload Data">
+                    <DropdownButton label="Proses Data">
                         <a
                             @click="openImportKaryawanModal"
                             class="dropdown-item"
@@ -22,54 +22,70 @@
                             <font-awesome-icon icon="upload" class="icon" />
                             Upload Excel Karyawan
                         </a>
-                        <a
-                            @click="openImportPayslipModal"
-                            class="dropdown-item"
-                        >
-                            <font-awesome-icon
-                                icon="file-invoice-dollar"
-                                class="icon"
-                            />
-                            Upload Slip Gaji Karyawan
+
+                        <a @click="downloadKaryawan" class="dropdown-item">
+                            <font-awesome-icon icon="download" class="icon" />
+                            Download Karyawan
                         </a>
                     </DropdownButton>
-
-                    <Button
-                        variant="success"
-                        :loading="isDownloading"
-                        @click="downloadKaryawan"
-                    >
-                        <font-awesome-icon icon="download" class="icon" />
-                        Download Karyawan
-                    </Button>
-
-                    <Button variant="primary" @click="tambahKaryawan">
-                        <font-awesome-icon icon="plus" class="icon" />
-                        Tambah Karyawan
-                    </Button>
                 </div>
             </div>
 
-            <!-- RINGKASAN DI ATAS TABEL -->
             <div class="overview-row">
                 <div class="overview-card primary">
+                    <div class="card-icon">
+                        <font-awesome-icon icon="users" />
+                    </div>
                     <div class="overview-label">Total Karyawan</div>
                     <div class="overview-value">{{ totalAllKaryawan }}</div>
                 </div>
-                <div class="overview-card neutral">
-                    <div class="overview-label">
-                        Kontrak Hampir Habis ({{ defaultExpiringDays }} hari)
+
+                <div class="overview-card warning">
+                    <div class="card-icon">
+                        <font-awesome-icon icon="user-clock" />
                     </div>
+                    <div class="overview-label">Kontrak Hampir Habis</div>
                     <div class="overview-value">
                         {{ totalKontrakHampirHabis }}
                     </div>
+                    <div class="overview-badge positive">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ defaultExpiringDays }} hari
+                    </div>
+                </div>
+
+                <div
+                    class="overview-card danger"
+                    @click="showExpired"
+                    @keydown.enter.prevent="showExpired"
+                >
+                    <div class="card-icon">
+                        <font-awesome-icon icon="user-xmark" />
+                        <!-- alternatif: <font-awesome-icon icon="triangle-exclamation" /> -->
+                    </div>
+                    <div class="overview-label">Total Kontrak Expired</div>
+                    <div class="overview-value">{{ totalAllExpired }}</div>
+                    <div class="overview-badge negative">
+                        <i class="fas fa-exclamation-circle"></i> Perlu Tindakan
+                    </div>
                 </div>
             </div>
-
-            <!-- KONTROL DATATABLE -->
-            <div class="dt-toolbar">
-                <div class="dt-length">
-                    <label>
+            <div v-if="isDownloading" class="fullpage-loader">
+                <div class="fullpage-loader__card">
+                    <div class="fullpage-loader__spinner"></div>
+                    <div class="fullpage-loader__title">
+                        Download data karyawan…
+                    </div>
+                    <div class="fullpage-loader__subtitle">
+                        Mohon tunggu sebentar
+                    </div>
+                </div>
+            </div>
+            <!-- TABEL DALAM CARD (Original) -->
+            <div class="dt-toolbar-mobile">
+                <!-- Row 1: Length & Search -->
+                <div class="dt-row-main">
+                    <label class="dt-length-compact">
                         Tampil
                         <select v-model.number="perPage">
                             <option :value="10">10</option>
@@ -79,303 +95,324 @@
                         </select>
                         data
                     </label>
-                </div>
 
-                <div class="dt-search">
-                    <label>
+                    <div class="dt-search-compact">
                         <input
                             v-model="search"
                             type="search"
                             placeholder="Cari NIK atau nama"
                         />
-                    </label>
-                </div>
-            </div>
-
-            <!-- TABEL DALAM CARD -->
-            <div class="table-card">
-                <div class="filter-bar">
-                    <div class="filter-right">
-                        <label>Filter Perusahaan</label>
-                        <Select2
-                            v-model="filtered_perusahaan"
-                            :settings="{ width: '100%' }"
-                        >
-                            <option value="">Semua Perusahaan</option>
-                            <option
-                                v-for="value in data_filtered_perusahaan"
-                                :key="value"
-                                :value="value"
-                            >
-                                {{ value }}
-                            </option>
-                        </Select2>
-                    </div>
-
-                    <div class="filter-right">
-                        <label>Filter Divisi / Departemen</label>
-                        <Select2
-                            v-model="filtered_jabatan"
-                            :settings="{ width: '100%' }"
-                        >
-                            <option value="">Semua Divisi / Departemen</option>
-                            <option
-                                v-for="value in data_filtered_jabatan"
-                                :key="value"
-                                :value="value"
-                            >
-                                {{ value }}
-                            </option>
-                        </Select2>
-                    </div>
-
-                    <div class="filter-right">
-                        <label>Filter Kontrak Hampir Habis</label>
-                        <Select2
-                            v-model="contractExpiring"
-                            :settings="{ width: '100%' }"
-                        >
-                            <option value="">-- Pilih --</option>
-                            <option value="7">7 Hari</option>
-                            <option value="30">30 Hari</option>
-                        </Select2>
-                    </div>
-
-                    <div class="filter-right">
-                        <Button
-                            variant="secondary"
-                            class="filter-btn"
-                            @click="filteredData"
-                        >
-                            <font-awesome-icon
-                                icon="filter"
-                                class="filter-icon"
-                            />
-                            <span>Filter</span>
-                        </Button>
                     </div>
                 </div>
 
-                <div
-                    class="table-hint"
-                    role="note"
-                    aria-label="Petunjuk tabel karyawan"
-                >
-                    <div class="table-hint__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            />
-                            <path
-                                d="M12 16V12"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                            />
-                            <circle cx="12" cy="8" r="1" fill="currentColor" />
-                        </svg>
-                    </div>
+                <!-- Row 2: Filters (collapsible on mobile) -->
+                <div class="dt-filters-wrapper">
+                    <button
+                        class="filter-toggle-btn"
+                        @click="showFilters = !showFilters"
+                    >
+                        <font-awesome-icon icon="filter" />
+                        <span>Filter</span>
+                        <font-awesome-icon
+                            :icon="showFilters ? 'chevron-up' : 'chevron-down'"
+                            class="toggle-icon"
+                        />
+                    </button>
 
-                    <div class="table-hint__body">
-                        <div class="table-hint__title">
-                            Konfigurasi shift karyawan
-                            <span class="table-hint__badge">Tips</span>
+                    <div class="dt-filters" :class="{ show: showFilters }">
+                        <div class="form-group">
+                            <label class="filter-label">Perusahaan</label>
+                            <Select2
+                                v-model="filtered_perusahaan"
+                                :settings="{ width: '100%' }"
+                            >
+                                <option value="">Semua Perusahaan</option>
+                                <option
+                                    v-for="value in data_filtered_perusahaan"
+                                    :key="value"
+                                    :value="value"
+                                >
+                                    {{ value }}
+                                </option>
+                            </Select2>
                         </div>
-                        <div class="table-hint__text">
-                            Klik <b>Nama</b> untuk membuka pengaturan shift.
+
+                        <div class="form-group">
+                            <label class="filter-label">Divisi / Dept</label>
+                            <Select2
+                                v-model="filtered_jabatan"
+                                :settings="{ width: '100%' }"
+                            >
+                                <option value="">Semua Divisi / Dept</option>
+                                <option
+                                    v-for="value in data_filtered_jabatan"
+                                    :key="value"
+                                    :value="value"
+                                >
+                                    {{ value }}
+                                </option>
+                            </Select2>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="filter-label">Kontrak</label>
+                            <Select2
+                                v-model="contractExpiring"
+                                :settings="{ width: '100%' }"
+                            >
+                                <option value="">Semua Kontrak</option>
+                                <option value="7">≤ 7 Hari</option>
+                                <option value="30">≤ 30 Hari</option>
+                            </Select2>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="filter-label">Kontrak Expired</label>
+                            <select
+                                class="form-control"
+                                v-model="contractExpired"
+                                :settings="{ width: '100%' }"
+                            >
+                                <option value="">Pilih</option>
+                                <option value="true">Ya</option>
+                                <option value="false">Tidak</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group filter-actions">
+                            <label class="filter-label">&nbsp;</label>
+                            <Button
+                                variant="secondary"
+                                class="filter-apply-btn"
+                                @click="filteredData"
+                            >
+                                <font-awesome-icon icon="filter" />
+                                Terapkan Filter
+                            </Button>
                         </div>
                     </div>
-
-                    <div class="table-hint__actions">
-                        <!-- <button
-                            type="button"
-                            class="table-hint__btn"
-                            @click="openShiftGuide?.()"
-                        >
-                            Panduan
-                        </button>
-                        <button
-                            type="button"
-                            class="table-hint__close"
-                            @click="dismissHint?.()"
-                            aria-label="Tutup"
-                        >
-                            ✕
-                        </button> -->
-                    </div>
                 </div>
 
-                <div class="table-responsive-custom">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th class="col-no">#</th>
-                                <th class="col-name">Nama</th>
-                                <th class="col-nik">NIK</th>
-                                <th class="col-perusahaan">Perusahaan</th>
-                                <th class="col-position">
-                                    Divisi / Departemen
-                                </th>
-                                <th class="col-status">Awal Kontrak</th>
-                                <th class="col-status">Akhir Kontrak</th>
-                                <th class="col-action">Detail</th>
-                            </tr>
-                        </thead>
+                <!-- TABEL DALAM CARD (Original) -->
+                <div class="table-card">
+                    <div
+                        class="table-hint"
+                        role="note"
+                        aria-label="Petunjuk tabel karyawan"
+                    >
+                        <div class="table-hint__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                />
+                                <path
+                                    d="M12 16V12"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+                                <circle
+                                    cx="12"
+                                    cy="8"
+                                    r="1"
+                                    fill="currentColor"
+                                />
+                            </svg>
+                        </div>
 
-                        <tbody>
-                            <!-- LOADING -->
-                            <tr v-if="loadingUsers">
-                                <td colspan="8" class="loading-row">
-                                    <div class="table-spinner">
-                                        <span class="spinner"></span>
-                                        <span class="spinner-text"
-                                            >Memuat data...</span
-                                        >
-                                    </div>
-                                </td>
-                            </tr>
+                        <div class="table-hint__body">
+                            <div class="table-hint__title">
+                                Konfigurasi shift karyawan
+                                <span class="table-hint__badge">Tips</span>
+                            </div>
+                            <div class="table-hint__text">
+                                Klik <b>Nama</b> untuk membuka pengaturan shift.
+                            </div>
+                        </div>
 
-                            <!-- EMPTY -->
-                            <tr v-else-if="users.length === 0">
-                                <td colspan="8" class="empty-row">
-                                    Tidak ada data ...
-                                </td>
-                            </tr>
+                        <div class="table-hint__actions"></div>
+                    </div>
 
-                            <!-- DATA -->
-                            <tr v-else v-for="(u, index) in users" :key="u.id">
-                                <td>{{ startIndex + index + 1 }}</td>
+                    <div class="table-responsive-custom">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th class="col-no">#</th>
+                                    <th class="col-name">Nama</th>
+                                    <th class="col-nik">NIK</th>
+                                    <th class="col-perusahaan">Perusahaan</th>
+                                    <th class="col-position">
+                                        Divisi / Departemen
+                                    </th>
+                                    <th class="col-status">Awal Kontrak</th>
+                                    <th class="col-status">Akhir Kontrak</th>
+                                    <th class="col-action">Detail</th>
+                                </tr>
+                            </thead>
 
-                                <td>
-                                    <button
-                                        type="button"
-                                        class="cell-user-btn"
-                                        title="Klik untuk konfigurasi shift"
-                                        @click="openShiftConfig(u)"
-                                    >
-                                        <div class="cell-user">
-                                            <div class="cell-avatar">
-                                                {{ (u.name || '').charAt(0) }}
-                                            </div>
-                                            <div class="cell-user-text">
-                                                <div class="cell-name">
-                                                    {{ u.name }}
-                                                    <span class="cell-badge">
-                                                        {{ u.shift.nama_shift }}
-                                                        (
-                                                        {{ u.shift.jam_masuk }}
-                                                        -
-                                                        {{ u.shift.jam_pulang }}
-                                                        )</span
-                                                    >
-                                                </div>
-                                                <div class="cell-dept">
-                                                    NRP: {{ u.nrp }}
-                                                    <span class="cell-hint"
-                                                        >Klik untuk atur
-                                                        shift</span
-                                                    >
-                                                </div>
-                                            </div>
+                            <tbody>
+                                <!-- LOADING -->
+                                <tr v-if="loadingUsers">
+                                    <td colspan="8" class="loading-row">
+                                        <div class="table-spinner">
+                                            <span class="spinner"></span>
+                                            <span class="spinner-text"
+                                                >Memuat data...</span
+                                            >
                                         </div>
-                                    </button>
-                                </td>
+                                    </td>
+                                </tr>
 
-                                <td>
-                                    <span class="cell-nik">{{ u.nik }}</span>
-                                </td>
-                                <td>
-                                    <span class="cell-perusahaan">{{
-                                        u.perusahaan
-                                    }}</span>
-                                </td>
-                                <td>{{ u.position }}</td>
-                                <td>{{ u.awal_kontrak }}</td>
-                                <td>{{ u.akhir_kontrak }}</td>
+                                <!-- EMPTY -->
+                                <tr v-else-if="users.length === 0">
+                                    <td colspan="8" class="empty-row">
+                                        Tidak ada data ...
+                                    </td>
+                                </tr>
 
-                                <td class="actions-cell">
-                                    <button
-                                        class="action-btn primary"
-                                        title="Edit Karyawan"
-                                        @click="openEdit(u.id)"
-                                    >
-                                        <font-awesome-icon
-                                            icon="pen-to-square"
-                                        />
-                                    </button>
+                                <!-- DATA -->
+                                <tr
+                                    v-else
+                                    v-for="(u, index) in users"
+                                    :key="u.id"
+                                >
+                                    <td>{{ startIndex + index + 1 }}</td>
 
-                                    <button
-                                        class="action-btn primary"
-                                        title="Lihat Detail Karyawan"
-                                        @click="openDetail(u.id)"
-                                    >
-                                        <font-awesome-icon icon="eye" />
-                                    </button>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="cell-user-btn"
+                                            title="Klik untuk konfigurasi shift"
+                                            @click="openShiftConfig(u)"
+                                        >
+                                            <div class="cell-user">
+                                                <div class="cell-avatar">
+                                                    {{
+                                                        (u.name || '').charAt(0)
+                                                    }}
+                                                </div>
+                                                <div class="cell-user-text">
+                                                    <div class="cell-name">
+                                                        {{ u.name }}
+                                                        <span
+                                                            class="cell-badge"
+                                                        >
+                                                            {{
+                                                                u.shift
+                                                                    .nama_shift
+                                                            }}
+                                                            (
+                                                            {{
+                                                                u.shift
+                                                                    .jam_masuk
+                                                            }}
+                                                            -
+                                                            {{
+                                                                u.shift
+                                                                    .jam_pulang
+                                                            }}
+                                                            )</span
+                                                        >
+                                                    </div>
+                                                    <div class="cell-dept">
+                                                        NRP: {{ u.nrp }}
+                                                        <span class="cell-hint"
+                                                            >Klik untuk atur
+                                                            shift</span
+                                                        >
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </td>
 
-                                    <button
-                                        class="action-btn danger"
-                                        title="Non Aktifkan Karyawan"
-                                        @click="fiturBelumTersedia"
-                                    >
-                                        <font-awesome-icon icon="trash" />
-                                    </button>
+                                    <td>
+                                        <span class="cell-nik">{{
+                                            u.nik
+                                        }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="cell-perusahaan">{{
+                                            u.perusahaan
+                                        }}</span>
+                                    </td>
+                                    <td>{{ u.position }}</td>
+                                    <td>{{ u.awal_kontrak }}</td>
+                                    <td>{{ u.akhir_kontrak }}</td>
 
-                                    <button
-                                        class="action-btn success"
-                                        title="Slip Gaji Karyawan"
-                                        @click="openPayslip(u.id)"
-                                    >
-                                        <font-awesome-icon icon="file-lines" />
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                                    <td class="col-actions">
+                                        <div class="actions-wrap">
+                                            <button
+                                                class="action-btn primary"
+                                                title="Lihat Detail Karyawan"
+                                                @click="openDetail(u.id)"
+                                            >
+                                                <font-awesome-icon icon="eye" />
+                                            </button>
 
-                <!-- FOOTER DATATABLE: INFO + PAGINATION -->
-                <div class="dt-footer" v-if="!loadingUsers">
-                    <div class="dt-info">
-                        Menampilkan
-                        <strong v-if="totalItems">{{ startIndex + 1 }}</strong>
-                        <strong v-else>0</strong>
-                        &nbsp;–&nbsp;
-                        <strong>{{ endIndex }}</strong>
-                        dari <strong>{{ totalItems }}</strong> karyawan
+                                            <button
+                                                class="action-btn danger"
+                                                title="Non Aktifkan Karyawan"
+                                                @click="fiturBelumTersedia"
+                                            >
+                                                <font-awesome-icon
+                                                    icon="trash"
+                                                />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
-                    <div class="dt-pagination">
-                        <button
-                            class="dt-page-btn"
-                            :disabled="currentPage === 1"
-                            @click="goToPage(currentPage - 1)"
-                        >
-                            «
-                        </button>
+                    <!-- FOOTER DATATABLE: INFO + PAGINATION -->
+                    <div class="dt-footer" v-if="!loadingUsers">
+                        <div class="dt-info">
+                            Menampilkan
+                            <strong v-if="totalItems">{{
+                                startIndex + 1
+                            }}</strong>
+                            <strong v-else>0</strong>
+                            &nbsp;–&nbsp;
+                            <strong>{{ endIndex }}</strong>
+                            dari <strong>{{ totalItems }}</strong> karyawan
+                        </div>
 
-                        <button
-                            v-for="page in pages"
-                            :key="page"
-                            class="dt-page-btn"
-                            :class="{ active: page === currentPage }"
-                            @click="goToPage(page)"
-                        >
-                            {{ page }}
-                        </button>
+                        <div class="dt-pagination">
+                            <button
+                                class="dt-page-btn"
+                                :disabled="currentPage === 1"
+                                @click="goToPage(currentPage - 1)"
+                            >
+                                «
+                            </button>
 
-                        <button
-                            class="dt-page-btn"
-                            :disabled="
-                                currentPage === totalPages || totalPages === 0
-                            "
-                            @click="goToPage(currentPage + 1)"
-                        >
-                            »
-                        </button>
+                            <button
+                                v-for="page in pages"
+                                :key="page"
+                                class="dt-page-btn"
+                                :class="{ active: page === currentPage }"
+                                @click="goToPage(page)"
+                            >
+                                {{ page }}
+                            </button>
+
+                            <button
+                                class="dt-page-btn"
+                                :disabled="
+                                    currentPage === totalPages ||
+                                    totalPages === 0
+                                "
+                                @click="goToPage(currentPage + 1)"
+                            >
+                                »
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -639,6 +676,7 @@ export default {
             isDownloading: false,
             totalAllKaryawan: 0,
             totalKontrakHampirHabis: 0,
+            totalAllExpired: 0,
             defaultExpiringDays: 7,
 
             // modal
@@ -657,6 +695,8 @@ export default {
             },
 
             shiftOptions: [],
+            showFilters: false,
+            contractExpired: false,
         };
     },
 
@@ -732,10 +772,32 @@ export default {
             this.fetchEmployees(1);
         },
 
+        resetFilters() {
+            this.search = '';
+            this.filtered_jabatan = null;
+            this.filtered_perusahaan = null;
+
+            this.contractExpired = false;
+            this.contractExpiring = null; // atau default '7' kalau kamu mau
+            // this.contractExpiring = '7';
+
+            this.currentPage = 1;
+            this.fetchEmployees(1);
+        },
+
         fiturBelumTersedia() {
             triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
         },
+        showExpired() {
+            this.contractExpired = !this.contractExpired;
 
+            if (this.contractExpired) {
+                this.contractExpiring = null; // biar tidak tabrakan
+            }
+
+            this.currentPage = 1;
+            this.fetchEmployees(1);
+        },
         async fetchEmployees(page = this.currentPage) {
             this.loadingUsers = true;
 
@@ -748,6 +810,7 @@ export default {
                         status_active: 1,
                         filtered_jabatan: this.filtered_jabatan,
                         filtered_perusahaan: this.filtered_perusahaan,
+                        contract_expired: this.contractExpired,
                         contract_expiring: this.contractExpiring
                             ? Number(this.contractExpiring)
                             : null,
@@ -773,6 +836,9 @@ export default {
                 );
                 this.defaultExpiringDays = Number(
                     res.data.contract_expiring_days || 0,
+                );
+                this.totalAllExpired = Number(
+                    res.data.total_contract_expired || 0,
                 );
             } catch (err) {
                 console.error(err);
@@ -853,10 +919,21 @@ export default {
                     type: response.headers['content-type'],
                 });
 
+                const pad2 = (n) => String(n).padStart(2, '0');
+                const d = new Date();
+                const tgl = pad2(d.getDate());
+                const bln = pad2(d.getMonth() + 1);
+                const thn = d.getFullYear();
+                const hari = pad2(d.getHours());
+                const jam = pad2(d.getMinutes());
+                const detik = pad2(d.getSeconds());
+
+                const filename = `data_karyawan_${tgl}${bln}${thn}${hari}${jam}${detik}.xlsx`;
+
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.setAttribute('download', 'karyawan.xlsx');
+                link.setAttribute('download', filename);
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
