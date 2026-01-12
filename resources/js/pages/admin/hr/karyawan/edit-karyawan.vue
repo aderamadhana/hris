@@ -1567,6 +1567,17 @@ export default {
     },
     components: { AppLayout, Tabs },
 
+    setup() {
+        const statusChip = (status) => {
+            const s = (status ?? '').toLowerCase().trim();
+            if (s === 'aktif') return 'chip-success';
+            if (s === 'berakhir' || s === 'expired') return 'chip-danger';
+            if (s === 'menunggu' || s === 'pending') return 'chip-warning';
+            return 'chip-muted';
+        };
+
+        return { statusChip }; // WAJIB
+    },
     data() {
         const page = usePage();
         return {
