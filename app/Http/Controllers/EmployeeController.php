@@ -1176,4 +1176,16 @@ class EmployeeController extends Controller
             ], 500);
         }
     }
+
+    
+    public function nonAktif($id)
+    {
+        $employee = Employee::findOrFail($id);
+
+        $employee->update([
+            'status_active' => 0
+        ]);
+
+        return back()->with('success', 'Data karyawan berhasil dinonaktifkan');
+    }
 }

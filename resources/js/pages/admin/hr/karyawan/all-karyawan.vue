@@ -1,5 +1,16 @@
 <template>
     <AppLayout>
+        <div v-if="isLoadingNonAktif" class="fullpage-loader">
+            <div class="fullpage-loader__card">
+                <div class="fullpage-loader__spinner"></div>
+                <div class="fullpage-loader__title">
+                    Loading nonaktifkan karyawan...
+                </div>
+                <div class="fullpage-loader__subtitle">
+                    Mohon tunggu sebentar
+                </div>
+            </div>
+        </div>
         <section class="page employees-page">
             <!-- HEADER + ACTIONS -->
             <div class="page-header">
@@ -357,7 +368,7 @@
                                             <button
                                                 class="action-btn danger"
                                                 title="Non Aktifkan Karyawan"
-                                                @click="fiturBelumTersedia"
+                                                @click="deleteUser(u)"
                                             >
                                                 <font-awesome-icon
                                                     icon="trash"
@@ -697,6 +708,7 @@ export default {
             shiftOptions: [],
             showFilters: false,
             contractExpired: false,
+            isLoadingNonAktif: false,
         };
     },
 
@@ -894,7 +906,25 @@ export default {
         openPayslip(id) {
             router.visit(`/hr/karyawan/daftar-gaji/${id}`);
         },
+        deleteUser(u) {
+            if (!confirm(`Nonaktifkan ${u.name}?`)) return;
+            this.isLoadingNonAktif = true;
 
+            router.post(
+                `/hr/karyawan/non-aktif/${u.id}`,
+                {},
+                {
+                    onSuccess: () => {
+                        triggerAlert(
+                            'success',
+                            'Data karyawan berhasil dinonaktifkan.',
+                        );
+                        this.fetchEmployees(1);
+                        this.isLoadingNonAktif = false;
+                    },
+                },
+            );
+        },
         tambahKaryawan() {
             this.$inertia.visit('/hr/karyawan/tambah-karyawan');
         },

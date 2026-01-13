@@ -52,6 +52,7 @@ Route::middleware('auth')->group(function () {
                     'employeeId' => $id
                 ]);
             });
+            Route::post('/non-aktif/{id}', [EmployeeController::class, 'nonAktif']);
         });
 
         Route::prefix('pelamar')->group(function () {

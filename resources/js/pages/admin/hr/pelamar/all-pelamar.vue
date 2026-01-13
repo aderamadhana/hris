@@ -1,5 +1,16 @@
 <template>
     <AppLayout>
+        <div v-if="isLoadingHapus" class="fullpage-loader">
+            <div class="fullpage-loader__card">
+                <div class="fullpage-loader__spinner"></div>
+                <div class="fullpage-loader__title">
+                    Loading hapus pelamar...
+                </div>
+                <div class="fullpage-loader__subtitle">
+                    Mohon tunggu sebentar
+                </div>
+            </div>
+        </div>
         <section class="page employees-page">
             <!-- HEADER + ACTIONS -->
             <div class="page-header">
@@ -293,6 +304,7 @@ export default {
 
             showFilters: false,
             statistics: [],
+            isLoadingHapus: false,
         };
     },
 
@@ -447,6 +459,7 @@ export default {
         },
         deleteUser(u) {
             if (!confirm(`Hapus ${u.name}?`)) return;
+            this.isLoadingHapus = true;
 
             router.post(
                 `/hr/pelamar/delete/${u.id}`,
@@ -455,6 +468,7 @@ export default {
                     onSuccess: () => {
                         triggerAlert('success', 'Berhasil hapus data.');
                         this.fetchEmployees(1);
+                        this.isLoadingHapus = false;
                     },
                 },
             );

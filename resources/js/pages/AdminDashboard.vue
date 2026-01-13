@@ -210,7 +210,7 @@
                     </select>
                 </div>
                 <div class="chart-container">
-                    <canvas ref="recruitmentChart"></canvas>
+                    <canvas ref="kontrakHampirHabisChart"></canvas>
                 </div>
             </div>
 
@@ -802,9 +802,9 @@ export default defineComponent({
             }
 
             // Recruitment Chart
-            if (this.$refs.recruitmentChart) {
+            if (this.$refs.kontrakHampirHabisChart) {
                 this.charts.recruitment = new Chart(
-                    this.$refs.recruitmentChart,
+                    this.$refs.kontrakHampirHabisChart,
                     {
                         type: 'bar',
                         data: {

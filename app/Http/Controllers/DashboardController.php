@@ -10,6 +10,7 @@ use App\Models\EmployeeEmployment;
 use Carbon\Carbon;
 use App\Models\Perusahaan;
 use App\Models\Divisi;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -67,8 +68,8 @@ class DashboardController extends Controller
                 // Chart Data
                 'employeeTrend' => $this->getEmployeeTrend(),
                 'employeeStatus' => $this->getEmployeeStatus(),
-                'recruitmentFunnel' => $this->getRecruitmentFunnel(),
                 'departmentData' => $this->getDepartmentData($perusahaanFilter),
+                'recruitmentFunnel' => $this->getKontrakHampirHabisPerTanggal($kontrakHabisFilter), // TAMBAHKAN INI
             ];
 
             return response()->json([
@@ -357,5 +358,45 @@ class DashboardController extends Controller
         */
         
         return []; // Sementara return array kosong
+    }
+
+    private function getKontrakHampirHabisPerTanggal($days = 30)
+    {
+        $today = Carbon::today();
+        $endDate = Carbon::today()->addDays($days);
+
+        $kontrakData = EmployeeEmployment::query()
+            ->selectRaw('DATE(tgl_akhir_kerja) as tanggal, COUNT(*) as jumlah')
+            // ->where('status', 'aktif')
+            ->whereNotNull('tgl_akhir_kerja')
+            ->whereBetween(
+                DB::raw('DATE(tgl_akhir_kerja)'),
+                [$today->toDateString(), $endDate->toDateString()]
+            )
+            ->whereHas('employee', function ($q) {
+                $q->where('status_active', '1');
+            })
+            ->groupBy('tanggal')
+            ->orderBy('tanggal')
+            ->get();
+
+        // Generate semua tanggal (termasuk yang kosong)
+        $result = [];
+        $currentDate = $today->copy();
+
+        while ($currentDate->lte($endDate)) {
+            $dateStr = $currentDate->toDateString();
+            $existingData = $kontrakData->firstWhere('tanggal', $dateStr);
+
+            $result[] = [
+                'tanggal'        => $currentDate->format('d M'),
+                'tanggal_full'   => $dateStr,
+                'jumlah'         => $existingData ? (int) $existingData->jumlah : 0,
+            ];
+
+            $currentDate->addDay();
+        }
+
+        return $result;
     }
 }
