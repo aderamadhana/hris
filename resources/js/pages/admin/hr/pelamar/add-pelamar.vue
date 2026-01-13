@@ -4,10 +4,10 @@
             <!-- HEADER -->
             <div class="page-header">
                 <div>
-                    <h2 class="page-title">Edit Data Karyawan</h2>
+                    <h2 class="page-title">Tambah Data Pelamar</h2>
                     <p class="page-subtitle">
-                        Ubah profil, pendidikan, pekerjaan, keluarga, kesehatan,
-                        dan kelengkapan dokumen.
+                        Tambah profil, pendidikan, pekerjaan, keluarga,
+                        kesehatan, dan kelengkapan dokumen.
                     </p>
                 </div>
             </div>
@@ -18,9 +18,9 @@
                     <!-- ================= FORM KARYAWAN ================= -->
                     <template #karyawan>
                         <div class="tab-section">
-                            <h3 class="tab-title">Profil Karyawan</h3>
+                            <h3 class="tab-title">Profil Pelamar</h3>
 
-                            <form @submit.prevent="handleSubmitKaryawan">
+                            <form @submit.prevent="handleSubmitPelamar">
                                 <!-- DATA UTAMA -->
                                 <div class="form-section">
                                     <h4 class="form-section-title">
@@ -468,7 +468,7 @@
                                     <button
                                         type="button"
                                         class="btn btn-secondary"
-                                        @click="resetFormKaryawan"
+                                        @click="resetFormPelamar"
                                     >
                                         Reset
                                     </button>
@@ -476,7 +476,7 @@
                                         type="submit"
                                         class="btn btn-primary"
                                     >
-                                        Simpan Tab Karyawan
+                                        Simpan Tab Pelamar
                                     </button>
                                 </div>
                             </form>
@@ -592,6 +592,7 @@
                                 </div>
                             </form>
 
+                            <!-- LIST (Pendidikan) -->
                             <div
                                 class="entry-list"
                                 v-if="listPendidikan.length"
@@ -672,64 +673,27 @@
                                         <label class="field-label"
                                             >Perusahaan</label
                                         >
-                                        <Select2
+                                        <input
+                                            type="text"
                                             v-model="formPekerjaan.perusahaan"
-                                            :settings="{ width: '100%' }"
-                                        >
-                                            <option value="">
-                                                Pilih Perusahaan
-                                            </option>
-                                            <option
-                                                v-for="perusahaan in data_perusahaan"
-                                                :key="perusahaan.id"
-                                                :value="
-                                                    perusahaan.nama_perusahaan
-                                                "
-                                            >
-                                                {{ perusahaan.nama_perusahaan }}
-                                            </option>
-                                        </Select2>
+                                            class="form-input"
+                                            placeholder="Contoh: PT Maju Jaya Sejahtera"
+                                        />
                                     </div>
 
                                     <div class="form-group">
                                         <label class="field-label"
                                             >Divisi / Departemen</label
                                         >
-                                        <Select2
+                                        <input
+                                            type="text"
                                             v-model="formPekerjaan.bagian"
-                                            :settings="{ width: '100%' }"
-                                            :disabled="
-                                                !formPekerjaan.perusahaan
-                                            "
-                                        >
-                                            <option value="">
-                                                {{
-                                                    !formPekerjaan.perusahaan
-                                                        ? 'Pilih perusahaan terlebih dahulu'
-                                                        : 'Pilih Divisi'
-                                                }}
-                                            </option>
-                                            <option
-                                                v-for="divisi in data_divisi"
-                                                :key="divisi.id"
-                                                :value="divisi.nama_divisi"
-                                            >
-                                                {{ divisi.nama_divisi }}
-                                            </option>
-                                        </Select2>
-                                        <small
-                                            v-if="
-                                                data_divisi.length === 0 &&
-                                                formPekerjaan.perusahaan
-                                            "
-                                            class="text-muted"
-                                        >
-                                            Tidak ada divisi aktif untuk
-                                            perusahaan ini
-                                        </small>
+                                            class="form-input"
+                                            placeholder="Contoh: Operasional / HR / Finance"
+                                        />
                                     </div>
 
-                                    <div class="form-group">
+                                    <!-- <div class="form-group">
                                         <label class="field-label"
                                             >No. Kontrak</label
                                         >
@@ -739,9 +703,9 @@
                                             class="form-input"
                                             placeholder="Contoh: PKWT/001/2025"
                                         />
-                                    </div>
+                                    </div> -->
 
-                                    <div class="form-group">
+                                    <!-- <div class="form-group">
                                         <label class="field-label"
                                             >Jenis Kontrak</label
                                         >
@@ -773,18 +737,18 @@
                                                 Outsource
                                             </option>
                                         </select>
-                                    </div>
+                                    </div> -->
 
-                                    <div class="form-group">
+                                    <!-- <div class="form-group">
                                         <label class="field-label">Mulai</label>
                                         <input
                                             type="date"
                                             v-model="formPekerjaan.mulai"
                                             class="form-input"
                                         />
-                                    </div>
+                                    </div> -->
 
-                                    <div class="form-group">
+                                    <!-- <div class="form-group">
                                         <label class="field-label"
                                             >Selesai</label
                                         >
@@ -793,7 +757,7 @@
                                             v-model="formPekerjaan.selesai"
                                             class="form-input"
                                         />
-                                    </div>
+                                    </div> -->
 
                                     <div class="form-group">
                                         <label class="field-label"
@@ -836,6 +800,7 @@
                                             >Status Kontrak</label
                                         >
                                         <select
+                                            style="pointer-events: none"
                                             v-model="
                                                 formPekerjaan.status_kontrak
                                             "
@@ -1121,6 +1086,7 @@
                                 </div>
                             </form>
 
+                            <!-- LIST (Keluarga) -->
                             <div v-if="listKeluarga.length" class="entry-list">
                                 <div
                                     v-for="(f, i) in listKeluarga"
@@ -1592,7 +1558,6 @@
 </template>
 
 <script>
-import Select2 from '@/components/Select2.vue';
 import Tabs from '@/components/Tabs.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
@@ -1600,11 +1565,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 
 export default {
-    props: {
-        employee_id: String,
-    },
-    components: { AppLayout, Tabs, Select2 },
-
+    components: { AppLayout, Tabs },
     setup() {
         const statusChip = (status) => {
             const s = (status ?? '').toLowerCase().trim();
@@ -1622,14 +1583,18 @@ export default {
             user: page.props.auth.user,
             loading: true,
 
-            // snapshot untuk tombol reset (restore ke data awal load)
-            initialSnapshot: null,
+            // sumber data detail (optional dipakai kalau kamu masih fetch dari API)
+            employee: {},
+            alamat: {},
+            pendidikan: [],
+            pekerjaan: [],
+            keluarga: [],
+            kesehatan: {},
+            dokumen: {},
 
-            // sumber data (raw)
-            dokumenRaw: {}, // data.documents asli dari API
-
+            // tabs: SAMAKAN SLOT KEY -> pakai id
             tabs: [
-                { key: 'karyawan', id: 'karyawan', label: 'Data Karyawan' },
+                { key: 'karyawan', id: 'karyawan', label: 'Data Pelamar' },
                 { key: 'pendidikan', id: 'pendidikan', label: 'Pendidikan' },
                 { key: 'pekerjaan', id: 'pekerjaan', label: 'Pekerjaan' },
                 { key: 'keluarga', id: 'keluarga', label: 'Keluarga' },
@@ -1637,13 +1602,14 @@ export default {
                 { key: 'dokumen', id: 'dokumen', label: 'Kelengkapan Dokumen' },
             ],
 
-            // ===== EDIT MODE INDEX (untuk pendidikan/pekerjaan/keluarga) =====
+            // ===== EDIT MODE INDEX =====
             editPendidikanIndex: null,
             editPekerjaanIndex: null,
             editKeluargaIndex: null,
 
-            // ===== FORM STATE =====
+            // ===== FORM STATE (EDIT) =====
             formEmployee: {
+                // Data utama employees table
                 nama: '',
                 nrp: '',
                 jk: '',
@@ -1655,6 +1621,7 @@ export default {
                 kewarganegaraan: '',
                 status: '1',
 
+                // Data dari employee_personals table
                 no_wa: '',
                 bpjs_tk: '',
                 bpjs_kes: '',
@@ -1696,7 +1663,7 @@ export default {
                 jenis_kerja: '',
                 pola_kerja: '',
                 hari_kerja: '',
-                status_kontrak: '',
+                status_kontrak: 'Tidak Aktif',
             },
             listPekerjaan: [],
 
@@ -1728,20 +1695,16 @@ export default {
                 os: '',
             },
 
-            /**
-             * formDokumen DIKHUSUSKAN untuk file baru (File object)
-             * jangan isi boolean di sini, karena akan ke-append sebagai "true" ke FormData.
-             */
             formDokumen: {
-                pas_foto: null,
-                ktp: null,
-                kk: null,
-                lisensi: null,
-                form_bpjs_tk: null,
-                form_bpjs_kes: null,
-                paklaring: null,
-                ijazah_terakhir: null,
-                skck: null,
+                pas_foto: false,
+                ktp: false,
+                kk: false,
+                lisensi: false,
+                form_bpjs_tk: false,
+                form_bpjs_kes: false,
+                paklaring: false,
+                ijazah_terakhir: false,
+                skck: false,
             },
 
             dokumenMeta: [
@@ -1755,239 +1718,95 @@ export default {
                     key: 'paklaring',
                     label: 'Surat Pengalaman Kerja / Paklaring',
                 },
-                { key: 'ijazah_terakhir', label: 'Ijazah Terakhir' },
-                { key: 'skck', label: 'SKCK' },
+                {
+                    key: 'ijazah_terakhir',
+                    label: 'Ijazah Terakhir',
+                },
+                {
+                    key: 'skck',
+                    label: 'SKCK',
+                },
             ],
-
+            deleteExistingDokumen: {},
             dokumenToDelete: [],
-            data_perusahaan: [],
-            data_divisi: [],
-            all_data: [],
         };
     },
 
     mounted() {
-        this.getFPerusahaanDanDivisi();
-        this.getDataKaryawan();
+        // TODO: ganti ini dengan fetch data kamu (props inertia / axios)
+        // simulasi: setelah data ada, panggil hydrateFormsFromDetail()
+        this.hydrateFormsFromDetail();
+        this.loading = false;
     },
-    watch: {
-        'formPekerjaan.perusahaan'(newVal, oldVal) {
-            console.log('Perusahaan berubah dari', oldVal, 'ke', newVal);
-            this.onPerusahaanChange();
-        },
-    },
+
     methods: {
-        async getFPerusahaanDanDivisi() {
-            try {
-                const res = await axios.get('/referensi/perusahaan-divisi');
-                this.data_perusahaan = res.data.data || [];
-                this.all_data = res.data.data;
-            } catch (err) {
-                console.error(err);
-                triggerAlert(
-                    'error',
-                    'Gagal memuat filter perusahaan/jabatan.',
-                );
-            }
-        },
-        onPerusahaanChange() {
-            console.log('Perusahaan dipilih:', this.formPekerjaan.perusahaan);
-            console.log('Data perusahaan:', this.data_perusahaan);
+        // ====== HYDRATE (DETAIL -> FORM) ======
+        hydrateFormsFromDetail() {
+            this.formEmployee = {
+                ...this.formEmployee,
+                ...this.employee,
+                status: String(
+                    this.employee?.status ?? this.formEmployee.status,
+                ),
+            };
 
-            // Reset divisi
-            this.formPekerjaan.bagian = '';
-            this.data_divisi = [];
+            this.formAlamat = {
+                ...this.formAlamat,
+                ...this.alamat,
+            };
 
-            // Jika tidak ada perusahaan dipilih, stop
-            if (!this.formPekerjaan.perusahaan) {
-                console.log('Tidak ada perusahaan dipilih');
-                return;
-            }
+            this.listPendidikan = Array.isArray(this.pendidikan)
+                ? [...this.pendidikan]
+                : [];
 
-            // Filter perusahaan yang dipilih dari data_perusahaan
-            const perusahaanSelected = this.data_perusahaan.find(
-                (p) => p.nama_perusahaan === this.formPekerjaan.perusahaan,
-            );
+            this.listPekerjaan = Array.isArray(this.pekerjaan)
+                ? [...this.pekerjaan]
+                : [];
 
-            console.log('Perusahaan selected:', perusahaanSelected);
+            this.listKeluarga = Array.isArray(this.keluarga)
+                ? [...this.keluarga]
+                : [];
 
-            // Ambil divisi dari perusahaan yang dipilih
-            if (perusahaanSelected) {
-                if (
-                    perusahaanSelected.divisi &&
-                    perusahaanSelected.divisi.length > 0
-                ) {
-                    this.data_divisi = perusahaanSelected.divisi.filter(
-                        (d) => d.status === 'aktif',
-                    );
-                    console.log('Divisi ditemukan:', this.data_divisi);
-                } else {
-                    console.log('Perusahaan tidak memiliki divisi');
-                }
-            } else {
-                console.log('Perusahaan tidak ditemukan dalam data');
-            }
-        },
-        // ====== LOAD DATA ======
-        async getDataKaryawan() {
-            this.loading = true;
-            try {
-                const { data } = await axios.get(
-                    `/employee/${this.employee_id}`,
-                );
+            this.formKesehatan = {
+                ...this.formKesehatan,
+                ...this.kesehatan,
+                buta_warna: Boolean(this.kesehatan?.buta_warna),
+            };
 
-                // ===============================
-                // FORM EMPLOYEE
-                // ===============================
-                Object.assign(this.formEmployee, {
-                    nama: data.nama ?? '',
-                    nrp: data.nrp ?? '',
-                    jk: data.jenis_kelamin ?? '',
-                    kk: data.no_kk ?? '',
-                    tempat_lahir: data.tempat_lahir ?? '',
-                    tanggal_lahir: data.tanggal_lahir ?? '',
-                    perkawinan: data.status_perkawinan ?? '',
-                    agama: data.agama ?? '',
-                    kewarganegaraan: data.kewarganegaraan ?? '',
-                    status: String(data.status_active ?? '1'),
-
-                    no_wa: data.no_wa ?? '',
-                    bpjs_tk: data.bpjs_tk ?? '',
-                    bpjs_kes: data.bpjs_kes ?? '',
-                    jenis_bpjs_tk: data.jenis_bpjs_tk ?? '',
-                    nama_faskes: data.nama_faskes ?? '',
-                    status_bpjs_ks: data.status_bpjs_ks ?? '',
-                    email: data.email ?? '',
-                    no_skck: data.no_skck ?? '',
-                    masa_berlaku_skck: data.masa_berlaku_skck ?? '',
-                    jenis_lisensi: data.jenis_lisensi ?? '',
-                    no_lisensi: data.no_lisensi ?? '',
-                    masa_berlaku_lisensi: data.masa_berlaku_lisensi ?? '',
+            // dokumen (boolean)
+            if (this.dokumen && typeof this.dokumen === 'object') {
+                Object.keys(this.formDokumen).forEach((k) => {
+                    this.formDokumen[k] = Boolean(this.dokumen?.[k]);
                 });
-
-                // ===============================
-                // FORM ALAMAT
-                // ===============================
-                Object.assign(this.formAlamat, {
-                    ktp: data.no_ktp ?? '',
-                    phone: data.no_wa ?? '',
-                    domisili: data.alamat_lengkap_domisili ?? '',
-                    kota: data.kota_domisili ?? '',
-                });
-
-                // ===============================
-                // PENDIDIKAN
-                // ===============================
-                this.listPendidikan = (data.educations ?? []).map((p) => ({
-                    jenjang: p.jenjang ?? '',
-                    jurusan: p.jurusan ?? '',
-                    sekolah: p.institusi ?? p.sekolah_asal ?? '',
-                    tahun_lulus: p.tahun_lulus ?? '',
-                }));
-
-                // ===============================
-                // PEKERJAAN (support key typo: employmentss/employments)
-                // ===============================
-                const employments = data.employmentss ?? data.employments ?? [];
-                this.listPekerjaan = employments.map((j) => ({
-                    jabatan: j.jabatan ?? j.job_roll ?? '',
-                    perusahaan: j.perusahaan ?? '',
-                    bagian: j.penempatan ?? '',
-                    no_kontrak: j.no_kontrak ?? '',
-                    cost_center: j.cost_center ?? '',
-                    jenis_kontrak: j.jenis_kontrak ?? '',
-                    mulai: j.tgl_awal_kerja ?? '',
-                    selesai: j.tgl_akhir_kerja ?? '',
-                    jenis_kerja: j.jenis_kerja ?? '',
-                    pola_kerja: j.pola_kerja ?? '',
-                    hari_kerja: j.hari_kerja ?? '',
-                    status_kontrak: j.status ?? j.keterangan_status ?? '',
-                }));
-
-                // ===============================
-                // KELUARGA
-                // ===============================
-                this.listKeluarga = (data.families ?? []).map((f) => ({
-                    nama: f.nama ?? '',
-                    hubungan: f.hubungan ?? '',
-                    ttl:
-                        f.tempat_lahir && f.tanggal_lahir
-                            ? `${f.tempat_lahir}, ${f.tanggal_lahir}`
-                            : '',
-                    no_hp: f.no_hp ?? '',
-                }));
-
-                // ===============================
-                // KESEHATAN
-                // ===============================
-                if (data.health) {
-                    Object.assign(this.formKesehatan, {
-                        tinggi_badan: data.health.tinggi_badan ?? '',
-                        berat_badan: data.health.berat_badan ?? '',
-                        gol_darah: data.health.gol_darah ?? '',
-                        buta_warna: !!data.health.buta_warna,
-                        riwayat_penyakit: data.health.riwayat_penyakit ?? '',
-                        tanggal_mcu: data.health.tanggal_mcu ?? '',
-                        kesimpulan_hasil_mcu:
-                            data.health.kesimpulan_hasil_mcu ?? '',
-                        darah: data.health.darah ?? '',
-                        urine: data.health.urine ?? '',
-                        f_hati: data.health.f_hati ?? '',
-                        gula_darah: data.health.gula_darah ?? '',
-                        ginjal: data.health.ginjal ?? '',
-                        thorax: data.health.thorax ?? '',
-                        tensi: data.health.tensi ?? '',
-                        nadi: data.health.nadi ?? '',
-                        od: data.health.od ?? '',
-                        os: data.health.os ?? '',
-                    });
-                }
-
-                // ===============================
-                // DOKUMEN RAW (untuk link existing)
-                // ===============================
-                this.dokumenRaw = data.documents ?? {};
-
-                // reset state dokumen
-                this.resetFormDokumen();
-
-                // simpan snapshot awal untuk tombol reset (karyawan & kesehatan)
-                this.initialSnapshot = JSON.parse(
-                    JSON.stringify({
-                        formEmployee: this.formEmployee,
-                        formAlamat: this.formAlamat,
-                        formKesehatan: this.formKesehatan,
-                    }),
-                );
-            } catch (e) {
-                console.error(e);
-                triggerAlert('error', 'Gagal memuat data karyawan');
-            } finally {
-                this.loading = false;
             }
         },
 
         // ====== SUBMIT PER TAB (optional) ======
-        async handleSubmitKaryawan() {
-            if (
-                !this.formEmployee.nama ||
-                !this.formEmployee.nrp ||
-                !this.formEmployee.jk
-            ) {
-                triggerAlert(
-                    'warning',
-                    'Nama, NRP, dan Jenis Kelamin wajib diisi!',
-                );
-                return;
-            }
+        async handleSubmitPelamar() {
+            try {
+                if (
+                    !this.formEmployee.nama ||
+                    !this.formEmployee.nrp ||
+                    !this.formEmployee.jk
+                ) {
+                    triggerAlert(
+                        'warning',
+                        'Nama, NRP, dan Jenis Kelamin wajib diisi!',
+                    );
+                    return;
+                }
 
-            triggerAlert(
-                'success',
-                'Data karyawan berhasil disimpan sementara. Klik "Simpan Semua Perubahan" untuk menyimpan ke database.',
-            );
+                triggerAlert(
+                    'success',
+                    'Data karyawan berhasil disimpan sementara. Klik "Simpan Semua Perubahan" untuk menyimpan ke database.',
+                );
+            } catch (error) {
+                console.error('Error submit karyawan:', error);
+                triggerAlert('error', 'Gagal menyimpan data karyawan');
+            }
         },
 
-        // ================= PENDIDIKAN (ADD/EDIT) =================
+        // ============== PENDIDIKAN (ADD/EDIT) ==============
         async handleSubmitPendidikan() {
             if (!this.formPendidikan.jenjang && !this.formPendidikan.sekolah) {
                 triggerAlert('warning', 'Minimal isi jenjang atau sekolah');
@@ -2022,7 +1841,7 @@ export default {
             this.resetFormPendidikan();
         },
 
-        // ================= PEKERJAAN (ADD/EDIT) =================
+        // ============== PEKERJAAN (ADD/EDIT) ==============
         async handleSubmitPekerjaan() {
             if (!this.formPekerjaan.perusahaan && !this.formPekerjaan.jabatan) {
                 triggerAlert('warning', 'Minimal isi perusahaan atau jabatan');
@@ -2053,7 +1872,7 @@ export default {
             this.resetFormPekerjaan();
         },
 
-        // ================= KELUARGA (ADD/EDIT) =================
+        // ============== KELUARGA (ADD/EDIT) ==============
         async handleSubmitKeluarga() {
             if (!this.formKeluarga.nama) {
                 triggerAlert('warning', 'Nama wajib diisi');
@@ -2113,15 +1932,16 @@ export default {
                 return;
             }
 
-            if (!confirm('Apakah Anda yakin ingin menyimpan semua data?'))
+            if (!confirm('Apakah Anda yakin ingin menyimpan semua data?')) {
                 return;
+            }
 
             this.loading = true;
 
             try {
                 const formData = new FormData();
 
-                // 1. Data Employees
+                // 1. Data Employees (table employees)
                 formData.append('nama', this.formEmployee.nama);
                 formData.append('nrp', this.formEmployee.nrp);
                 formData.append('kk', this.formEmployee.kk || '');
@@ -2143,13 +1963,14 @@ export default {
                     'kewarganegaraan',
                     this.formEmployee.kewarganegaraan || '',
                 );
-                formData.append('status_active', this.formEmployee.status);
+                formData.append('status_active', 0);
 
-                // 2. Employee personals
+                // 2. Data Employee Personals (table employee_personals)
                 formData.append('no_ktp', this.formAlamat.ktp || '');
                 formData.append('no_wa', this.formEmployee.no_wa || '');
                 formData.append('bpjs_tk', this.formEmployee.bpjs_tk || '');
                 formData.append('bpjs_kes', this.formEmployee.bpjs_kes || '');
+
                 formData.append(
                     'jenis_bpjs_tk',
                     this.formEmployee.jenis_bpjs_tk || '',
@@ -2181,7 +2002,7 @@ export default {
                     this.formEmployee.masa_berlaku_lisensi || '',
                 );
 
-                // 3. Address
+                // 3. Data Address (table employee_addresses)
                 formData.append(
                     'alamat_lengkap_domisili',
                     this.formAlamat.domisili || '',
@@ -2189,30 +2010,31 @@ export default {
                 formData.append('kota_domisili', this.formAlamat.kota || '');
                 formData.append('tipe', 'Domisili');
 
-                // 4. Pendidikan
+                // 4. Data Pendidikan (table employee_educations) - JSON Array
                 formData.append(
                     'pendidikan',
                     JSON.stringify(
                         this.listPendidikan.map((edu) => ({
                             jenjang: edu.jenjang,
                             jurusan: edu.jurusan,
-                            institusi: edu.sekolah,
+                            institusi: edu.sekolah, // sekolah -> institusi
                             tahun_lulus: edu.tahun_lulus,
                         })),
                     ),
                 );
 
-                // 5. Pekerjaan
+                // 5. Data Pekerjaan (table employee_employment_histories) - JSON Array
                 const hasNoKontrak = this.listPekerjaan.some(
                     (job) => job.no_kontrak,
                 );
+
                 formData.append(
                     'pekerjaan',
                     JSON.stringify(
                         this.listPekerjaan.map((job) => ({
                             perusahaan: job.perusahaan,
                             jabatan: job.jabatan,
-                            penempatan: job.bagian,
+                            penempatan: job.bagian, // bagian -> penempatan
                             no_kontrak: job.no_kontrak,
                             cost_center: job.cost_center,
                             jenis_kontrak: job.jenis_kontrak,
@@ -2225,9 +2047,10 @@ export default {
                         })),
                     ),
                 );
+
                 formData.append('create_user', hasNoKontrak ? '1' : '0');
 
-                // 6. Keluarga
+                // 6. Data Keluarga (table employee_family_members) - JSON Array
                 formData.append(
                     'keluarga',
                     JSON.stringify(
@@ -2248,7 +2071,7 @@ export default {
                     ),
                 );
 
-                // 7. Kesehatan
+                // 7. Data Kesehatan (table employee_health_records)
                 formData.append(
                     'tinggi_badan',
                     this.formKesehatan.tinggi_badan || '',
@@ -2273,10 +2096,6 @@ export default {
                     'tanggal_mcu',
                     this.formKesehatan.tanggal_mcu || '',
                 );
-                formData.append(
-                    'kesimpulan_hasil_mcu',
-                    this.formKesehatan.kesimpulan_hasil_mcu || '',
-                );
                 formData.append('darah', this.formKesehatan.darah || '');
                 formData.append('urine', this.formKesehatan.urine || '');
                 formData.append('f_hati', this.formKesehatan.f_hati || '');
@@ -2291,15 +2110,22 @@ export default {
                 formData.append('od', this.formKesehatan.od || '');
                 formData.append('os', this.formKesehatan.os || '');
 
-                // 8. Upload file baru saja (File only)
+                formData.append(
+                    'kesimpulan_hasil_mcu',
+                    this.formKesehatan.kesimpulan_hasil_mcu || '',
+                );
+
+                // 8. Upload Files (Dokumen)
                 for (const doc of this.dokumenMeta) {
-                    const file = this.formDokumen[doc.key];
-                    if (file instanceof File) {
-                        formData.append(`dokumen_${doc.key}`, file);
+                    if (this.formDokumen[doc.key]) {
+                        formData.append(
+                            `dokumen_${doc.key}`,
+                            this.formDokumen[doc.key],
+                        );
                     }
                 }
 
-                // 9. Dokumen existing yang diminta hapus
+                // 9. Dokumen yang akan dihapus
                 if (this.dokumenToDelete.length > 0) {
                     formData.append(
                         'dokumen_to_delete',
@@ -2307,75 +2133,69 @@ export default {
                     );
                 }
 
-                await axios.post(
-                    `/employee/store-edit/${this.employee_id}`,
-                    formData,
-                    {
-                        headers: { 'Content-Type': 'multipart/form-data' },
-                    },
-                );
+                try {
+                    await axios.post('/hr/pelamar/store', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    });
 
-                triggerAlert('success', 'Semua data berhasil disimpan!');
-                router.visit(`/hr/karyawan`);
-            } catch (error) {
-                if (axios.isAxiosError(error) && error.response) {
-                    if (error.response.status === 422) {
-                        const data = error.response.data || {};
-                        const fieldErrors = data.errors || {};
+                    triggerAlert('success', 'Semua data berhasil disimpan!');
+                    router.visit(`/hr/pelamar`);
+                } catch (error) {
+                    if (axios.isAxiosError(error) && error.response) {
+                        if (error.response.status === 422) {
+                            const data = error.response.data || {};
+                            const fieldErrors = data.errors || {};
 
-                        const errorsArr = Object.entries(fieldErrors).flatMap(
-                            ([field, msgs]) =>
+                            const errorsArr = Object.entries(
+                                fieldErrors,
+                            ).flatMap(([field, msgs]) =>
                                 (msgs || []).map((m) => `${field}: ${m}`),
+                            );
+
+                            const d = {
+                                total: errorsArr.length,
+                                success: 0,
+                                failed: errorsArr.length,
+                                errors: errorsArr,
+                            };
+
+                            const html = `
+                                <div>
+                                    <strong>Submit gagal karena validasi</strong>
+                                    <strong>Detail Error:</strong>
+                                    <ul>
+                                        ${d.errors.map((e) => `<li>${e}</li>`).join('')}
+                                    </ul>
+                                 </div>
+                            `;
+
+                            triggerAlert('warning', html, 15000, true);
+                            return;
+                        }
+
+                        triggerAlert(
+                            'error',
+                            error.response.data?.message ||
+                                `Gagal menyimpan data (HTTP ${error.response.status})`,
                         );
-
-                        const html = `
-                            <div>
-                                <strong>Submit gagal karena validasi</strong>
-                                <strong>Detail Error:</strong>
-                                <ul>
-                                    ${errorsArr.map((e) => `<li>${e}</li>`).join('')}
-                                </ul>
-                            </div>
-                        `;
-
-                        triggerAlert('warning', html, 15000, true);
                         return;
                     }
 
-                    triggerAlert(
-                        'error',
-                        error.response.data?.message ||
-                            `Gagal menyimpan data (HTTP ${error.response.status})`,
-                    );
-                    return;
+                    console.error(error);
+                    triggerAlert('error', 'Gagal menyimpan data');
                 }
-
-                console.error(error);
-                triggerAlert('error', 'Gagal menyimpan data');
+            } catch (error) {
+                console.error('Error submit all:', error);
+                triggerAlert('error', 'Gagal menyimpan data: ' + error.message);
             } finally {
                 this.loading = false;
             }
         },
 
         // ================= RESET FORMS =================
-        resetFormKaryawan() {
-            // di halaman edit, reset seharusnya restore data awal (bukan mengosongkan)
-            if (
-                this.initialSnapshot?.formEmployee &&
-                this.initialSnapshot?.formAlamat
-            ) {
-                this.formEmployee = {
-                    ...this.formEmployee,
-                    ...this.initialSnapshot.formEmployee,
-                };
-                this.formAlamat = {
-                    ...this.formAlamat,
-                    ...this.initialSnapshot.formAlamat,
-                };
-                return;
-            }
-
-            // fallback (kalau snapshot belum ada)
+        resetFormPelamar() {
             this.formEmployee = {
                 nama: '',
                 nrp: '',
@@ -2386,7 +2206,7 @@ export default {
                 perkawinan: '',
                 agama: '',
                 kewarganegaraan: '',
-                status: '1',
+                status: '0',
                 no_wa: '',
                 bpjs_tk: '',
                 bpjs_kes: '',
@@ -2400,7 +2220,12 @@ export default {
                 no_lisensi: '',
                 masa_berlaku_lisensi: '',
             };
-            this.formAlamat = { ktp: '', phone: '', domisili: '', kota: '' };
+            this.formAlamat = {
+                ktp: '',
+                phone: '',
+                domisili: '',
+                kota: '',
+            };
         },
 
         resetFormPendidikan() {
@@ -2439,13 +2264,6 @@ export default {
         },
 
         resetFormKesehatan() {
-            if (this.initialSnapshot?.formKesehatan) {
-                this.formKesehatan = {
-                    ...this.formKesehatan,
-                    ...this.initialSnapshot.formKesehatan,
-                };
-                return;
-            }
             this.formKesehatan = {
                 tinggi_badan: null,
                 berat_badan: null,
@@ -2468,41 +2286,41 @@ export default {
         },
 
         resetFormDokumen() {
-            // reset hanya pilihan file baru + daftar delete
-            Object.keys(this.formDokumen).forEach(
-                (k) => (this.formDokumen[k] = null),
-            );
+            this.formDokumen = {};
             this.dokumenToDelete = [];
         },
 
         // ================= HANDLE DOKUMEN =================
         onFileChange(event, key) {
-            const file = event.target.files?.[0];
-            if (!file) return;
+            const file = event.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    triggerAlert('warning', 'Ukuran file maksimal 5MB');
+                    event.target.value = '';
+                    return;
+                }
 
-            if (file.size > 5 * 1024 * 1024) {
-                triggerAlert('warning', 'Ukuran file maksimal 5MB');
-                event.target.value = '';
-                return;
+                const allowedTypes = [
+                    'application/pdf',
+                    'image/jpeg',
+                    'image/jpg',
+                    'image/png',
+                ];
+                if (!allowedTypes.includes(file.type)) {
+                    triggerAlert(
+                        'warning',
+                        'Format file harus PDF, JPG, atau PNG',
+                    );
+                    event.target.value = '';
+                    return;
+                }
+
+                this.formDokumen[key] = file;
             }
-
-            const allowedTypes = [
-                'application/pdf',
-                'image/jpeg',
-                'image/jpg',
-                'image/png',
-            ];
-            if (!allowedTypes.includes(file.type)) {
-                triggerAlert('warning', 'Format file harus PDF, JPG, atau PNG');
-                event.target.value = '';
-                return;
-            }
-
-            this.formDokumen[key] = file;
         },
 
         removeSelectedFile(key) {
-            this.formDokumen[key] = null;
+            delete this.formDokumen[key];
             const input = document.querySelector(
                 `input[type="file"][data-key="${key}"]`,
             );
@@ -2510,89 +2328,58 @@ export default {
         },
 
         getExistingDocUrl(key) {
-            // mapping key UI -> field backend (sesuai mapping kamu)
-            const map = {
-                pas_foto: 'pas_foto',
-                ktp: 'dokumen_ktp',
-                kk: 'dokumen_kk',
-                lisensi: 'dokumen_lisensi',
-                form_bpjs_tk: 'dokumen_bpjs_ketenagakerjaan',
-                form_bpjs_kes: 'dokumen_formulir_bpjs_kesehatan',
-                paklaring: 'dokumen_surat_pengalaman_kerja',
-                ijazah_terakhir: 'dokumen_ijazah_terakhir',
-                skck: 'dokumen_skck',
-            };
-
-            const rawKey = map[key];
-            const val = rawKey ? this.dokumenRaw?.[rawKey] : null;
-
-            // kalau backend kasih URL string -> tampilkan
-            if (typeof val === 'string' && val.trim()) return val;
-
-            // kalau backend cuma boolean/1 -> tidak bisa "lihat file", jadi null
             return null;
         },
 
         markDeleteExisting(key) {
-            const url = this.getExistingDocUrl(key);
-            if (!url) {
-                triggerAlert(
-                    'warning',
-                    'Dokumen tidak ditemukan / tidak ada link file.',
-                );
-                return;
-            }
-
             if (confirm('Hapus dokumen yang sudah tersimpan?')) {
-                if (!this.dokumenToDelete.includes(key)) {
-                    this.dokumenToDelete.push(key);
+                this.dokumenToDelete.push(key);
+            }
+        },
+
+        // ================= HANDLE DELETE LIST (AMAN DENGAN EDIT MODE) =================
+        hapusPendidikan(index) {
+            if (confirm('Hapus data pendidikan ini?')) {
+                this.listPendidikan.splice(index, 1);
+
+                if (this.editPendidikanIndex === index) {
+                    this.batalEditPendidikan();
+                } else if (
+                    this.editPendidikanIndex !== null &&
+                    index < this.editPendidikanIndex
+                ) {
+                    this.editPendidikanIndex -= 1;
                 }
             }
         },
 
-        // ================= HANDLE DELETE LIST (AMAN SAAT EDIT) =================
-        hapusPendidikan(index) {
-            if (!confirm('Hapus data pendidikan ini?')) return;
-
-            this.listPendidikan.splice(index, 1);
-
-            if (this.editPendidikanIndex === index) {
-                this.batalEditPendidikan();
-            } else if (
-                this.editPendidikanIndex !== null &&
-                index < this.editPendidikanIndex
-            ) {
-                this.editPendidikanIndex -= 1;
-            }
-        },
-
         hapusPekerjaan(index) {
-            if (!confirm('Hapus data pekerjaan ini?')) return;
+            if (confirm('Hapus data pekerjaan ini?')) {
+                this.listPekerjaan.splice(index, 1);
 
-            this.listPekerjaan.splice(index, 1);
-
-            if (this.editPekerjaanIndex === index) {
-                this.batalEditPekerjaan();
-            } else if (
-                this.editPekerjaanIndex !== null &&
-                index < this.editPekerjaanIndex
-            ) {
-                this.editPekerjaanIndex -= 1;
+                if (this.editPekerjaanIndex === index) {
+                    this.batalEditPekerjaan();
+                } else if (
+                    this.editPekerjaanIndex !== null &&
+                    index < this.editPekerjaanIndex
+                ) {
+                    this.editPekerjaanIndex -= 1;
+                }
             }
         },
 
         hapusKeluarga(index) {
-            if (!confirm('Hapus data keluarga ini?')) return;
+            if (confirm('Hapus data keluarga ini?')) {
+                this.listKeluarga.splice(index, 1);
 
-            this.listKeluarga.splice(index, 1);
-
-            if (this.editKeluargaIndex === index) {
-                this.batalEditKeluarga();
-            } else if (
-                this.editKeluargaIndex !== null &&
-                index < this.editKeluargaIndex
-            ) {
-                this.editKeluargaIndex -= 1;
+                if (this.editKeluargaIndex === index) {
+                    this.batalEditKeluarga();
+                } else if (
+                    this.editKeluargaIndex !== null &&
+                    index < this.editKeluargaIndex
+                ) {
+                    this.editKeluargaIndex -= 1;
+                }
             }
         },
 

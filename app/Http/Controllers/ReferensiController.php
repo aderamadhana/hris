@@ -7,7 +7,8 @@ use App\Models\{
     PayrollPeriod,
     PayrollSummary,
     EmployeeEmployment,
-    Shift
+    Shift,
+    Perusahaan
 };
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -216,5 +217,31 @@ class ReferensiController extends Controller
         return response()->json([
             'data' => $data,
         ]);
+    }
+
+    public function getPerusahaanDanDivisi(Request $request)
+    {
+        try {
+            $query = Perusahaan::with(['divisi' => function ($query) {
+                $query->where('status', 'aktif')
+                      ->orderBy('nama_divisi', 'asc');
+            }]);
+
+            // Urutkan
+            $query->orderBy('nama_perusahaan', 'asc');
+            $perusahaan = $query->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data perusahaan berhasil diambil',
+                'data' => $perusahaan
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -3,6 +3,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Employee extends Model
 {
@@ -22,6 +24,12 @@ class Employee extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function currentEmployment()
+    {
+        return $this->hasOne(EmployeeEmployment::class, 'employee_id')
+            ->latestOfMany('tgl_awal_kerja'); // atau created_at kalau lebih tepat
     }
 
     public function educations()
@@ -59,6 +67,11 @@ class Employee extends Model
     public function salaryConfigurations(): HasMany
     {
         return $this->hasMany(SalaryConfiguration::class);
+    }
+
+    public function latestSalaryConfiguration(): HasOne
+    {
+        return $this->hasOne(SalaryConfiguration::class)->latestOfMany('effective_date');
     }
 
     public function attendanceSummaries(): HasMany
@@ -106,9 +119,56 @@ class Employee extends Model
     {
         return $query->whereNotNull('status_kary');
     }
+    
+    // Relasi ke employment history yang aktif
+    public function activeEmployment()
+    {
+        return $this->hasOne(EmployeeEmployment::class)
+            ->where('status', 'aktif')
+            ->latest();
+    }
+
+    // Scope untuk karyawan tidak aktif
+    public function scopeInactive($query)
+    {
+        return $query->where('status_active', '0');
+    }
 
     public function getTanggalLahirAttribute($value)
     {
         return $value ? \Carbon\Carbon::parse($value)->format('Y-m-d') : null;
+    }
+
+    protected static function booted()
+    {
+        static::deleting(function ($employee) {
+
+            // BASIC PROFILE
+            $employee->educations()->delete();
+            $employee->families()->delete();
+
+            // EMPLOYMENT
+            $employee->employments()->delete();
+            $employee->employmentss()->delete();
+            $employee->currentEmployment()->delete();
+            $employee->activeEmployment()->delete();
+
+            // DOCUMENTS & HEALTH
+            $employee->documents()->delete();
+            $employee->health()->delete();
+
+            // PAYROLL (KRITIS)
+            $employee->salaryConfigurations()->delete();
+            $employee->attendanceSummaries()->delete();
+            $employee->overtimeSummaries()->delete();
+            $employee->earnings()->delete();
+            $employee->allowances()->delete();
+            $employee->additionalEarnings()->delete();
+            $employee->deductions()->delete();
+            $employee->payrollSummaries()->delete();
+
+            // USER (OPTIONAL — PUTUSKAN DENGAN SADAR)
+            // $employee->user()->delete();
+        });
     }
 }

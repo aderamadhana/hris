@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class EmployeeController extends Controller
+class PelamarController extends Controller
 {
     /**
      * Tampilkan halaman employee
@@ -43,14 +43,18 @@ class EmployeeController extends Controller
         $filtered_jabatan = trim($request->query('filtered_jabatan'));
         $filtered_perusahaan = trim($request->query('filtered_perusahaan'));
 
-        // ✅ new: 7 / 30 (hari)
+        // Filter existing
         $contractExpiring = $request->query('contract_expiring'); // '7' | '30' | null
         $contractExpiring = in_array((string) $contractExpiring, ['7', '30'], true) ? (int) $contractExpiring : null;
         $contractExpired = $request->boolean('contract_expired');
 
+        // Filter untuk membedakan karyawan lama vs pelamar
+        $needsRenewal = $request->boolean('needs_renewal'); // Karyawan lama butuh perpanjang
+        $isApplicant = $request->boolean('is_applicant');   // Data pelamar baru
+
         $id_dummy = [1, 2];
 
-        $employees = Employee::with(['employments','currentEmployment'])
+        $employees = Employee::with(['employments', 'currentEmployment'])
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('nrp', 'like', "%{$search}%")
@@ -62,29 +66,58 @@ class EmployeeController extends Controller
                 });
             })
 
+            // Filter: Kontrak sudah expired (untuk karyawan aktif)
             ->when($contractExpired, function ($query) {
                 $today = now()->startOfDay();
 
                 $query->whereHas('currentEmployment', function ($qe) use ($today) {
                     $qe->whereNotNull('tgl_akhir_kerja')
-                    ->where('tgl_akhir_kerja', '<', $today);
+                        ->where('tgl_akhir_kerja', '<', $today);
                 });
             })
 
-            // ✅ FILTER jabatan + perusahaan (di employee_employments)
+            // Filter data pelamar
+            // Status = 0 DAN (tidak punya employment ATAU no_kontrak kosong)
+            ->when($isApplicant, function ($query) {
+                $query->where('status_active', 0)
+                    ->where(function ($q) {
+                        $q->whereDoesntHave('currentEmployment')
+                            ->orWhereHas('currentEmployment', function ($qe) {
+                                $qe->where(function ($subQ) {
+                                    $subQ->whereNull('no_kontrak')
+                                        ->orWhere('no_kontrak', '');
+                                });
+                            });
+                    });
+            })
+
+            // Filter karyawan lama yang butuh perpanjang kontrak
+            // Status = 0 DAN no_kontrak tidak kosong DAN tgl_akhir_kerja < sekarang
+            ->when($needsRenewal, function ($query) {
+                $today = now()->startOfDay();
+
+                $query->where('status_active', 0)
+                    ->whereHas('currentEmployment', function ($qe) use ($today) {
+                        $qe->whereNotNull('no_kontrak')
+                            ->where('no_kontrak', '!=', '')
+                            ->whereNotNull('tgl_akhir_kerja')
+                            ->where('tgl_akhir_kerja', '<', $today);
+                    });
+            })
+
+            // FILTER jabatan + perusahaan (di employee_employments)
             ->when($filtered_jabatan || $filtered_perusahaan, function ($query) use ($filtered_jabatan, $filtered_perusahaan) {
                 $query->whereHas('employments', function ($qe) use ($filtered_jabatan, $filtered_perusahaan) {
                     $qe->when($filtered_jabatan, function ($q) use ($filtered_jabatan) {
-                        // ✅ FIX: jabatan harus filter kolom jabatan, bukan penempatan
                         $q->where('penempatan', $filtered_jabatan);
                     })
-                    ->when($filtered_perusahaan, function ($q) use ($filtered_perusahaan) {
-                        $q->where('perusahaan', $filtered_perusahaan);
-                    });
+                        ->when($filtered_perusahaan, function ($q) use ($filtered_perusahaan) {
+                            $q->where('perusahaan', $filtered_perusahaan);
+                        });
                 });
             })
 
-            // ✅ FILTER kontrak habis dalam 7 / 30 hari ke depan
+            // FILTER kontrak habis dalam 7 / 30 hari ke depan
             ->when($contractExpiring, function ($query) use ($contractExpiring) {
                 $start = now()->startOfDay();
                 $end   = now()->addDays($contractExpiring)->endOfDay();
@@ -97,43 +130,30 @@ class EmployeeController extends Controller
 
             ->whereNotIn('id', $id_dummy)
             ->when($status_active !== '', function ($query) use ($status_active) {
-                // biar kalau status_active kosong tidak memaksa where('status_active','')
                 $query->where('status_active', $status_active);
             })
             ->orderBy('id', 'desc')
             ->paginate($perPage);
 
         $data = $employees->getCollection()->map(function ($e) {
-            // kalau employments itu hasMany, optional($e->employments) bakal aneh.
-            // asumsi kamu memang punya accessor/relationship single. Kalau hasMany, ambil ->first().
-            $emp = is_iterable($e->employments) ? $e->employments->first() : $e->employments;
             $emp = $e->currentEmployment;
-            
+
+            // Tentukan kategori karyawan
+            $employeeCategory = $this->determineEmployeeCategory($e);
+
             return [
                 'id' => $e->id,
                 'name' => $e->nama,
                 'nrp' => $e->nrp,
                 'nik' => $e->no_ktp ?? '-',
-                'shift_id' => $e->shift_id,
-                'shift' => $e->shift,
 
-                'tanggal_lahir' => $e->tanggal_lahir
-                    ? \Carbon\Carbon::parse($e->tanggal_lahir)->format('d/m/Y')
+                'tgl_daftar' => optional($emp)->tgl_daftar
+                    ? \Carbon\Carbon::parse($emp->tgl_daftar)->format('d/m/Y')
                     : '-',
-
-                'perusahaan' => optional($emp)->perusahaan ?? '-',
-                'department' => optional($emp)->jabatan ?? '-',
                 'position' => optional($emp)->penempatan ?? '-',
 
-                'awal_kontrak' => optional($emp)->tgl_awal_kerja
-                    ? \Carbon\Carbon::parse($emp->tgl_awal_kerja)->format('d/m/Y')
-                    : '-',
-
-                'akhir_kontrak' => optional($emp)->tgl_akhir_kerja
-                    ? \Carbon\Carbon::parse($emp->tgl_akhir_kerja)->format('d/m/Y')
-                    : '-',
-
-                'status' => $e->status_active ? 'Aktif' : 'Nonaktif',
+                'category' => $employeeCategory['category'],
+                'category_label' => $employeeCategory['label'],
             ];
         });
 
@@ -141,12 +161,12 @@ class EmployeeController extends Controller
             ->whereNotIn('id', $id_dummy)
             ->where('status_active', $status_active);
 
-        // total karyawan tanpa filter lain
+        // Total karyawan tanpa filter lain
         $totalAllActive = (clone $baseQuery)->count();
 
-        // total karyawan kontrak hampir habis (7/30) tanpa filter lain
+        // Total karyawan kontrak hampir habis (7/30) tanpa filter lain
         $totalContractExpiring = null;
-        if($contractExpiring == null){
+        if ($contractExpiring == null) {
             $contractExpiring = 7;
         }
 
@@ -157,7 +177,7 @@ class EmployeeController extends Controller
             $totalContractExpiring = (clone $baseQuery)
                 ->whereHas('employments', function ($qe) use ($start, $end) {
                     $qe->whereNotNull('tgl_akhir_kerja')
-                    ->whereBetween('tgl_akhir_kerja', [$start, $end]);
+                        ->whereBetween('tgl_akhir_kerja', [$start, $end]);
                 })
                 ->count();
         }
@@ -167,12 +187,39 @@ class EmployeeController extends Controller
             ->where('status_active', 1);
 
         $today = now()->startOfDay();
-                $totalContractExpired = (clone $baseActiveQuery)
+        $totalContractExpired = (clone $baseActiveQuery)
             ->whereHas('currentEmployment', function ($qe) use ($today) {
                 $qe->whereNotNull('tgl_akhir_kerja')
-                ->where('tgl_akhir_kerja', '<', $today);
+                    ->where('tgl_akhir_kerja', '<', $today);
             })
-        ->count();
+            ->count();
+
+        // Hitung karyawan yang butuh perpanjang kontrak
+        $totalNeedsRenewal = Employee::query()
+            ->whereNotIn('id', $id_dummy)
+            ->where('status_active', 0)
+            ->whereHas('currentEmployment', function ($qe) use ($today) {
+                $qe->whereNotNull('no_kontrak')
+                    ->where('no_kontrak', '!=', '')
+                    ->whereNotNull('tgl_akhir_kerja')
+                    ->where('tgl_akhir_kerja', '<', $today);
+            })
+            ->count();
+
+        // Hitung data pelamar
+        $totalApplicants = Employee::query()
+            ->whereNotIn('id', $id_dummy)
+            ->where('status_active', 0)
+            ->where(function ($q) {
+                $q->whereDoesntHave('currentEmployment')
+                    ->orWhereHas('currentEmployment', function ($qe) {
+                        $qe->where(function ($subQ) {
+                            $subQ->whereNull('no_kontrak')
+                                ->orWhere('no_kontrak', '');
+                        });
+                    });
+            })
+            ->count();
 
         return response()->json([
             'data' => $data,
@@ -182,12 +229,75 @@ class EmployeeController extends Controller
                 'current_page' => $employees->currentPage(),
                 'last_page' => $employees->lastPage(),
             ],
-            // ✅ tambahan
-            'total_contract_expired' => $totalContractExpired,
-            'total_all_active' => $totalAllActive,
-            'total_contract_expiring' => $totalContractExpiring, // null kalau contract_expiring tidak dikirim
-            'contract_expiring_days' => $contractExpiring,        // 7/30/null (biar FE jelas)
+            'statistics' => [
+                'total_all_active' => $totalAllActive,
+                'total_contract_expired' => $totalContractExpired,
+                'total_contract_expiring' => $totalContractExpiring,
+                'contract_expiring_days' => $contractExpiring,
+                'total_needs_renewal' => $totalNeedsRenewal,
+                'total_applicants' => $totalApplicants,
+            ],
         ]);
+    }
+
+    /**
+     * ✅ NEW: Helper function untuk menentukan kategori karyawan
+     */
+    private function determineEmployeeCategory($employee)
+    {
+        $today = now()->startOfDay();
+
+        // 1. Karyawan aktif
+        if ($employee->status_active == 1) {
+            return [
+                'category' => 'active',
+                'label' => 'Karyawan Aktif'
+            ];
+        }
+
+        // 2. Status tidak aktif (0)
+        $employment = $employee->currentEmployment;
+
+        // 2a. Tidak punya employment sama sekali = PELAMAR
+        if (!$employment) {
+            return [
+                'category' => 'applicant',
+                'label' => 'Pelamar Baru'
+            ];
+        }
+
+        // 2b. Punya employment tapi no_kontrak kosong/null = PELAMAR
+        if (empty($employment->no_kontrak) || $employment->no_kontrak === '') {
+            return [
+                'category' => 'applicant',
+                'label' => 'Pelamar Baru'
+            ];
+        }
+
+        // 2c. Punya no_kontrak VALID tapi tgl_akhir_kerja kosong = PERMANENT
+        if (empty($employment->tgl_akhir_kerja)) {
+            return [
+                'category' => 'permanent',
+                'label' => 'Kontrak Permanen'
+            ];
+        }
+
+        // 2d. Punya no_kontrak dan tgl_akhir_kerja
+        $expiryDate = \Carbon\Carbon::parse($employment->tgl_akhir_kerja);
+
+        if ($expiryDate->lt($today)) {
+            // Kontrak sudah expired = BUTUH PERPANJANG
+            return [
+                'category' => 'needs_renewal',
+                'label' => 'Butuh Perpanjang Kontrak'
+            ];
+        }
+
+        // 2e. Kontrak masih berlaku tapi status tidak aktif
+        return [
+            'category' => 'inactive',
+            'label' => 'Tidak Aktif'
+        ];
     }
 
     public function profil($id)
@@ -197,7 +307,7 @@ class EmployeeController extends Controller
             'role',
         ]);
         
-        return Inertia::render('admin/hr/karyawan/profil', [
+        return Inertia::render('admin/hr/pelamar/profil', [
             'user' => $user,
         ]);
     } 
@@ -601,7 +711,7 @@ class EmployeeController extends Controller
                 'agama' => $request->agama,
                 'status_perkawinan' => $request->status_perkawinan,
                 'kewarganegaraan' => $request->kewarganegaraan,
-                'status_active' => $request->status_active ?? '1',
+                'status_active' => $request->status_active ?? '0',
                 
                 // Data personal (dulunya di employee_personals)
                 'no_ktp' => $request->no_ktp,
@@ -656,6 +766,7 @@ class EmployeeController extends Controller
                             'employee_id' => $employee->id,
                             'perusahaan' => $job['perusahaan'] ?? null,
                             'jabatan' => $job['jabatan'] ?? null,
+                            'tgl_daftar' => date('Y-m-d'),
                             'penempatan' => $job['penempatan'] ?? null,
                             'no_kontrak' => $job['no_kontrak'] ?? null,
                             'cost_center' => $job['cost_center'] ?? null,
@@ -748,7 +859,7 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
 
-        return Inertia::render('admin/hr/karyawan/edit-karyawan', [
+        return Inertia::render('admin/hr/pelamar/edit-pelamar', [
             'employee_id' => $employee->id
         ]);
 
@@ -787,6 +898,7 @@ class EmployeeController extends Controller
             // 1. Cek apakah perlu update user
             $userId = $employee->user_id;
             $shouldCreateUser = false;
+            $status_active = 0;
             
             if ($request->pekerjaan) {
                 $pekerjaan = json_decode($request->pekerjaan, true);
@@ -797,6 +909,7 @@ class EmployeeController extends Controller
                         !empty($job['status']) && 
                         strtolower($job['status']) === 'aktif') {
                         $shouldCreateUser = true;
+                        $status_active = 1;
                         break;
                     }
                 }
@@ -814,7 +927,7 @@ class EmployeeController extends Controller
                 'agama' => $request->agama,
                 'status_perkawinan' => $request->status_perkawinan,
                 'kewarganegaraan' => $request->kewarganegaraan,
-                'status_active' => $request->status_active ?? '1',
+                'status_active' => $status_active,
                 
                 // Data personal (dulunya di employee_personals)
                 'no_ktp' => $request->no_ktp,
@@ -1177,15 +1290,10 @@ class EmployeeController extends Controller
         }
     }
 
-    
-    public function nonAktif($id)
+    public function delete($id)
     {
-        $employee = Employee::findOrFail($id);
-
-        $employee->update([
-            'status_active' => 0
-        ]);
-
-        return back()->with('success', 'Data karyawan berhasil dinonaktifkan');
+       Employee::findOrFail($id)->delete();
+       
+        return back()->with('success', 'Data pelamar berhasil dihapus');
     }
 }

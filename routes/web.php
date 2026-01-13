@@ -7,6 +7,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\PelamarController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\ReferensiController;
 use App\Http\Controllers\PayrollController;
@@ -51,11 +52,25 @@ Route::middleware('auth')->group(function () {
                     'employeeId' => $id
                 ]);
             });
+            Route::post('/non-aktif/{id}', [EmployeeController::class, 'nonAktif']);
+        });
+
+        Route::prefix('pelamar')->group(function () {
+            Route::get('/', function () {
+                return Inertia::render('admin/hr/pelamar/all-pelamar');
+            });
+            Route::get('/all', [PelamarController::class, 'index']);
+            Route::get('/edit-pelamar/{id}', [PelamarController::class, 'edit']);
+            Route::get('/tambah-pelamar', function () {
+                return Inertia::render('admin/hr/pelamar/add-pelamar');
+            });
+            
+
+            Route::post('/store', [PelamarController::class, 'store']);
+            Route::post('/store-edit/{id}', [PelamarController::class, 'update']);
+            Route::post('/delete/{id}', [PelamarController::class, 'delete']);
         });
         
-        Route::get('/pelamar', function () {
-            return Inertia::render('admin/DataPelamar');
-        });
         
         Route::prefix('payroll')->group(function () {
             Route::get('/', function () {
@@ -162,6 +177,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('export')->group(function () {
         Route::get('/karyawan', [EmployeeController::class, 'downloadEmployees']);
         Route::get('/profil/{id}', [EmployeeController::class, 'downloadProfil']);
+        Route::get('/payroll', [PayrollController::class, 'downloadPayroll']);
     });
 
 
@@ -275,6 +291,7 @@ Route::prefix('referensi')->group(function () {
     Route::get('/get-filter_perusahaan_dan_jabatan', [ReferensiController::class, 'getFilterPerusahaanDanJabatan']);
     Route::get('/get-payroll-periods-by-employee-id/{id}', [ReferensiController::class, 'getPayrollPeriodByEmployeeId']);
     Route::get('/perusahaan-terakhir/{employeeId}', [ReferensiController::class, 'getPerusahaanTerakhir']);
+    Route::get('/perusahaan-divisi', [ReferensiController::class, 'getPerusahaanDanDivisi']);
     Route::get('/get-shift-options', [ReferensiController::class, 'getShiftOptions']);
     
 });

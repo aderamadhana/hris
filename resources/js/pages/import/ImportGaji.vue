@@ -19,7 +19,7 @@
         <div class="modal-body">
             <!-- PILIH PERIODE PAYROLL -->
 
-            <div class="form-group mb-3">
+            <!-- <div class="form-group mb-3">
                 <label class="form-label">
                     Periode Payroll <span class="text-danger">*</span>
                 </label>
@@ -40,7 +40,7 @@
                         {{ period.end_date }})
                     </option>
                 </select>
-            </div>
+            </div> -->
 
             <!-- FILE -->
             <input
@@ -109,6 +109,12 @@ export default {
         Modal,
         Button,
     },
+    props: {
+        period: {
+            type: Object, // atau String/Number sesuai data kamu
+            required: true,
+        },
+    },
     data() {
         return {
             showImportGajiModal: false,
@@ -125,7 +131,7 @@ export default {
     },
 
     mounted() {
-        this.getPaymentPeriods();
+        // this.getPaymentPeriods();
     },
 
     methods: {
@@ -146,11 +152,8 @@ export default {
         },
 
         async submitImportGaji() {
-            if (!this.selectedPayrollPeriodId) {
-                triggerAlert(
-                    'warning',
-                    'Silakan pilih payroll periods terlebih dahulu.',
-                );
+            if (!this.period.id) {
+                triggerAlert('warning', 'Periode gaji tidak terdefinisi.');
                 return;
             }
             if (!this.selectedFileGaji) {
@@ -162,7 +165,7 @@ export default {
             this.importProcessingGaji = true;
             const formData = new FormData();
             formData.append('file', this.selectedFileGaji);
-            formData.append('payroll_period_id', this.selectedPayrollPeriodId);
+            formData.append('payroll_period_id', this.period.id);
 
             try {
                 triggerAlert(

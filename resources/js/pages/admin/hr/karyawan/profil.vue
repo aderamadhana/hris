@@ -10,15 +10,34 @@
                         keluarga, dan kesehatan karyawan.
                     </p>
                 </div>
-                <Button
-                    variant="primary"
-                    size="md"
-                    :loading="isDownloading"
-                    @click="downloadProfil"
-                    class="download-btn"
-                >
-                    Download PDF
-                </Button>
+                <div class="page-actions">
+                    <Button
+                        variant="primary"
+                        size="md"
+                        :loading="isDownloading"
+                        @click="downloadProfil(employee.nama)"
+                        class="download-btn"
+                    >
+                        <font-awesome-icon icon="download" class="icon" />
+                        Download PDF
+                    </Button>
+                    <Button
+                        variant="warning"
+                        title="Edit Karyawan"
+                        @click="openEdit()"
+                    >
+                        <font-awesome-icon icon="pen-to-square" />
+                        Edit Karyawan
+                    </Button>
+                    <Button
+                        variant="success"
+                        title="Slip Gaji Karyawan"
+                        @click="openPayslip()"
+                    >
+                        <font-awesome-icon icon="file-lines" />
+                        Slip Gaji Karyawan
+                    </Button>
+                </div>
             </div>
 
             <!-- CONTENT -->
@@ -681,7 +700,7 @@ import Button from '@/components/Button.vue';
 import Modal from '@/components/Modal.vue';
 import Tabs from '@/components/Tabs.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 
 export default {
@@ -800,30 +819,74 @@ export default {
                 });
         },
 
-        async downloadProfil() {
+        async downloadProfil(nama) {
             this.isDownloading = true;
+
+            let id = null;
+            if (this.user.role_id == 2) {
+                id = this.user.employee.id;
+            } else {
+                id = window.location.pathname.split('/').pop();
+            }
+
+            const pad2 = (n) => String(n).padStart(2, '0');
+
+            try {
+                const response = await axios({
+                    url: `/export/profil/${id}`,
+                    method: 'GET',
+                    responseType: 'blob',
+                });
+
+                const d = new Date();
+                const tgl = pad2(d.getDate());
+                const bln = pad2(d.getMonth() + 1);
+                const thn = d.getFullYear();
+                const jam = pad2(d.getHours());
+                const menit = pad2(d.getMinutes());
+                const detik = pad2(d.getSeconds());
+
+                const safeNama = (nama || 'karyawan')
+                    .toString()
+                    .trim()
+                    .replace(/\s+/g, '_')
+                    .replace(/[^a-zA-Z0-9_-]/g, '');
+
+                const filename = `Profil_${safeNama}_${tgl}${bln}${thn}${jam}${menit}${detik}.pdf`;
+
+                const url = window.URL.createObjectURL(
+                    new Blob([response.data]),
+                );
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(url);
+            } finally {
+                this.isDownloading = false;
+            }
+        },
+
+        openEdit() {
             var id = null;
             if (this.user.role_id == 2) {
                 id = this.user.employee.id;
             } else {
                 id = window.location.pathname.split('/').pop();
             }
-            await axios({
-                url: `/export/profil/${id}`,
-                method: 'GET',
-                responseType: 'blob',
-            }).then((response) => {
-                const url = window.URL.createObjectURL(
-                    new Blob([response.data]),
-                );
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', `Profil.pdf`);
-                document.body.appendChild(link);
-                this.isDownloading = false;
-                link.click();
-                link.remove();
-            });
+            router.visit(`/hr/karyawan/edit-karyawan/${id}`);
+        },
+        openPayslip() {
+            var id = null;
+            if (this.user.role_id == 2) {
+                id = this.user.employee.id;
+            } else {
+                id = window.location.pathname.split('/').pop();
+            }
+            router.visit(`/hr/karyawan/daftar-gaji/${id}`);
         },
     },
 };

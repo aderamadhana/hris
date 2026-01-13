@@ -181,6 +181,7 @@ export default {
                             <input
                                 type="date"
                                 v-model="form.end_date"
+                                :min="form.start_date"
                                 class="form-input"
                                 required
                             />

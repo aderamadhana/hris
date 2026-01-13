@@ -3,6 +3,7 @@ import '../css/components/header.css';
 import '../css/components/sidebar.css';
 import '../css/components/dashboard.css';
 import '../css/components/content.css'
+import '../css/components/datatable_filter_search.css'
 import 'leaflet/dist/leaflet.css'
 
 import { createInertiaApp } from '@inertiajs/vue3';
@@ -69,7 +70,10 @@ import {
     faShieldHalved,
     faSave,
     faTimes,
-
+    faUserClock,
+    faUserXmark,faBuildingCircleXmark,
+    faUserPlus,
+    faUserMinus
 } from '@fortawesome/free-solid-svg-icons'
 
 import 'select2/dist/css/select2.min.css'
@@ -130,6 +134,11 @@ library.add(
     faShieldHalved,
     faSave,
     faTimes,
+    faUserClock,
+    faUserXmark,
+  faBuildingCircleXmark,
+  faUserPlus,
+  faUserMinus
 )
 
 createInertiaApp({

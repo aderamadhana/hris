@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Imports\PayslipImport;
+use App\Exports\PayrollExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel;
@@ -20,7 +21,7 @@ use App\Models\{
     PayrollSummary,
     Earning,
     Deduction,
-    Allowance
+    Allowance,
 };
 
 class PayrollController extends Controller
@@ -459,4 +460,12 @@ class PayrollController extends Controller
         }
     }
 
+    public function downloadPayroll(Request $request){
+        $periode_id = $request->input('periode_id');
+
+        return Excel::download(
+            new PayrollExport($periode_id),
+            'karyawan.xlsx'
+        );
+    }
 }

@@ -4,7 +4,7 @@
             <!-- HEADER -->
             <div class="page-header">
                 <div>
-                    <h2 class="page-title">Edit Data Karyawan</h2>
+                    <h2 class="page-title">Edit Data Pelamar</h2>
                     <p class="page-subtitle">
                         Ubah profil, pendidikan, pekerjaan, keluarga, kesehatan,
                         dan kelengkapan dokumen.
@@ -18,9 +18,9 @@
                     <!-- ================= FORM KARYAWAN ================= -->
                     <template #karyawan>
                         <div class="tab-section">
-                            <h3 class="tab-title">Profil Karyawan</h3>
+                            <h3 class="tab-title">Profil Pelamar</h3>
 
-                            <form @submit.prevent="handleSubmitKaryawan">
+                            <form @submit.prevent="handleSubmitPelamar">
                                 <!-- DATA UTAMA -->
                                 <div class="form-section">
                                     <h4 class="form-section-title">
@@ -468,7 +468,7 @@
                                     <button
                                         type="button"
                                         class="btn btn-secondary"
-                                        @click="resetFormKaryawan"
+                                        @click="resetFormPelamar"
                                     >
                                         Reset
                                     </button>
@@ -476,7 +476,7 @@
                                         type="submit"
                                         class="btn btn-primary"
                                     >
-                                        Simpan Tab Karyawan
+                                        Simpan Tab Pelamar
                                     </button>
                                 </div>
                             </form>
@@ -1629,7 +1629,7 @@ export default {
             dokumenRaw: {}, // data.documents asli dari API
 
             tabs: [
-                { key: 'karyawan', id: 'karyawan', label: 'Data Karyawan' },
+                { key: 'karyawan', id: 'karyawan', label: 'Data Pelamar' },
                 { key: 'pendidikan', id: 'pendidikan', label: 'Pendidikan' },
                 { key: 'pekerjaan', id: 'pekerjaan', label: 'Pekerjaan' },
                 { key: 'keluarga', id: 'keluarga', label: 'Keluarga' },
@@ -1768,7 +1768,7 @@ export default {
 
     mounted() {
         this.getFPerusahaanDanDivisi();
-        this.getDataKaryawan();
+        this.getDataPelamar();
     },
     watch: {
         'formPekerjaan.perusahaan'(newVal, oldVal) {
@@ -1829,7 +1829,7 @@ export default {
             }
         },
         // ====== LOAD DATA ======
-        async getDataKaryawan() {
+        async getDataPelamar() {
             this.loading = true;
             try {
                 const { data } = await axios.get(
@@ -1968,7 +1968,7 @@ export default {
         },
 
         // ====== SUBMIT PER TAB (optional) ======
-        async handleSubmitKaryawan() {
+        async handleSubmitPelamar() {
             if (
                 !this.formEmployee.nama ||
                 !this.formEmployee.nrp ||
@@ -2308,7 +2308,7 @@ export default {
                 }
 
                 await axios.post(
-                    `/employee/store-edit/${this.employee_id}`,
+                    `/hr/pelamar/store-edit/${this.employee_id}`,
                     formData,
                     {
                         headers: { 'Content-Type': 'multipart/form-data' },
@@ -2316,7 +2316,7 @@ export default {
                 );
 
                 triggerAlert('success', 'Semua data berhasil disimpan!');
-                router.visit(`/hr/karyawan`);
+                router.visit(`/hr/pelamar`);
             } catch (error) {
                 if (axios.isAxiosError(error) && error.response) {
                     if (error.response.status === 422) {
@@ -2358,7 +2358,7 @@ export default {
         },
 
         // ================= RESET FORMS =================
-        resetFormKaryawan() {
+        resetFormPelamar() {
             // di halaman edit, reset seharusnya restore data awal (bukan mengosongkan)
             if (
                 this.initialSnapshot?.formEmployee &&

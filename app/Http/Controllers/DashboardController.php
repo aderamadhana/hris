@@ -8,6 +8,9 @@ use Inertia\Inertia;
 use App\Models\Employee;
 use App\Models\EmployeeEmployment;
 use Carbon\Carbon;
+use App\Models\Perusahaan;
+use App\Models\Divisi;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -39,180 +42,361 @@ class DashboardController extends Controller
             $karyawanBaruFilter = (int) $request->input('karyawan_baru', 7);
             $pelamarFilter      = (int) $request->input('pelamar', 7);
             $resignFilter       = (int) $request->input('resign', 7);
+            $perusahaanFilter       = (int) $request->input('perusahaan', 0);
 
-            $stats = [
-                // HR - Karyawan Tidak Aktif
-                'karyawanAktif' => $this->getKaryawanAktif(),
-                'karyawanTidakAktif' => $this->getKaryawanTidakAktif(),
+            $data = [
+                // Stats Cards
+                'stats' => [
+                    'karyawanAktif' => $this->getKaryawanAktif(),
+                    'karyawanTidakAktif' => $this->getKaryawanTidakAktif(),
+                    'kontrakHampirHabis' => $this->getKontrakHampirHabis($kontrakHabisFilter),
+                    'clientAktif' => $this->getClientAktif(),
+                    'clientTidakAktif' => $this->getClientTidakAktif(),
+                    'karyawanBaru' => $this->getKaryawanBaru($karyawanBaruFilter),
+                    'pelamarMasuk' => $this->getPelamarMasuk($pelamarFilter),
+                    'resign' => $this->getResign($resignFilter),
+                ],
                 
-                // Kontrak - Hampir Habis
-                'kontrakHampirHabis' => $this->getKontrakHampirHabis($kontrakHabisFilter),
+                // Filter values (echo back untuk sync dengan frontend)
+                'filters' => [
+                    'kontrakHabis' => $kontrakHabisFilter,
+                    'karyawanBaru' => $karyawanBaruFilter,
+                    'pelamar' => $pelamarFilter,
+                    'resign' => $resignFilter,
+                ],
                 
-                // Client - Aktif (berdasarkan employee yang masih aktif dengan perusahaan tertentu)
-                'clientAktif' => $this->getClientAktif(),
-                
-                // Client - Tidak Aktif
-                'clientTidakAktif' => $this->getClientTidakAktif(),
-                
-                // HR - Karyawan Baru
-                'karyawanBaru' => $this->getKaryawanBaru($karyawanBaruFilter),
-                
-                // Rekrutmen - Pelamar Masuk (ini perlu tabel recruitment/applicants terpisah)
-                // Untuk sementara saya set 0, karena tidak ada tabel pelamar di skema
-                'pelamarMasuk' => $this->getPelamarMasuk($pelamarFilter),
-                
-                // HR - Resign
-                'resign' => $this->getResign($resignFilter),
+                // Chart Data
+                'employeeTrend' => $this->getEmployeeTrend(),
+                'employeeStatus' => $this->getEmployeeStatus(),
+                'departmentData' => $this->getDepartmentData($perusahaanFilter),
+                'recruitmentFunnel' => $this->getKontrakHampirHabisPerTanggal($kontrakHabisFilter), // TAMBAHKAN INI
             ];
 
             return response()->json([
                 'success' => true,
-                'data' => $stats
+                'data' => $data
             ]);
         } catch (\Throwable $th) {
-            
             return response()->json([
                 'success' => false,
                 'data' => null,
                 'error' => $th->getMessage(),
                 'line' => $th->getLine()
-            ]);
+            ], 500);
         }
-        
     }
 
-    /**
-     * Hitung karyawan tidak aktif (status_active = '0' atau 'N')
-     */
+
     private function getKaryawanAktif()
     {
-        $id_dummy = [1,2];
-        return Employee::whereIn('status_active', ['1', 'N', null])
-            ->whereNotIn('id', $id_dummy)
-            ->count();
+        return Employee::active()->count();
     }
 
+    /**
+     * Get Karyawan Tidak Aktif
+     */
     private function getKaryawanTidakAktif()
     {
-        $id_dummy = [1,2];
-        return Employee::whereIn('status_active', ['0', 'N', null])
-            ->orWhere('status_kary', 'like', '%tidak aktif%')
-            ->orWhere('status_kary', 'like', '%PHK%')
-            ->orWhere('status_kary', 'like', '%resign%')
-            ->whereNotIn('id', $id_dummy)
-            ->count();
+        return Employee::inactive()->count();
     }
 
     /**
-     * Hitung kontrak yang hampir habis dalam X hari ke depan
+     * Get Kontrak Hampir Habis
+     * @param int $days - jumlah hari untuk filter kontrak hampir habis
      */
-    private function getKontrakHampirHabis(int $days): int
+    private function getKontrakHampirHabis($days = 30)
     {
-        $id_dummy = [1, 2];
-        $baseQuery = Employee::query()
-            ->whereNotIn('id', $id_dummy)
-            ->where('status_active', 1);
-
-        // total karyawan tanpa filter lain
-        $totalAllActive = (clone $baseQuery)->count();
-
-        // total karyawan kontrak hampir habis (7/30) tanpa filter lain
-        $totalContractExpiring = null;
-        $start = now()->startOfDay();
-        $end   = now()->addDays($days)->endOfDay();
-
-        $totalContractExpiring = (clone $baseQuery)
-            ->whereHas('employments', function ($qe) use ($start, $end) {
-                $qe->whereNotNull('tgl_akhir_kerja')
-                ->whereBetween('tgl_akhir_kerja', [$start, $end]);
+        $today = Carbon::now();
+        $limitDate = Carbon::now()->addDays($days);
+        
+        return EmployeeEmployment::active()
+            ->pkwt()
+            ->whereHas('employee', function($q) {
+                $q->active();
             })
+            ->whereNotNull('tgl_akhir_kerja')
+            ->whereRaw("STR_TO_DATE(tgl_akhir_kerja, '%Y-%m-%d') BETWEEN ? AND ?", 
+                [$today->format('Y-m-d'), $limitDate->format('Y-m-d')])
+            ->distinct('employee_id')
             ->count();
-
-        return $totalContractExpiring;
     }
 
     /**
-     * Hitung jumlah client/perusahaan yang masih memiliki karyawan aktif
+     * Get Client Aktif
+     * Client dianggap aktif jika masih memiliki karyawan aktif
      */
     private function getClientAktif()
     {
-        return 0;
-        // return EmployeeEmployment::where('status', 'aktif')
-        //     ->whereHas('employee', function($query) {
-        //         $query->where('status_active', '1')
-        //               ->orWhere('status_active', 'Y');
-        //     })
-        //     ->distinct('perusahaan')
-        //     ->count('perusahaan');
+        return Perusahaan::active()
+            ->whereHas('divisi')
+            ->get()
+            ->filter(function($perusahaan) {
+                return $perusahaan->hasActiveEmployees();
+            })
+            ->count();
     }
 
     /**
-     * Hitung jumlah client/perusahaan yang tidak memiliki karyawan aktif lagi
+     * Get Client Tidak Aktif
      */
     private function getClientTidakAktif()
     {
-        return 0;
-        // // Ambil semua perusahaan
-        // $allCompanies = EmployeeEmployment::distinct('perusahaan')
-        //     ->pluck('perusahaan');
-        
-        // // Ambil perusahaan yang masih aktif
-        // $activeCompanies = EmployeeEmployment::where('status', 'aktif')
-        //     ->whereHas('employee', function($query) {
-        //         $query->where('status_active', '1')
-        //               ->orWhere('status_active', 'Y');
-        //     })
-        //     ->distinct('perusahaan')
-        //     ->pluck('perusahaan');
-        
-        // // Hitung selisihnya
-        // return $allCompanies->diff($activeCompanies)->count();
+        return Perusahaan::inactive()->count();
     }
 
     /**
-     * Hitung karyawan baru dalam X hari terakhir
+     * Get Karyawan Baru
+     * @param int $days - jumlah hari untuk filter karyawan baru
      */
-    private function getKaryawanBaru($days)
+    private function getKaryawanBaru($days = 7)
     {
-        $dateFrom = Carbon::now()->subDays($days);
-        $id_dummy = [1,2];
+        $dateLimit = Carbon::now()->subDays($days);
         
-        return EmployeeEmployment::where('status', 'aktif')
-            ->where('tgl_awal_kerja', '>=', $dateFrom)
-            ->whereHas('employee', function($query) {
-                $query->where('status_active', '1')
-                      ->orWhere('status_active', 'Y');
+        return EmployeeEmployment::active()
+            ->whereHas('employee', function($q) {
+                $q->active();
             })
-            ->whereNotIn('employee_id', $id_dummy)
+            ->whereNotNull('tgl_awal_kerja')
+            ->whereRaw("STR_TO_DATE(tgl_awal_kerja, '%Y-%m-%d') >= ?", 
+                [$dateLimit->format('Y-m-d')])
+            ->distinct('employee_id')
             ->count();
     }
 
     /**
-     * Hitung pelamar masuk dalam X hari terakhir
-     * Note: Ini membutuhkan tabel applicants/recruitment terpisah
-     * Untuk sementara return 0
+     * Get Pelamar Masuk
+     * Catatan: Ini memerlukan tabel applicants/recruitment
      */
-    private function getPelamarMasuk($days)
+    private function getPelamarMasuk($days = 7)
     {
-        // TODO: Implement ketika ada tabel applicants
-        // $dateFrom = Carbon::now()->subDays($days);
-        // return Applicant::where('created_at', '>=', $dateFrom)->count();
+        // Jika sudah ada Model Applicant:
+        /*
+        $dateLimit = Carbon::now()->subDays($days);
+        return Applicant::where('created_at', '>=', $dateLimit)->count();
+        */
         
-        return 0;
+        return 0; // Sementara return 0
     }
 
     /**
-     * Hitung karyawan resign dalam X hari terakhir
+     * Get Resign
+     * @param int $days - jumlah hari untuk filter resign
      */
-    private function getResign($days)
+    private function getResign($days = 7)
     {
-        $id_dummy = [1,2];
-        $dateFrom = Carbon::now()->subDays($days);
+        $dateLimit = Carbon::now()->subDays($days);
         
-        return EmployeeEmployment::whereIn('status', ['resign', 'keluar', 'berhenti'])
-            ->where('tgl_akhir_kerja', '>=', $dateFrom)
-            ->where('tgl_akhir_kerja', '<=', Carbon::now())
-            ->whereNotIn('employee_id', $id_dummy)
+        return EmployeeEmployment::resign()
+            ->whereNotNull('tgl_akhir_kerja')
+            ->whereRaw("STR_TO_DATE(tgl_akhir_kerja, '%Y-%m-%d') >= ?", 
+                [$dateLimit->format('Y-m-d')])
+            ->distinct('employee_id')
             ->count();
+    }
+
+    /**
+     * BONUS: Get Employee Trend Data (untuk chart)
+     * Data 6 bulan terakhir
+     */
+    public function getEmployeeTrend()
+    {
+        $trends = [];
+        
+        for ($i = 5; $i >= 0; $i--) {
+            $month = Carbon::now()->subMonths($i);
+            $startDate = $month->copy()->startOfMonth();
+            $endDate = $month->copy()->endOfMonth();
+            
+            // Karyawan masuk bulan ini
+            $masuk = EmployeeEmployment::whereRaw(
+                "STR_TO_DATE(tgl_awal_kerja, '%Y-%m-%d') BETWEEN ? AND ?", 
+                [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]
+            )->distinct('employee_id')->count();
+            
+            // Karyawan keluar bulan ini
+            $keluar = EmployeeEmployment::resign()
+                ->whereRaw(
+                    "STR_TO_DATE(tgl_akhir_kerja, '%Y-%m-%d') BETWEEN ? AND ?", 
+                    [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]
+                )
+                ->distinct('employee_id')->count();
+            
+            // Total karyawan aktif di akhir bulan
+            $total = Employee::active()
+                ->where('created_at', '<=', $endDate)
+                ->count();
+            
+            $trends[] = [
+                'bulan' => $month->format('M'),
+                'masuk' => $masuk,
+                'keluar' => $keluar,
+                'total' => $total,
+            ];
+        }
+        
+        return $trends;
+    }
+
+    /**
+     * BONUS: Get Employee Status Distribution
+     */
+    public function getEmployeeStatus()
+    {
+        $statuses = [];
+        
+        // 1. Get PKWT (Kontrak)
+        $pkwt = EmployeeEmployment::active()
+            ->whereHas('employee', function($q) {
+                $q->active();
+            })
+            ->where('jenis_kontrak', 'PKWT')
+            ->distinct('employee_id')
+            ->count();
+        
+        if ($pkwt > 0) {
+            $statuses[] = [
+                'name' => 'PKWT',
+                'value' => $pkwt,
+                'color' => '#3b82f6',
+            ];
+        }
+        
+        // 2. Get PKWTT (Tetap)
+        $pkwtt = EmployeeEmployment::active()
+            ->whereHas('employee', function($q) {
+                $q->active();
+            })
+            ->where('jenis_kontrak', 'PKWTT')
+            ->distinct('employee_id')
+            ->count();
+        
+        if ($pkwtt > 0) {
+            $statuses[] = [
+                'name' => 'PKWTT',
+                'value' => $pkwtt,
+                'color' => '#10b981',
+            ];
+        }
+        
+        // 3. Get Pelamar (status_active = 0)
+        $pelamar = Employee::inactive()->count();
+        
+        if ($pelamar > 0) {
+            $statuses[] = [
+                'name' => 'Pelamar',
+                'value' => $pelamar,
+                'color' => '#f59e0b',
+            ];
+        }
+        
+        // 4. Get Tidak Terdefinisi (jenis_kontrak = null atau selain PKWT/PKWTT)
+        $tidakTerdefinisi = EmployeeEmployment::active()
+            ->whereHas('employee', function($q) {
+                $q->active();
+            })
+            ->where(function($q) {
+                $q->whereNull('jenis_kontrak')
+                ->orWhereNotIn('jenis_kontrak', ['PKWT', 'PKWTT']);
+            })
+            ->distinct('employee_id')
+            ->count();
+        
+        if ($tidakTerdefinisi > 0) {
+            $statuses[] = [
+                'name' => 'Tidak Terdefinisi',
+                'value' => $tidakTerdefinisi,
+                'color' => '#6b7280',
+            ];
+        }
+        
+        return $statuses;
+    }
+
+    /**
+     * BONUS: Get Department Data
+     */
+    public function getDepartmentData($perusahaanId)
+    {
+        return EmployeeEmployment::query()
+            ->whereHas('employee', fn ($q) => $q->active())
+            ->join('divisi', 'divisi.nama_divisi', '=', 'employee_employment_histories.penempatan')
+            ->where('divisi.perusahaan_id', $perusahaanId)
+            ->where('divisi.status', 'aktif')
+            ->selectRaw('
+                divisi.nama_divisi as dept,
+                COUNT(DISTINCT employee_employment_histories.employee_id) as total
+            ')
+            ->groupBy('divisi.nama_divisi')
+            ->orderByDesc('total')
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * BONUS: Get Recruitment Funnel
+     * Data 7 hari terakhir pelamar masuk per hari
+     */
+    public function getRecruitmentFunnel()
+    {
+        // Jika sudah ada Model Applicant:
+        /*
+        $funnel = [];
+        
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            
+            $count = Applicant::whereDate('created_at', $date->format('Y-m-d'))
+                ->count();
+            
+            $funnel[] = [
+                'tanggal' => $date->format('d M'),
+                'jumlah' => $count,
+            ];
+        }
+        
+        return $funnel;
+        */
+        
+        return []; // Sementara return array kosong
+    }
+
+    private function getKontrakHampirHabisPerTanggal($days = 30)
+    {
+        $today = Carbon::today();
+        $endDate = Carbon::today()->addDays($days);
+
+        $kontrakData = EmployeeEmployment::query()
+            ->selectRaw('DATE(tgl_akhir_kerja) as tanggal, COUNT(*) as jumlah')
+            // ->where('status', 'aktif')
+            ->whereNotNull('tgl_akhir_kerja')
+            ->whereBetween(
+                DB::raw('DATE(tgl_akhir_kerja)'),
+                [$today->toDateString(), $endDate->toDateString()]
+            )
+            ->whereHas('employee', function ($q) {
+                $q->where('status_active', '1');
+            })
+            ->groupBy('tanggal')
+            ->orderBy('tanggal')
+            ->get();
+
+        // Generate semua tanggal (termasuk yang kosong)
+        $result = [];
+        $currentDate = $today->copy();
+
+        while ($currentDate->lte($endDate)) {
+            $dateStr = $currentDate->toDateString();
+            $existingData = $kontrakData->firstWhere('tanggal', $dateStr);
+
+            $result[] = [
+                'tanggal'        => $currentDate->format('d M'),
+                'tanggal_full'   => $dateStr,
+                'jumlah'         => $existingData ? (int) $existingData->jumlah : 0,
+            ];
+
+            $currentDate->addDay();
+        }
+
+        return $result;
     }
 }

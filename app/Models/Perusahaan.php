@@ -94,4 +94,27 @@ class Perusahaan extends Model
         
         return now()->diffInDays($this->tanggal_akhir_mou, false);
     }
+
+    // Scope untuk perusahaan aktif
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'aktif');
+    }
+
+    // Scope untuk perusahaan tidak aktif
+    public function scopeInactive($query)
+    {
+        return $query->where('status', 'tidak_aktif');
+    }
+
+    // Check apakah perusahaan punya karyawan aktif
+    public function hasActiveEmployees()
+    {
+        return EmployeeEmployment::active()
+            ->whereHas('employee', function($q) {
+                $q->active();
+            })
+            ->where('perusahaan', $this->nama_perusahaan)
+            ->exists();
+    }
 }
