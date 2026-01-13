@@ -54,7 +54,7 @@ Route::middleware('auth')->group(function () {
         });
         
         Route::get('/pelamar', function () {
-            return Inertia::render('admin/DataPelamar');
+            return Inertia::render('admin/hr/pelamar/all-pelamar');
         });
         
         Route::prefix('payroll')->group(function () {

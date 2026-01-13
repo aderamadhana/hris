@@ -143,14 +143,16 @@
                                         </span>
                                     </td> -->
 
-                                    <td class="actions-cell">
-                                        <button
-                                            class="action-btn primary"
-                                            title="Lihat Detail Pelamar"
-                                            @click="openDetail(u.id)"
-                                        >
-                                            <font-awesome-icon icon="eye" />
-                                        </button>
+                                    <td class="col-actions">
+                                        <div class="actions-wrap">
+                                            <button
+                                                class="action-btn primary"
+                                                title="Lihat Detail Pelamar"
+                                                @click="openDetail(u.id)"
+                                            >
+                                                <font-awesome-icon icon="eye" />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -213,8 +215,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import ImportGaji from '../import/ImportGaji.vue';
-import ImportKaryawan from '../import/ImportKaryawan.vue';
+import ImportGaji from '../../../import/ImportGaji.vue';
+import ImportKaryawan from '../../../import/ImportKaryawan.vue';
 
 export default {
     components: {

@@ -231,7 +231,7 @@
                                                 <font-awesome-icon
                                                     icon="upload"
                                                 />
-                                                Upload Gaji
+                                                Upload
                                             </Button>
 
                                             <Button
@@ -242,7 +242,7 @@
                                                 <font-awesome-icon
                                                     icon="download"
                                                 />
-                                                Download Gaji
+                                                Download
                                             </Button>
                                         </div>
                                     </td>
