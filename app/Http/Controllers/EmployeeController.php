@@ -221,7 +221,7 @@ class EmployeeController extends Controller
             'role',
         ]);
         
-        return Inertia::render('settings/GantiPassword', [
+        return Inertia::render('GantiPassword', [
             'user' => $user,
         ]);
     }

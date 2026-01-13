@@ -71,8 +71,9 @@ import {
     faSave,
     faTimes,
     faUserClock,
-    faUserXmark
-
+    faUserXmark,faBuildingCircleXmark,
+    faUserPlus,
+    faUserMinus
 } from '@fortawesome/free-solid-svg-icons'
 
 import 'select2/dist/css/select2.min.css'
@@ -134,7 +135,10 @@ library.add(
     faSave,
     faTimes,
     faUserClock,
-    faUserXmark
+    faUserXmark,
+  faBuildingCircleXmark,
+  faUserPlus,
+  faUserMinus
 )
 
 createInertiaApp({

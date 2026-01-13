@@ -1,5 +1,16 @@
 <template>
     <div>
+        <div v-if="isLoading" class="fullpage-loader">
+            <div class="fullpage-loader__card">
+                <div class="fullpage-loader__spinner"></div>
+                <div class="fullpage-loader__title">
+                    Loading charts dashboard…
+                </div>
+                <div class="fullpage-loader__subtitle">
+                    Mohon tunggu sebentar
+                </div>
+            </div>
+        </div>
         <div class="page-header">
             <div>
                 <div class="page-heading-row">
@@ -18,7 +29,7 @@
 
         <!-- Overview Cards -->
         <div class="overview-grid">
-            <div class="overview-card success">
+            <div class="overview-card success" @click="toKaryawanAktif">
                 <div class="overview-card-content">
                     <div class="overview-card-info">
                         <p class="overview-card-label">Karyawan Aktif</p>
@@ -48,7 +59,7 @@
                 </div>
             </div>
 
-            <div class="overview-card danger">
+            <div class="overview-card danger" @click="toKaryawanTidakAktif">
                 <div class="overview-card-content">
                     <div class="overview-card-info">
                         <p class="overview-card-label">Tidak Aktif</p>
@@ -77,7 +88,7 @@
                 </div>
             </div>
 
-            <div class="overview-card warning">
+            <div class="overview-card warning" @click="toKontrakHampirHabis">
                 <div class="overview-card-content">
                     <div class="overview-card-info">
                         <p class="overview-card-label">Kontrak Hampir Habis</p>
@@ -110,7 +121,7 @@
                 </div>
             </div>
 
-            <div class="overview-card info">
+            <div class="overview-card info" @click="toClientAktif">
                 <div class="overview-card-content">
                     <div class="overview-card-info">
                         <p class="overview-card-label">Client Aktif</p>
@@ -205,7 +216,24 @@
 
             <!-- Karyawan per Departemen -->
             <div class="chart-card">
-                <h3 class="chart-title">Karyawan per Departemen</h3>
+                <div class="chart-header">
+                    <h3 class="chart-title">Karyawan per Departemen</h3>
+                    <Select2
+                        class="chart-dropdown"
+                        v-model="filters.perusahaanSelected"
+                        :settings="{ width: '40%' }"
+                        @change="fetchStats"
+                    >
+                        <option value="">Pilih</option>
+                        <option
+                            v-for="perusahaan in data_perusahaan"
+                            :key="perusahaan.id"
+                            :value="perusahaan.id"
+                        >
+                            {{ perusahaan.nama_perusahaan }}
+                        </option>
+                    </Select2>
+                </div>
                 <div class="chart-container">
                     <canvas ref="departmentChart"></canvas>
                 </div>
@@ -356,10 +384,10 @@
                 </div>
 
                 <!-- PELAMAR MASUK -->
-                <div class="dashboard-card">
+                <div class="dashboard-card success">
                     <div class="dashboard-card-header">
                         <div class="header-left">
-                            <div class="card-icon">
+                            <div class="card-icon success">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="20"
@@ -407,20 +435,19 @@
             <h2 class="category-title">Client</h2>
             <div class="dashboard-grid">
                 <!-- CLIENT | TIDAK AKTIF -->
-                <div class="dashboard-card">
+                <div class="dashboard-card danger" @click="toClientTidakAktif">
                     <div class="dashboard-card-header">
                         <div class="header-left">
-                            <div class="card-icon">
+                            <div class="card-icon danger">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
-                                    width="20"
-                                    height="20"
                                     viewBox="0 0 24 24"
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="2"
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
+                                    class="icon"
                                 >
                                     <rect
                                         x="2"
@@ -429,10 +456,10 @@
                                         height="14"
                                         rx="2"
                                         ry="2"
-                                    ></rect>
+                                    />
                                     <path
                                         d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"
-                                    ></path>
+                                    />
                                 </svg>
                             </div>
                             <h3 class="header-title">Client Tidak Aktif</h3>
@@ -454,62 +481,53 @@
 </template>
 
 <script>
+import Select2 from '@/components/Select2.vue';
+import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { defineComponent } from 'vue';
 
 export default defineComponent({
+    components: {
+        Select2,
+    },
     data() {
         return {
             stats: {
-                karyawanAktif: 245,
-                karyawanTidakAktif: 28,
-                kontrakHampirHabis: 12,
-                clientAktif: 18,
-                clientTidakAktif: 7,
-                karyawanBaru: 8,
-                pelamarMasuk: 34,
-                resign: 3,
+                karyawanAktif: 0,
+                karyawanTidakAktif: 0,
+                kontrakHampirHabis: 0,
+                clientAktif: 0,
+                clientTidakAktif: 0,
+                karyawanBaru: 0,
+                pelamarMasuk: 0,
+                resign: 0,
             },
             filters: {
                 kontrakHabis: 30,
                 karyawanBaru: 7,
                 pelamar: 7,
                 resign: 7,
+                perusahaanSelected: '',
             },
-            loading: false,
-            employeeTrend: [
-                { bulan: 'Jul', masuk: 12, keluar: 5, total: 230 },
-                { bulan: 'Agu', masuk: 15, keluar: 8, total: 237 },
-                { bulan: 'Sep', masuk: 10, keluar: 6, total: 241 },
-                { bulan: 'Okt', masuk: 18, keluar: 7, total: 252 },
-                { bulan: 'Nov', masuk: 9, keluar: 11, total: 250 },
-                { bulan: 'Des', masuk: 8, keluar: 13, total: 245 },
-            ],
-            employeeStatus: [
-                { name: 'Karyawan Tetap', value: 165, color: '#10b981' },
-                { name: 'Kontrak', value: 58, color: '#3b82f6' },
-                { name: 'Probation', value: 22, color: '#f59e0b' },
-            ],
-            recruitmentFunnel: [
-                { tanggal: '13 Jan', jumlah: 2 },
-                { tanggal: '14 Jan', jumlah: 1 },
-                { tanggal: '15 Jan', jumlah: 3 },
-                { tanggal: '18 Jan', jumlah: 1 },
-                { tanggal: '20 Jan', jumlah: 2 },
-                { tanggal: '25 Jan', jumlah: 1 },
-                { tanggal: '28 Jan', jumlah: 2 },
-            ],
-            departmentData: [
-                { dept: 'IT', total: 45 },
-                { dept: 'Sales', total: 38 },
-                { dept: 'Marketing', total: 28 },
-                { dept: 'Finance', total: 22 },
-                { dept: 'HR', total: 15 },
-                { dept: 'Operations', total: 35 },
-            ],
+
+            employeeTrend: [],
+            employeeStatus: [],
+            recruitmentFunnel: [],
+            departmentData: [],
+
             charts: {},
+            data_perusahaan: [],
+
+            isUpdatingFromBackend: false,
+
+            // internal
+            debounceTimer: null,
+            _fetchToken: 0,
+            _chartJsPromise: null,
+            isLoading: false,
         };
     },
+
     computed: {
         currentDate() {
             return new Date().toLocaleDateString('id-ID', {
@@ -519,13 +537,120 @@ export default defineComponent({
             });
         },
     },
-    mounted() {
-        this.fetchStats();
-        this.loadChartJS();
+
+    watch: {
+        'filters.kontrakHabis'(n, o) {
+            if (!this.isUpdatingFromBackend && n !== o)
+                this.debouncedFetchStats();
+        },
+        'filters.karyawanBaru'(n, o) {
+            if (!this.isUpdatingFromBackend && n !== o)
+                this.debouncedFetchStats();
+        },
+        'filters.pelamar'(n, o) {
+            if (!this.isUpdatingFromBackend && n !== o)
+                this.debouncedFetchStats();
+        },
+        'filters.resign'(n, o) {
+            if (!this.isUpdatingFromBackend && n !== o)
+                this.debouncedFetchStats();
+        },
+        'filters.perusahaanSelected'(n, o) {
+            if (!this.isUpdatingFromBackend && n !== o)
+                this.debouncedFetchStats();
+        },
     },
+
+    mounted() {
+        this.setupDebounce();
+        this.getFPerusahaanDanDivisi();
+        this.fetchStats();
+    },
+
+    beforeUnmount() {
+        if (this.debounceTimer) clearTimeout(this.debounceTimer);
+        this.destroyCharts();
+    },
+
     methods: {
+        async getFPerusahaanDanDivisi() {
+            try {
+                const res = await axios.get('/referensi/perusahaan-divisi');
+                this.data_perusahaan = res.data.data || [];
+            } catch (err) {
+                console.error(err);
+                triggerAlert(
+                    'error',
+                    'Gagal memuat filter perusahaan/jabatan.',
+                );
+            }
+        },
+
+        setupDebounce() {
+            this.debouncedFetchStats = () => {
+                clearTimeout(this.debounceTimer);
+                this.debounceTimer = setTimeout(() => {
+                    this.fetchStats();
+                }, 500);
+            };
+        },
+
+        // Load Chart.js once, return a promise
+        loadChartJS() {
+            if (typeof Chart !== 'undefined') return Promise.resolve();
+
+            if (this._chartJsPromise) return this._chartJsPromise;
+
+            this._chartJsPromise = new Promise((resolve, reject) => {
+                const existingScript =
+                    document.querySelector('script[data-chartjs="1"]') ||
+                    document.querySelector('script[src*="chart.min.js"]') ||
+                    document.querySelector('script[src*="Chart.js"]');
+
+                if (existingScript) {
+                    // wait until Chart global exists
+                    const start = Date.now();
+                    const timer = setInterval(() => {
+                        if (typeof Chart !== 'undefined') {
+                            clearInterval(timer);
+                            resolve();
+                        } else if (Date.now() - start > 5000) {
+                            clearInterval(timer);
+                            reject(
+                                new Error(
+                                    'Chart.js script exists but Chart is not available',
+                                ),
+                            );
+                        }
+                    }, 50);
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src =
+                    'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js';
+                script.async = true;
+                script.defer = true;
+                script.dataset.chartjs = '1';
+
+                script.onload = () => resolve();
+                script.onerror = () =>
+                    reject(new Error('Failed to load Chart.js'));
+
+                document.head.appendChild(script);
+            });
+
+            return this._chartJsPromise;
+        },
+
         async fetchStats() {
-            this.loading = true;
+            const token = ++this._fetchToken;
+
+            // kalau UI kamu pakai v-if="loading" buat section chart,
+            // ini penting supaya chart lama tidak nyangkut ke canvas yang akan di-unmount.
+            this.destroyCharts();
+            this.isLoading = true;
+
             try {
                 const response = await axios.get('/dashboard/stats', {
                     params: {
@@ -533,37 +658,82 @@ export default defineComponent({
                         karyawan_baru: this.filters.karyawanBaru,
                         pelamar: this.filters.pelamar,
                         resign: this.filters.resign,
+                        perusahaan: this.filters.perusahaanSelected,
                     },
                 });
 
-                if (response.data.success) {
-                    this.stats = response.data.data;
+                if (token !== this._fetchToken) return;
+                if (!response.data.success) return;
+
+                const data = response.data.data;
+
+                this.isUpdatingFromBackend = true;
+
+                // stats
+                this.stats = data.stats || this.stats;
+
+                // jangan replace object filters (ini bikin DOM/refs reset)
+                if (data.filters) {
+                    Object.assign(this.filters, data.filters);
                 }
+
+                // chart data
+                this.employeeTrend = data.employeeTrend || [];
+                this.employeeStatus = data.employeeStatus || [];
+                this.recruitmentFunnel = data.recruitmentFunnel || [];
+                this.departmentData = data.departmentData || [];
             } catch (error) {
                 console.error('Error fetching stats:', error);
             } finally {
-                this.loading = false;
+                if (token !== this._fetchToken) return;
+
+                this.isLoading = false;
+
+                // tunggu DOM kembali (canvas muncul lagi)
+                await this.$nextTick();
+
+                this.isUpdatingFromBackend = false;
+
+                try {
+                    await this.loadChartJS();
+                } catch (e) {
+                    console.error(e);
+                    return;
+                }
+
+                // nextTick lagi untuk memastikan refs benar-benar terpasang
+                await this.$nextTick();
+
+                this.initializeCharts();
             }
         },
+
+        async updateFilter(filterName, value) {
+            // optional kalau kamu pakai handler manual di dropdown
+            this.isUpdatingFromBackend = true;
+            this.filters[filterName] = value;
+            this.isUpdatingFromBackend = false;
+
+            await this.fetchStats();
+        },
+
+        async refreshDashboard() {
+            await this.fetchStats();
+        },
+
         getMetaText(days) {
             if (days == 1) return 'hari ini';
             if (days == 7) return '7 hari terakhir';
             if (days == 30) return '30 hari terakhir';
             return '';
         },
-        loadChartJS() {
-            const script = document.createElement('script');
-            script.src =
-                'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js';
-            script.onload = () => {
-                this.$nextTick(() => {
-                    this.initCharts();
-                });
-            };
-            document.head.appendChild(script);
-        },
-        initCharts() {
-            // Employee Trend Chart
+
+        initializeCharts() {
+            // Jika canvas belum ada (biasanya karena v-if/transition), skip saja.
+            // fetchStats akan memanggil lagi setelah DOM siap.
+            if (!this.$refs.employeeTrendChart) return;
+
+            // Trend Chart
             if (this.$refs.employeeTrendChart) {
                 this.charts.trend = new Chart(this.$refs.employeeTrendChart, {
                     type: 'line',
@@ -597,20 +767,16 @@ export default defineComponent({
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: {
-                                position: 'top',
-                            },
+                            legend: { position: 'top' },
                         },
                         scales: {
-                            y: {
-                                beginAtZero: true,
-                            },
+                            y: { beginAtZero: true },
                         },
                     },
                 });
             }
 
-            // Employee Status Pie Chart
+            // Status Chart
             if (this.$refs.employeeStatusChart) {
                 this.charts.status = new Chart(this.$refs.employeeStatusChart, {
                     type: 'doughnut',
@@ -629,15 +795,13 @@ export default defineComponent({
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: {
-                                display: false,
-                            },
+                            legend: { display: false },
                         },
                     },
                 });
             }
 
-            // Kontrak Hampir Habis per Tanggal Chart
+            // Recruitment Chart
             if (this.$refs.recruitmentChart) {
                 this.charts.recruitment = new Chart(
                     this.$refs.recruitmentChart,
@@ -649,7 +813,7 @@ export default defineComponent({
                             ),
                             datasets: [
                                 {
-                                    label: 'Jumlah Karyawan',
+                                    label: 'Kontrak Berakhir',
                                     data: this.recruitmentFunnel.map(
                                         (d) => d.jumlah,
                                     ),
@@ -663,15 +827,12 @@ export default defineComponent({
                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: {
-                                legend: {
-                                    display: false,
-                                },
+                                legend: { display: false },
                                 tooltip: {
                                     callbacks: {
                                         label: function (context) {
-                                            return (
-                                                context.parsed.y + ' karyawan'
-                                            );
+                                            const count = context.parsed.y;
+                                            return count + ' kontrak berakhir';
                                         },
                                     },
                                 },
@@ -681,6 +842,10 @@ export default defineComponent({
                                     beginAtZero: true,
                                     ticks: {
                                         stepSize: 1,
+                                        callback: function (value) {
+                                            if (Number.isInteger(value))
+                                                return value;
+                                        },
                                     },
                                 },
                             },
@@ -707,24 +872,51 @@ export default defineComponent({
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: {
-                                display: false,
-                            },
+                            legend: { display: false },
                         },
                         scales: {
-                            y: {
-                                beginAtZero: true,
-                            },
+                            y: { beginAtZero: true },
                         },
                     },
                 });
             }
         },
-    },
-    beforeUnmount() {
-        Object.values(this.charts).forEach((chart) => {
-            if (chart) chart.destroy();
-        });
+
+        destroyCharts() {
+            Object.keys(this.charts).forEach((key) => {
+                const ch = this.charts[key];
+                if (ch && typeof ch.destroy === 'function') {
+                    ch.destroy();
+                }
+            });
+            this.charts = {};
+        },
+
+        // Navigation methods
+        toKaryawanAktif() {
+            router.visit(`/hr/karyawan`);
+        },
+        toKaryawanTidakAktif() {
+            router.visit(`/hr/karyawan`);
+        },
+        toKontrakHampirHabis() {
+            router.visit(`/hr/karyawan`);
+        },
+        toClientAktif() {
+            router.visit(`/marketing/client/aktif`);
+        },
+        toKaryawanBaru() {
+            router.visit(`/hr/karyawan`);
+        },
+        toKaryawanResign() {
+            router.visit(`/hr/karyawan`);
+        },
+        toPelamarMasuk() {
+            router.visit(`/hr/pelamar`);
+        },
+        toClientTidakAktif() {
+            router.visit(`/marketing/client/non-aktif`);
+        },
     },
 });
 </script>

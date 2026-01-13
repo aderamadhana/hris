@@ -3,6 +3,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Employee extends Model
 {
@@ -67,6 +69,11 @@ class Employee extends Model
         return $this->hasMany(SalaryConfiguration::class);
     }
 
+    public function latestSalaryConfiguration(): HasOne
+    {
+        return $this->hasOne(SalaryConfiguration::class)->latestOfMany('effective_date');
+    }
+
     public function attendanceSummaries(): HasMany
     {
         return $this->hasMany(AttendanceSummary::class);
@@ -111,6 +118,20 @@ class Employee extends Model
     public function scopeActive($query)
     {
         return $query->whereNotNull('status_kary');
+    }
+    
+    // Relasi ke employment history yang aktif
+    public function activeEmployment()
+    {
+        return $this->hasOne(EmployeeEmploymentHistory::class)
+            ->where('status', 'aktif')
+            ->latest();
+    }
+
+    // Scope untuk karyawan tidak aktif
+    public function scopeInactive($query)
+    {
+        return $query->where('status_active', '0');
     }
 
     public function getTanggalLahirAttribute($value)

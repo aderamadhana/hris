@@ -44,4 +44,22 @@ class EmployeeEmployment extends Model
             ->where('nama_divisi', $this->penempatan)
             ->first();
     }
+
+    // Scope untuk employment aktif
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'aktif');
+    }
+
+    // Scope untuk PKWT
+    public function scopePkwt($query)
+    {
+        return $query->where('jenis_kontrak', 'PKWT');
+    }
+
+    // Scope untuk resign
+    public function scopeResign($query)
+    {
+        return $query->where('status', 'resign');
+    }
 }

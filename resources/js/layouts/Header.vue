@@ -76,11 +76,7 @@
                     <span>Profile</span>
                 </Link>
 
-                <Link
-                    href="#"
-                    class="user-menu-item"
-                    @click.prevent="goChangePassword"
-                >
+                <Link class="user-menu-item" @click.prevent="goChangePassword">
                     <font-awesome-icon icon="key" />
                     <span>Ganti Password</span>
                 </Link>

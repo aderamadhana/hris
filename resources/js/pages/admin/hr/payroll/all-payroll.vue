@@ -1,6 +1,17 @@
 <template>
     <AppLayout>
         <section class="page employees-page">
+            <div v-if="isDownloadingGaji" class="fullpage-loader">
+                <div class="fullpage-loader__card">
+                    <div class="fullpage-loader__spinner"></div>
+                    <div class="fullpage-loader__title">
+                        Proses download gaji…
+                    </div>
+                    <div class="fullpage-loader__subtitle">
+                        Mohon tunggu sebentar
+                    </div>
+                </div>
+            </div>
             <div class="page-header">
                 <div>
                     <div class="page-heading-row">
@@ -54,12 +65,43 @@
                     <div class="dt-filters" :class="{ show: showFilters }">
                         <div class="form-group">
                             <label>Filter Status</label>
-                            <select v-model="status" class="filter-input">
+                            <select
+                                v-model="filtered_status"
+                                class="filter-input"
+                            >
                                 <option value="">Semua Status</option>
                                 <option value="open">Terbuka</option>
                                 <option value="closed">Ditutup</option>
                                 <option value="processed">Diproses</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tanggal Mulai</label>
+                            <input
+                                type="date"
+                                v-model="filtered_tanggal_mulai"
+                                class="form-control"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>Tanggal Selesai</label>
+                            <input
+                                type="date"
+                                v-model="filtered_tanggal_selesai"
+                                :min="filtered_tanggal_mulai"
+                                class="form-control"
+                            />
+                        </div>
+                        <div class="form-group filter-actions">
+                            <label class="filter-label">&nbsp;</label>
+                            <Button
+                                variant="secondary"
+                                class="filter-apply-btn"
+                                @click="filteredData"
+                            >
+                                <font-awesome-icon icon="filter" />
+                                Terapkan Filter
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -113,12 +155,12 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th class="col-no">No</th>
+                                    <th class="col-no" style="width: 5%">No</th>
                                     <th style="width: 20%">Judul Periode</th>
-                                    <th>Tahun</th>
-                                    <th>Bulan</th>
-                                    <th>Tanggal Mulai</th>
-                                    <th>Tanggal Selesai</th>
+                                    <th style="width: 5%">Tahun</th>
+                                    <th style="width: 10%">Bulan</th>
+                                    <th style="width: 20%">Tanggal Mulai</th>
+                                    <th style="width: 20%">Tanggal Selesai</th>
                                     <th>Status</th>
                                     <th class="col-action">Aksi</th>
                                 </tr>
@@ -147,7 +189,9 @@
                                     v-for="(period, index) in periodsData"
                                     :key="period.id"
                                 >
-                                    <td>{{ startIndex + index + 1 }}</td>
+                                    <td style="text-align: center">
+                                        {{ startIndex + index + 1 }}
+                                    </td>
                                     <td>
                                         <button
                                             type="button"
@@ -177,11 +221,10 @@
                                             {{ getStatusLabel(period.status) }}
                                         </span>
                                     </td>
-
                                     <td class="col-actions">
                                         <div class="actions-wrap">
                                             <Button
-                                                @click="uploadGaji(period.id)"
+                                                @click="uploadGaji(period)"
                                                 variant="success"
                                                 title="Upload Gaji"
                                             >
@@ -192,7 +235,7 @@
                                             </Button>
 
                                             <Button
-                                                @click="downloadGaji(period.id)"
+                                                @click="downloadGaji(period)"
                                                 variant="primary"
                                                 title="Download Gaji"
                                             >
@@ -202,23 +245,6 @@
                                                 Download Gaji
                                             </Button>
                                         </div>
-                                        <!-- <Link
-                                            :href="`/hr/payroll/${period.id}/edit`"
-                                            class="action-btn emoji primary"
-                                            title="Edit"
-                                        >
-                                            <font-awesome-icon
-                                                icon="pen-to-square"
-                                            />
-                                        </Link>
-
-                                        <button
-                                            @click="deletePeriod(period.id)"
-                                            class="action-btn emoji danger"
-                                            title="Hapus"
-                                        >
-                                            <font-awesome-icon icon="trash" />
-                                        </button> -->
                                     </td>
                                 </tr>
                             </tbody>
@@ -280,7 +306,15 @@
             </div>
             <EditPayrollModal
                 v-if="showEditPayrollModal"
+                :period="selectedPeriod"
                 @closeModal="closeEditPayrollModal"
+                @refreshData="fetchPeriods"
+            />
+
+            <ImportGaji
+                v-if="showImportGajiModal"
+                :period="selectedPeriodGaji"
+                @closeModal="closeModalImportGaji"
                 @refreshData="fetchPeriods"
             />
         </section>
@@ -292,6 +326,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
 import { Link } from '@inertiajs/vue3';
 import axios from 'axios';
+import ImportGaji from '../../../import/ImportGaji.vue';
+import EditPayrollModal from './modal-edit-payroll.vue';
 
 export default {
     props: {
@@ -302,7 +338,9 @@ export default {
     components: {
         AppLayout,
         Link,
+        ImportGaji,
         Button,
+        EditPayrollModal,
     },
 
     data() {
@@ -318,10 +356,18 @@ export default {
             totalItems: 0,
             totalPages: 0,
             showFilters: false,
-            selectedPeriod: false,
+            selectedPeriod: [],
+            selectedPeriodGaji: [],
             periodForm: [],
 
             showEditPayrollModal: false,
+            showImportGajiModal: false,
+
+            isDownloadingGaji: false,
+
+            filtered_status: '',
+            filtered_tanggal_mulai: '',
+            filtered_tanggal_selesai: '',
         };
     },
 
@@ -345,18 +391,6 @@ export default {
                 this.startIndex + this.periodsData.length,
                 this.totalItems,
             );
-        },
-        openPeriodeConfig(period_selected) {
-            this.selectedPeriod = period_selected;
-
-            this.periodForm = {
-                // shift_id: u.shift_id || '', // kalau list karyawan sudah bawa shift_id
-            };
-
-            this.showEditPayrollModal = true;
-        },
-        closeEditPayrollModal() {
-            this.showEditPayrollModal = false;
         },
         pages() {
             if (this.totalPages <= 1) return [];
@@ -382,7 +416,9 @@ export default {
                 const res = await axios.get('/hr/payroll/all', {
                     params: {
                         search: this.search,
-                        status: this.status,
+                        status: this.filtered_status,
+                        tanggal_mulai: this.filtered_tanggal_mulai,
+                        tanggal_selesai: this.filtered_tanggal_selesai,
                         page,
                     },
                 });
@@ -454,6 +490,70 @@ export default {
         },
         tambahPeriode() {
             this.$inertia.visit('/hr/payroll/create');
+        },
+
+        openPeriodeConfig(period_selected) {
+            this.selectedPeriod = period_selected;
+
+            this.showEditPayrollModal = true;
+        },
+
+        closeEditPayrollModal() {
+            this.showEditPayrollModal = false;
+        },
+
+        uploadGaji(period_selected) {
+            this.selectedPeriodGaji = period_selected;
+            this.showImportGajiModal = true;
+        },
+
+        closeModalImportGaji() {
+            this.showImportGajiModal = false;
+            this.selectedFilePayslip = null;
+        },
+
+        async downloadGaji(period) {
+            try {
+                this.isDownloadingGaji = true;
+                const response = await axios.get('/export/payroll', {
+                    responseType: 'blob',
+                    params: {
+                        periode_id: period.id,
+                    },
+                });
+
+                const blob = new Blob([response.data], {
+                    type: response.headers['content-type'],
+                });
+
+                const pad2 = (n) => String(n).padStart(2, '0');
+                const d = new Date();
+                const tgl = pad2(d.getDate());
+                const bln = pad2(d.getMonth() + 1);
+                const thn = d.getFullYear();
+                const hari = pad2(d.getHours());
+                const jam = pad2(d.getMinutes());
+                const detik = pad2(d.getSeconds());
+
+                const filename = `PERIODE GAJI_${period.judul}_${tgl}${bln}${thn}${hari}${jam}${detik}.xlsx`;
+
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Download gagal', error);
+            } finally {
+                this.isDownloadingGaji = false;
+            }
+        },
+
+        filteredData() {
+            this.fetchPeriods();
         },
     },
 

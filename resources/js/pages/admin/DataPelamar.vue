@@ -21,6 +21,9 @@
             <!-- RINGKASAN -->
             <div class="overview-row">
                 <div class="overview-card primary">
+                    <div class="card-icon">
+                        <font-awesome-icon icon="users" />
+                    </div>
                     <div class="overview-label">Total Pelamar</div>
                     <div class="overview-value">{{ totalItems }}</div>
                 </div>
@@ -60,7 +63,7 @@
                                     <th class="col-status">Tanggal Melamar</th>
                                     <th class="col-perusahaan">Perusahaan</th>
                                     <th class="col-position">Jabatan</th>
-                                    <th class="col-status">Status</th>
+                                    <!-- <th class="col-status">Status</th> -->
                                     <th class="col-action">Detail</th>
                                 </tr>
                             </thead>
@@ -126,7 +129,7 @@
 
                                     <td>{{ u.position }}</td>
 
-                                    <td>
+                                    <!-- <td>
                                         <span
                                             class="status-pill"
                                             :class="{
@@ -138,7 +141,7 @@
                                         >
                                             {{ u.status }}
                                         </span>
-                                    </td>
+                                    </td> -->
 
                                     <td class="actions-cell">
                                         <button
