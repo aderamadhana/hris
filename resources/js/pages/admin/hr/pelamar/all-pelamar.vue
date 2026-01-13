@@ -11,7 +11,7 @@
                 </div>
 
                 <div class="page-actions">
-                    <Button variant="primary" @click="fiturBelumTersedia">
+                    <Button variant="primary" @click="tambahPelamar">
                         <font-awesome-icon icon="plus" class="icon" />
                         Tambah Pelamar
                     </Button>
@@ -25,7 +25,18 @@
                         <font-awesome-icon icon="users" />
                     </div>
                     <div class="overview-label">Total Pelamar</div>
-                    <div class="overview-value">{{ totalItems }}</div>
+                    <div class="overview-value">
+                        {{ statistics.total_applicants }}
+                    </div>
+                </div>
+                <div class="overview-card warning">
+                    <div class="card-icon warning">
+                        <font-awesome-icon icon="users" />
+                    </div>
+                    <div class="overview-label">Butuh Perpanjang Kontrak</div>
+                    <div class="overview-value">
+                        {{ statistics.total_needs_renewal }}
+                    </div>
                 </div>
             </div>
 
@@ -35,9 +46,10 @@
                     <label class="dt-length-compact">
                         Tampil
                         <select v-model.number="perPage">
-                            <option :value="5">5</option>
                             <option :value="10">10</option>
                             <option :value="25">25</option>
+                            <option :value="50">50</option>
+                            <option :value="100">100</option>
                         </select>
                         data
                     </label>
@@ -50,7 +62,32 @@
                         />
                     </div>
                 </div>
+                <div class="dt-filters-wrapper">
+                    <button
+                        class="filter-toggle-btn"
+                        @click="showFilters = !showFilters"
+                    >
+                        <font-awesome-icon icon="filter" />
+                        <span>Filter</span>
+                        <font-awesome-icon
+                            :icon="showFilters ? 'chevron-up' : 'chevron-down'"
+                            class="toggle-icon"
+                        />
+                    </button>
 
+                    <div class="dt-filters" :class="{ show: showFilters }">
+                        <div class="form-group">
+                            <label>Kategori</label>
+                            <select v-model="kategori" class="filter-input">
+                                <option value="">Semua Kategori</option>
+                                <option value="needs_renewal">
+                                    Butuh Perpanjang Kontrak
+                                </option>
+                                <option value="applicant">Data Pelamar</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 <!-- TABLE CARD -->
                 <div class="table-card">
                     <div class="table-responsive-custom">
@@ -58,12 +95,12 @@
                             <thead>
                                 <tr>
                                     <th class="col-no">#</th>
-                                    <th class="col-name">Nama</th>
+                                    <th class="col-name" style="width: 30%">
+                                        Nama
+                                    </th>
                                     <th class="col-nik">NIK</th>
                                     <th class="col-status">Tanggal Melamar</th>
-                                    <th class="col-perusahaan">Perusahaan</th>
-                                    <th class="col-position">Jabatan</th>
-                                    <!-- <th class="col-status">Status</th> -->
+                                    <th class="col-status">Status</th>
                                     <th class="col-action">Detail</th>
                                 </tr>
                             </thead>
@@ -119,35 +156,47 @@
                                     </td>
 
                                     <!-- Pastikan field ini memang ada di data pelamar -->
-                                    <td>{{ u.tanggal_melamar }}</td>
-
                                     <td>
-                                        <span class="cell-perusahaan">{{
-                                            u.perusahaan
-                                        }}</span>
+                                        {{ u.tgl_daftar ? u.tgl_daftar : '-' }}
                                     </td>
 
-                                    <td>{{ u.position }}</td>
-
-                                    <!-- <td>
+                                    <td>
                                         <span
                                             class="status-pill"
                                             :class="{
                                                 'status-active':
-                                                    u.status === 'Aktif',
+                                                    u.category === 'applicant',
                                                 'status-inactive':
-                                                    u.status !== 'Aktif',
+                                                    u.category !== 'applicant',
                                             }"
                                         >
-                                            {{ u.status }}
+                                            {{ u.category_label }}
                                         </span>
-                                    </td> -->
+                                    </td>
 
                                     <td class="col-actions">
                                         <div class="actions-wrap">
                                             <button
+                                                class="action-btn warning"
+                                                title="Edit Data"
+                                                @click="openEdit(u.id)"
+                                            >
+                                                <font-awesome-icon
+                                                    icon="edit"
+                                                />
+                                            </button>
+                                            <button
+                                                class="action-btn danger"
+                                                title="Hapus Data"
+                                                @click="deleteUser(u)"
+                                            >
+                                                <font-awesome-icon
+                                                    icon="trash"
+                                                />
+                                            </button>
+                                            <button
                                                 class="action-btn primary"
-                                                title="Lihat Detail Pelamar"
+                                                title="Detail Data"
                                                 @click="openDetail(u.id)"
                                             >
                                                 <font-awesome-icon icon="eye" />
@@ -237,11 +286,13 @@ export default {
             totalPages: 0,
 
             search: '',
+            kategori: '',
 
             showImportGajiModal: false,
             showImportKaryawanModal: false,
 
             showFilters: false,
+            statistics: [],
         };
     },
 
@@ -287,6 +338,9 @@ export default {
             this.currentPage = 1;
             this.fetchEmployees(1);
         },
+        kategori() {
+            this.fetchEmployees(1);
+        },
     },
     created() {
         this.debouncedFetch = this.debounce(() => {
@@ -295,9 +349,9 @@ export default {
 
         this.fetchEmployees(1);
     },
-    mounted() {
-        this.fetchEmployees();
-    },
+    // mounted() {
+    //     this.fetchEmployees();
+    // },
     search: {
         handler() {
             this.currentPage = 1;
@@ -321,17 +375,29 @@ export default {
         async fetchEmployees(page = this.currentPage) {
             this.loadingUsers = true;
 
+            var needs_renewal = false;
+            var is_applicant = false;
+
+            if (this.kategori == 'needs_renewal') {
+                needs_renewal = true;
+            } else if (this.kategori == 'applicant') {
+                is_applicant = true;
+            }
+
             try {
-                const res = await axios.get('/employee', {
+                const res = await axios.get('/hr/pelamar/all', {
                     params: {
                         page,
                         per_page: this.perPage,
                         search: this.search,
                         status_active: 0,
+                        needs_renewal: needs_renewal,
+                        is_applicant: is_applicant,
                     },
                 });
 
                 this.users = res.data.data;
+                this.statistics = res.data.statistics;
                 this.currentPage = res.data.meta.current_page;
                 this.perPage = res.data.meta.per_page;
                 this.totalItems = res.data.meta.total;
@@ -372,16 +438,29 @@ export default {
         openDetail(u) {
             router.visit(`/employee/detail_pelamar/${u}`);
         },
+
+        openEdit(id) {
+            router.visit(`/hr/pelamar/edit-pelamar/${id}`);
+        },
         editUser(u) {
             alert(`Edit: ${u.name}`);
         },
         deleteUser(u) {
-            if (confirm(`Hapus ${u.name}?`)) {
-                alert('Deleted');
-            }
+            if (!confirm(`Hapus ${u.name}?`)) return;
+
+            router.post(
+                `/hr/pelamar/delete/${u.id}`,
+                {},
+                {
+                    onSuccess: () => {
+                        triggerAlert('success', 'Berhasil hapus data.');
+                        this.fetchEmployees(1);
+                    },
+                },
+            );
         },
-        tambahKaryawan() {
-            this.$inertia.visit('/karyawan/tambah-karyawan');
+        tambahPelamar() {
+            this.$inertia.visit('/hr/pelamar/tambah-pelamar');
         },
     },
 };

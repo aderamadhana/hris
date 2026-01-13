@@ -7,6 +7,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\PelamarController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\ReferensiController;
 use App\Http\Controllers\PayrollController;
@@ -52,10 +53,23 @@ Route::middleware('auth')->group(function () {
                 ]);
             });
         });
-        
-        Route::get('/pelamar', function () {
-            return Inertia::render('admin/hr/pelamar/all-pelamar');
+
+        Route::prefix('pelamar')->group(function () {
+            Route::get('/', function () {
+                return Inertia::render('admin/hr/pelamar/all-pelamar');
+            });
+            Route::get('/all', [PelamarController::class, 'index']);
+            Route::get('/edit-pelamar/{id}', [PelamarController::class, 'edit']);
+            Route::get('/tambah-pelamar', function () {
+                return Inertia::render('admin/hr/pelamar/add-pelamar');
+            });
+            
+
+            Route::post('/store', [PelamarController::class, 'store']);
+            Route::post('/store-edit/{id}', [PelamarController::class, 'update']);
+            Route::post('/delete/{id}', [PelamarController::class, 'delete']);
         });
+        
         
         Route::prefix('payroll')->group(function () {
             Route::get('/', function () {

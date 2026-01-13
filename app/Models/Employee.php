@@ -123,7 +123,7 @@ class Employee extends Model
     // Relasi ke employment history yang aktif
     public function activeEmployment()
     {
-        return $this->hasOne(EmployeeEmploymentHistory::class)
+        return $this->hasOne(EmployeeEmployment::class)
             ->where('status', 'aktif')
             ->latest();
     }
@@ -137,5 +137,38 @@ class Employee extends Model
     public function getTanggalLahirAttribute($value)
     {
         return $value ? \Carbon\Carbon::parse($value)->format('Y-m-d') : null;
+    }
+
+    protected static function booted()
+    {
+        static::deleting(function ($employee) {
+
+            // BASIC PROFILE
+            $employee->educations()->delete();
+            $employee->families()->delete();
+
+            // EMPLOYMENT
+            $employee->employments()->delete();
+            $employee->employmentss()->delete();
+            $employee->currentEmployment()->delete();
+            $employee->activeEmployment()->delete();
+
+            // DOCUMENTS & HEALTH
+            $employee->documents()->delete();
+            $employee->health()->delete();
+
+            // PAYROLL (KRITIS)
+            $employee->salaryConfigurations()->delete();
+            $employee->attendanceSummaries()->delete();
+            $employee->overtimeSummaries()->delete();
+            $employee->earnings()->delete();
+            $employee->allowances()->delete();
+            $employee->additionalEarnings()->delete();
+            $employee->deductions()->delete();
+            $employee->payrollSummaries()->delete();
+
+            // USER (OPTIONAL — PUTUSKAN DENGAN SADAR)
+            // $employee->user()->delete();
+        });
     }
 }
