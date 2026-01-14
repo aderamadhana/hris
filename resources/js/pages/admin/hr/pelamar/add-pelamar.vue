@@ -54,7 +54,7 @@
                                                 placeholder="Contoh: 123456"
                                                 inputmode="numeric"
                                                 required
-                                                @input="onlyNumber"
+                                                @input="onlyNumberNRP"
                                             />
                                         </div>
 
@@ -202,7 +202,7 @@
                                                 maxlength="16"
                                                 autocomplete="off"
                                                 required
-                                                @input="onlyNumber"
+                                                @input="onlyNumberKtp"
                                             />
                                         </div>
                                         <div class="form-group">
@@ -218,7 +218,7 @@
                                                 maxlength="16"
                                                 autocomplete="off"
                                                 required
-                                                @input="onlyNumber"
+                                                @input="onlyNumberKk"
                                             />
                                         </div>
 
@@ -1744,9 +1744,13 @@ export default {
 
     methods: {
         // ====== HYDRATE (DETAIL -> FORM) ======
-        onlyNumber(e) {
+        onlyNumberNRP(e) {
             this.formEmployee.nrp = e.target.value.replace(/\D+/g, '');
+        },
+        onlyNumberKtp(e) {
             this.formAlamat.ktp = e.target.value.replace(/\D+/g, '');
+        },
+        onlyNumberKk(e) {
             this.formEmployee.kk = e.target.value.replace(/\D+/g, '');
         },
         hydrateFormsFromDetail() {
