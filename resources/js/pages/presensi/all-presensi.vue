@@ -11,20 +11,18 @@
                         Monitoring presensi semua karyawan
                     </p>
                 </div>
-                <!-- <div class="page-actions">
+                <div class="page-actions">
                     <Button
-                        variant="success"
+                        variant="primary"
+                        size="md"
                         :loading="isDownloading"
-                        @click="syncPerusahaan"
+                        @click="downloadPresensi()"
+                        class="download-btn"
                     >
-                        <font-awesome-icon icon="sync" class="icon" />
-                        Sync Client
+                        <font-awesome-icon icon="download" class="icon" />
+                        Download Presensi
                     </Button>
-                    <Button variant="primary" @click="tambahPerusahaan">
-                        <font-awesome-icon icon="plus" class="icon" />
-                        Tambah Client
-                    </Button>
-                </div> -->
+                </div>
             </div>
 
             <!-- Toolbar -->
@@ -45,7 +43,7 @@
                         <input
                             v-model="search"
                             type="search"
-                            placeholder="Cari nama / kode perusahaan"
+                            placeholder="Cari nama karyawan"
                         />
                     </div>
                 </div>
@@ -75,9 +73,9 @@
                                 <option
                                     v-for="value in data_filtered_perusahaan"
                                     :key="value"
-                                    :value="value"
+                                    :value="value.id"
                                 >
-                                    {{ value }}
+                                    {{ value.nama_perusahaan }}
                                 </option>
                             </Select2>
                         </div>
@@ -86,20 +84,20 @@
                             <Select2
                                 v-model="filtered_jabatan"
                                 :settings="{ width: '100%' }"
+                                :disabled="!filtered_perusahaan"
                             >
                                 <option value="">Semua Divisi / Dept</option>
                                 <option
                                     v-for="value in data_filtered_jabatan"
                                     :key="value"
-                                    :value="value"
+                                    :value="value.id"
                                 >
-                                    {{ value }}
+                                    {{ value.nama_divisi }}
                                 </option>
                             </Select2>
                         </div>
                         <div class="form-group">
                             <label for="">Tanggal Absen</label>
-
                             <input
                                 type="date"
                                 v-model="filtered_tanggal_absen"
@@ -293,22 +291,37 @@
                                     </td>
 
                                     <td style="text-align: center">
-                                        <span
-                                            class="status-pill"
-                                            :class="
-                                                item.status_kehadiran ===
-                                                'valid'
-                                                    ? 'status-open'
-                                                    : 'status-closed'
-                                            "
+                                        <button
+                                            class="status-toggle-btn"
+                                            :class="{
+                                                'status-valid':
+                                                    item.status_kehadiran ===
+                                                    'valid',
+                                                'status-tidak-valid':
+                                                    item.status_kehadiran ===
+                                                    'tidak_valid',
+                                            }"
+                                            @click="toggleStatus(item)"
+                                            :disabled="loadingStatus[item.id]"
                                         >
-                                            {{
-                                                item.status_kehadiran ===
-                                                'tidak_valid'
-                                                    ? 'Tidak Valid'
-                                                    : 'Aktif'
-                                            }}
-                                        </span>
+                                            <span
+                                                v-if="!loadingStatus[item.id]"
+                                            >
+                                                {{
+                                                    item.status_kehadiran ===
+                                                    'valid'
+                                                        ? 'Valid'
+                                                        : 'Tidak Valid'
+                                                }}
+                                            </span>
+                                            <span v-else>
+                                                <font-awesome-icon
+                                                    icon="spinner"
+                                                    spin
+                                                    class="loading-icon"
+                                                />
+                                            </span>
+                                        </button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -396,6 +409,7 @@ export default {
             filtered_perusahaan: '',
             filtered_tanggal_absen: '',
             showFilters: false,
+            loadingStatus: {},
         };
     },
 
@@ -405,6 +419,10 @@ export default {
         },
         status() {
             this.fetchAbsensi();
+        },
+        filtered_perusahaan(newVal, oldVal) {
+            console.log('Perusahaan changed:', newVal);
+            this.onPerusahaanChange();
         },
     },
 
@@ -428,14 +446,14 @@ export default {
             return pages;
         },
     },
-    created() {
-        const now = new Date();
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
+    //created() {
+    //     const now = new Date();
+    //     const yyyy = now.getFullYear();
+    //     const mm = String(now.getMonth() + 1).padStart(2, '0');
+    //     const dd = String(now.getDate()).padStart(2, '0');
 
-        this.filtered_tanggal_absen = `${yyyy}-${mm}-${dd}`;
-    },
+    //     this.filtered_tanggal_absen = `${yyyy}-${mm}-${dd}`;
+    // },
 
     methods: {
         toHHMM(v) {
@@ -451,23 +469,58 @@ export default {
             return m ? m[1] : null;
         },
         async getFilteredPerusahaanDanJabatan() {
-            this.loadingUsers = true;
-
             try {
-                const res = await axios.get(
-                    '/referensi/get-filter_perusahaan_dan_jabatan',
-                    {
-                        params: {},
-                    },
-                );
-
-                this.data_filtered_perusahaan = res.data.perusahaan;
-                this.data_filtered_jabatan = res.data.position;
+                const res = await axios.get('/referensi/perusahaan-divisi');
+                this.data_filtered_perusahaan = res.data.data || [];
+                this.all_data = res.data.data;
             } catch (err) {
                 console.error(err);
-                triggerAlert('error', 'Gagal memuat data karyawan.');
-            } finally {
-                this.loadingUsers = false;
+                triggerAlert(
+                    'error',
+                    'Gagal memuat filter perusahaan/jabatan.',
+                );
+            }
+        },
+        onPerusahaanChange() {
+            console.log('onPerusahaanChange called');
+
+            // Reset divisi
+            this.filtered_jabatan = '';
+            this.data_filtered_jabatan = [];
+
+            // Jika tidak ada perusahaan dipilih, stop
+            if (!this.filtered_perusahaan) {
+                console.log('Tidak ada perusahaan dipilih');
+                return;
+            }
+
+            // Filter perusahaan yang dipilih dari data_perusahaan
+            const perusahaanSelected = this.data_filtered_perusahaan.find(
+                (p) => p.id == this.filtered_perusahaan, // Gunakan == untuk compare
+            );
+
+            console.log('Perusahaan Selected:', perusahaanSelected);
+
+            // Ambil divisi dari perusahaan yang dipilih
+            if (perusahaanSelected) {
+                if (
+                    perusahaanSelected.divisi &&
+                    Array.isArray(perusahaanSelected.divisi) &&
+                    perusahaanSelected.divisi.length > 0
+                ) {
+                    this.data_filtered_jabatan =
+                        perusahaanSelected.divisi.filter(
+                            (d) => d.status === 'aktif',
+                        );
+                    console.log(
+                        'Divisi ditemukan:',
+                        this.data_filtered_jabatan,
+                    );
+                } else {
+                    console.log('Perusahaan tidak memiliki divisi');
+                }
+            } else {
+                console.log('Perusahaan tidak ditemukan dalam data');
             }
         },
         async fetchAbsensi(page = 1) {
@@ -517,18 +570,44 @@ export default {
             }
         },
 
-        async syncPerusahaan() {
+        async downloadPresensi() {
             try {
                 this.isDownloading = true;
-                const { data } = await axios.get('/master/client/sync');
+                const response = await axios.get('/export/presensi', {
+                    responseType: 'blob',
+                    params: {
+                        search: this.search,
+                        filtered_perusahaan: this.filtered_perusahaan,
+                        filtered_jabatan: this.filtered_jabatan,
+                        filtered_tanggal_absen: this.filtered_tanggal_absen,
+                    },
+                });
 
-                // contoh: tampilkan hasil
-                console.log(data.stats);
-                triggerAlert('success', data.message);
-                this.fetchAbsensi();
+                const blob = new Blob([response.data], {
+                    type: response.headers['content-type'],
+                });
+
+                const pad2 = (n) => String(n).padStart(2, '0');
+                const d = new Date();
+                const tgl = pad2(d.getDate());
+                const bln = pad2(d.getMonth() + 1);
+                const thn = d.getFullYear();
+                const hari = pad2(d.getHours());
+                const jam = pad2(d.getMinutes());
+                const detik = pad2(d.getSeconds());
+
+                const filename = `presensi_${tgl}${bln}${thn}${hari}${jam}${detik}.xlsx`;
+
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(url);
             } catch (error) {
-                console.error('Sync gagal', error);
-                triggerAlert('error', 'Sync gagal');
+                console.error('Download gagal', error);
             } finally {
                 this.isDownloading = false;
             }
@@ -536,6 +615,47 @@ export default {
 
         filteredData() {
             this.fetchAbsensi();
+        },
+
+        async toggleStatus(item) {
+            const newStatus =
+                item.status_kehadiran === 'valid' ? 'Tidak Valid' : 'Valid';
+
+            if (!confirm(`Ubah status kehadiran menjadi ${newStatus}?`)) {
+                return;
+            }
+
+            // Set loading - Vue 3 way atau vanilla JS
+            this.loadingStatus[item.id] = true;
+            this.loadingStatus = { ...this.loadingStatus }; // Trigger reactivity
+
+            try {
+                const statusValue =
+                    item.status_kehadiran === 'valid' ? 'tidak_valid' : 'valid';
+
+                const response = await axios.post(
+                    `/logs/presensi/${item.id}/update-status`,
+                    {
+                        status_kehadiran: statusValue,
+                    },
+                );
+
+                // Update local data
+                item.status_kehadiran = statusValue;
+
+                triggerAlert('success', 'Status kehadiran berhasil diubah');
+            } catch (error) {
+                console.error('Error updating status:', error);
+                triggerAlert(
+                    'warning',
+                    error.response?.data?.message ||
+                        'Terjadi kesalahan saat mengubah status',
+                );
+            } finally {
+                // Remove loading
+                delete this.loadingStatus[item.id];
+                this.loadingStatus = { ...this.loadingStatus }; // Trigger reactivity
+            }
         },
     },
 

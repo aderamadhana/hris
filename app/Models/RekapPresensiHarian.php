@@ -29,6 +29,8 @@ class RekapPresensiHarian extends Model
         'status_kehadiran',
         'durasi_kerja_menit',
         'keterangan',
+        'akurasi_gps_masuk',
+        'akurasi_gps_pulang'
     ];
 
     protected $casts = [
@@ -39,6 +41,8 @@ class RekapPresensiHarian extends Model
         'long_masuk' => 'decimal:8',
         'lat_pulang' => 'decimal:8',
         'long_pulang' => 'decimal:8',
+        'akurasi_gps_masuk' => 'decimal:2',
+        'akurasi_gps_pulang' => 'decimal:2',
         'valid_lokasi_masuk' => 'boolean',
         'valid_lokasi_pulang' => 'boolean',
         'durasi_kerja_menit' => 'integer',

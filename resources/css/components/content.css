@@ -115,21 +115,19 @@
 .overview-row {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
-    margin-bottom: 24px;
+    gap: 16px;
+    margin-bottom: 20px;
 }
 
 .overview-card {
-    padding: 24px;
-    border-radius: 20px;
+    padding: 20px;
+    border-radius: 12px;
     background: #ffffff;
-    box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.08),
-        0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     display: flex;
     flex-direction: column;
     gap: 12px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
     border: 1px solid rgba(0, 0, 0, 0.05);
@@ -147,31 +145,24 @@
         var(--card-bg-start) 0%,
         var(--card-bg-end) 100%
     );
-    opacity: 0.95;
+    opacity: 0.6;
     z-index: 0;
 }
 
 .overview-card::after {
     content: '';
     position: absolute;
-    top: -100px;
-    right: -100px;
-    width: 200px;
-    height: 200px;
+    top: -60px;
+    right: -60px;
+    width: 120px;
+    height: 120px;
     background: radial-gradient(
         circle,
         var(--card-accent-start) 0%,
         transparent 70%
     );
-    opacity: 0.15;
+    opacity: 0.08;
     z-index: 1;
-    transition: all 0.4s ease;
-}
-
-.overview-card:hover::after {
-    opacity: 0.25;
-    top: -80px;
-    right: -80px;
 }
 
 .overview-card > * {
@@ -180,12 +171,34 @@
 }
 
 .overview-card:hover {
-    transform: translateY(-6px);
-    box-shadow:
-        0 12px 35px rgba(0, 0, 0, 0.12),
-        0 4px 10px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* Icon Container */
+.overview-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(
+        135deg,
+        var(--card-accent-start) 0%,
+        var(--card-accent-end) 100%
+    );
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-bottom: 4px;
+}
+
+.overview-icon i,
+.overview-icon svg {
+    font-size: 24px;
+    color: #ffffff;
+}
+
+/* Color Variants */
 .overview-card.primary {
     --card-accent-start: #3b82f6;
     --card-accent-end: #60a5fa;
@@ -249,18 +262,20 @@
     --card-bg-end: #ffffff;
 }
 
+/* Text Styles */
 .overview-label {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #64748b;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.05em;
     line-height: 1.4;
+    margin: 0;
 }
 
 .overview-value {
-    font-size: 36px;
-    font-weight: 800;
+    font-size: 28px;
+    font-weight: 700;
     background: linear-gradient(
         135deg,
         var(--card-accent-start) 0%,
@@ -269,10 +284,36 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    line-height: 1;
-    letter-spacing: -0.02em;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 0;
 }
 
+/* Badge untuk status (opsional) */
+.overview-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.overview-badge.success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.overview-badge.danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.overview-badge.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
 .card-icon {
     width: 56px;
     height: 56px;

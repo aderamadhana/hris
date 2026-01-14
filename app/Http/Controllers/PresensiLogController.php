@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use App\Models\Employee;
 use App\Models\EmployeeEmployment;
 use App\Models\RekapPresensiHarian;
+use App\Models\Presensi;
 
 class PresensiLogController extends Controller
 {
@@ -29,20 +30,16 @@ class PresensiLogController extends Controller
             $query->whereDate('tanggal', $date);
         }
 
-        // filter perusahaan (nama perusahaan di employee_employment.perusahaan)
+        // filter perusahaan (berdasarkan ID dari tabel perusahaan)
         if ($request->filled('filtered_perusahaan')) {
-            $fp = trim($request->filtered_perusahaan);
-            $query->whereHas('employee.employments', function ($q) use ($fp) {
-                $q->where('perusahaan', 'like', "%{$fp}%");
-            });
+            $perusahaanId = (int) $request->filtered_perusahaan;
+            $query->where('perusahaan_id', $perusahaanId);
         }
 
-        // filter jabatan (employee_employment.jabatan)
+        // filter divisi/jabatan (berdasarkan ID dari tabel divisi)
         if ($request->filled('filtered_jabatan')) {
-            $fj = trim($request->filtered_jabatan);
-            $query->whereHas('employee.employments', function ($q) use ($fj) {
-                $q->where('jabatan', 'like', "%{$fj}%");
-            });
+            $divisiId = (int) $request->filtered_jabatan;
+            $query->where('divisi_id', $divisiId);
         }
 
         // status (anggap status_kehadiran)
@@ -547,6 +544,46 @@ class PresensiLogController extends Controller
         } catch (\Throwable $e) {
             // Kalau format tanggal kamu bukan parseable, jangan dipaksa
             return $v;
+        }
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status_kehadiran' => 'required|in:valid,tidak_valid,hadir,izin,sakit,alpha'
+        ]);
+
+        DB::beginTransaction();
+        
+        try {
+            // Update rekap presensi harian
+            $rekap = RekapPresensiHarian::findOrFail($id);
+            $rekap->status_kehadiran = $request->status_kehadiran;
+            $rekap->save();
+
+            // Update status di tabel presensi untuk tanggal dan employee yang sama
+            Presensi::where('employee_id', $rekap->employee_id)
+                ->whereDate('tanggal_presensi', $rekap->tanggal)
+                ->update([
+                    'status' => $request->status_kehadiran
+                ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status kehadiran berhasil diubah',
+                'data' => $rekap
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengubah status kehadiran',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }

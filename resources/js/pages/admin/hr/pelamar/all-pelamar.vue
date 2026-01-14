@@ -69,7 +69,7 @@
                         <input
                             v-model="search"
                             type="search"
-                            placeholder="Cari Nama, NIK, atau jabatan..."
+                            placeholder="Cari Nama atau NIK..."
                         />
                     </div>
                 </div>

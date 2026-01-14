@@ -1019,6 +1019,7 @@ class PelamarController extends Controller
                             'pola_kerja' => $job['pola_kerja'] ?? null,
                             'hari_kerja' => $job['hari_kerja'] ?? null,
                             'status' => $job['status'] ?? null,
+                            'masa_kerja' => $job['masa_kerja'] ?? null,
                         ]);
                     }
                 }

@@ -12,6 +12,7 @@ use App\Models\{
 };
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class ReferensiController extends Controller
@@ -101,10 +102,10 @@ class ReferensiController extends Controller
     }
 
     public function getFilterPerusahaanDanJabatan(Request $request){
-        $perusahaan = EmployeeEmployment::whereNotIn('employee_id', [1,2])->distinct()
+        $perusahaan = EmployeeEmployment::distinct()
             ->pluck('perusahaan');
 
-        $penempatan = EmployeeEmployment::whereNotIn('employee_id', [1,2])->distinct()
+        $penempatan = EmployeeEmployment::distinct()
             ->pluck('penempatan');
             
         return response()->json([
@@ -243,5 +244,48 @@ class ReferensiController extends Controller
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function generateNoKontrak(Request $request)
+    {
+        $request->validate([
+            'perusahaan' => 'required|string',
+        ]);
+
+        // Ambil perusahaan
+        $perusahaan = Perusahaan::where('nama_perusahaan', $request->perusahaan)->first();
+
+        if (!$perusahaan) {
+            return response()->json([
+                'message' => 'Perusahaan tidak ditemukan'
+            ], 404);
+        }
+
+        $kodePerusahaan = $perusahaan->kode_perusahaan;
+
+        $now   = Carbon::now();
+        $tahun = $now->format('y'); // 2 digit
+        $bulan = $now->format('m'); // 2 digit
+
+        // Ambil kontrak terakhir perusahaan ini di bulan & tahun yang sama
+        $lastKontrak = EmployeeEmployment::where('perusahaan', $request->perusahaan)
+            ->where('no_kontrak', 'like', "{$kodePerusahaan}/{$tahun}/{$bulan}/%")
+            ->orderBy('no_kontrak', 'desc')
+            ->first();
+
+        $nextNumber = 1;
+
+        if ($lastKontrak && $lastKontrak->no_kontrak) {
+            $lastNumber = (int) substr($lastKontrak->no_kontrak, -2);
+            $nextNumber = $lastNumber + 1;
+        }
+
+        $noUrut = str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
+
+        $noKontrak = "{$kodePerusahaan}/{$tahun}/{$bulan}/{$noUrut}";
+
+        return response()->json([
+            'no_kontrak' => $noKontrak
+        ]);
     }
 }

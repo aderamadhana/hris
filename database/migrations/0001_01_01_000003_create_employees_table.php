@@ -168,6 +168,7 @@ return new class extends Migration
             $table->string('pola_kerja')->nullable();
             $table->string('jenis_kerja')->nullable();
             $table->string('hari_kerja')->nullable();
+            $table->string('berapa_bulan')->nullable();
 
             $table->string('tgl_awal_kerja')->nullable();
             $table->string('tgl_akhir_kerja')->nullable();

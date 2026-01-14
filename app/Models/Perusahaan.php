@@ -107,6 +107,47 @@ class Perusahaan extends Model
         return $query->where('status', 'tidak_aktif');
     }
 
+    public function employees()
+    {
+        return $this->hasMany(Employee::class, 'perusahaan_id');
+    }
+
+    public function karyawanAktif()
+    {
+        return $this->hasManyThrough(
+            Employee::class,
+            EmployeeEmployment::class,
+            'perusahaan', // Foreign key on employment_histories table (nama perusahaan)
+            'id', // Foreign key on employees table
+            'nama_perusahaan', // Local key on perusahaan table
+            'employee_id' // Local key on employment_histories table
+        )
+        ->where('employees.status_active', '1')
+        ->where('employee_employment_histories.status', 'aktif')
+        ->whereRaw('employee_employment_histories.id IN (
+            SELECT MAX(id) 
+            FROM employee_employment_histories 
+            GROUP BY employee_id
+        )');
+    }
+
+    // Accessor untuk menghitung karyawan aktif
+    public function getTotalKaryawanAktifAttribute()
+    {
+        return EmployeeEmployment::where('perusahaan', $this->nama_perusahaan)
+            ->where('status', 'aktif')
+            ->whereHas('employee', function ($q) {
+                $q->where('status_active', '1');
+            })
+            ->whereRaw('id IN (
+                SELECT MAX(id) 
+                FROM employee_employment_histories 
+                GROUP BY employee_id
+            )')
+            ->count();
+    }
+
+
     // Check apakah perusahaan punya karyawan aktif
     public function hasActiveEmployees()
     {

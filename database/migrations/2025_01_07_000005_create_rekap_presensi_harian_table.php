@@ -32,6 +32,8 @@ return new class extends Migration
             
             // Status Kehadiran
             $table->string('status_kehadiran')->nullable()->default('tidak_hadir');
+            $table->decimal('akurasi_gps_masuk', 10, 2)->nullable()->comment('Akurasi GPS dalam meter');
+            $table->decimal('akurasi_gps_pulang', 10, 2)->nullable()->comment('Akurasi GPS dalam meter');
             
             // Durasi Kerja
             $table->integer('total_jam_kerja')->nullable()->comment('dalam menit');

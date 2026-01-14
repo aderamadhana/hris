@@ -674,6 +674,13 @@
                                         >
                                         <Select2
                                             v-model="formPekerjaan.perusahaan"
+                                            @update:modelValue="
+                                                (val) => {
+                                                    formPekerjaan.perusahaan =
+                                                        val;
+                                                    onPerusahaanInput(val);
+                                                }
+                                            "
                                             :settings="{ width: '100%' }"
                                         >
                                             <option value="">
@@ -693,10 +700,11 @@
 
                                     <div class="form-group">
                                         <label class="field-label"
-                                            >Divisi / Departemen</label
-                                        >
+                                            >Divisi / Departemen
+                                        </label>
                                         <Select2
                                             v-model="formPekerjaan.bagian"
+                                            :key="select2DivisiKey"
                                             :settings="{ width: '100%' }"
                                             :disabled="
                                                 !formPekerjaan.perusahaan
@@ -734,10 +742,10 @@
                                             >No. Kontrak</label
                                         >
                                         <input
+                                            readonly
                                             type="text"
                                             v-model="formPekerjaan.no_kontrak"
                                             class="form-input"
-                                            placeholder="Contoh: PKWT/001/2025"
                                         />
                                     </div>
 
@@ -776,7 +784,9 @@
                                     </div>
 
                                     <div class="form-group">
-                                        <label class="field-label">Mulai</label>
+                                        <label class="field-label"
+                                            >Mulai Kontrak</label
+                                        >
                                         <input
                                             type="date"
                                             v-model="formPekerjaan.mulai"
@@ -786,12 +796,33 @@
 
                                     <div class="form-group">
                                         <label class="field-label"
-                                            >Selesai</label
+                                            >Berapa Bulan</label
+                                        >
+                                        <select
+                                            v-model="formPekerjaan.masa_kerja"
+                                            class="form-input"
+                                        >
+                                            <option value="">
+                                                Pilih Durasi
+                                            </option>
+                                            <option value="1">1 Bulan</option>
+                                            <option value="2">2 Bulan</option>
+                                            <option value="3">3 Bulan</option>
+                                            <option value="6">6 Bulan</option>
+                                            <option value="12">12 Bulan</option>
+                                            <option value="24">24 Bulan</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="field-label"
+                                            >Selesai Kontrak</label
                                         >
                                         <input
                                             type="date"
                                             v-model="formPekerjaan.selesai"
                                             class="form-input"
+                                            readonly
                                         />
                                     </div>
 
@@ -965,17 +996,6 @@
                                                     <div class="info-value">
                                                         {{
                                                             job.hari_kerja ||
-                                                            '-'
-                                                        }}
-                                                    </div>
-                                                </div>
-                                                <div class="info-item">
-                                                    <div class="info-label">
-                                                        Cost Center
-                                                    </div>
-                                                    <div class="info-value">
-                                                        {{
-                                                            job.cost_center ||
                                                             '-'
                                                         }}
                                                     </div>
@@ -1621,6 +1641,7 @@ export default {
         return {
             user: page.props.auth.user,
             loading: true,
+            select2DivisiKey: 0,
 
             // snapshot untuk tombol reset (restore ke data awal load)
             initialSnapshot: null,
@@ -1641,7 +1662,10 @@ export default {
             editPendidikanIndex: null,
             editPekerjaanIndex: null,
             editKeluargaIndex: null,
-
+            originalPerusahaan: null,
+            originalNoKontrak: '',
+            originalBagian: '',
+            mode: 'create',
             // ===== FORM STATE =====
             formEmployee: {
                 nama: '',
@@ -1697,6 +1721,7 @@ export default {
                 pola_kerja: '',
                 hari_kerja: '',
                 status_kontrak: '',
+                masa_kerja: '',
             },
             listPekerjaan: [],
 
@@ -1775,8 +1800,61 @@ export default {
             console.log('Perusahaan berubah dari', oldVal, 'ke', newVal);
             this.onPerusahaanChange();
         },
+
+        'formPekerjaan.mulai': 'hitungSelesai',
+        'formPekerjaan.masa_kerja': 'hitungSelesai',
     },
     methods: {
+        onPerusahaanInput(payload) {
+            const newVal = payload?.target ? payload.target.value : payload;
+
+            if (this.suppressPerusahaanHandler) {
+                this.prevPerusahaan = newVal;
+                return;
+            }
+
+            const oldVal = this.prevPerusahaan;
+            if (newVal === oldVal) return;
+
+            const isEdit = this.editPekerjaanIndex !== null;
+
+            // kalau perusahaan berubah, bagian biasanya harus reset dulu
+            // (nanti bisa di-restore kalau balik ke original perusahaan)
+            this.formPekerjaan.bagian = '';
+
+            // jalankan perubahan perusahaan (idealnya onPerusahaanChange load data_divisi)
+            Promise.resolve(this.onPerusahaanChange()).then(() => {
+                this.$nextTick(() => {
+                    if (isEdit && newVal === this.originalPerusahaan) {
+                        // balik ke perusahaan awal -> restore
+                        this.formPekerjaan.no_kontrak = this.originalNoKontrak;
+                        this.formPekerjaan.bagian = this.originalBagian;
+                    }
+                    this.select2DivisiKey++; // refresh select2 setelah option update
+                });
+            });
+
+            if (!isEdit) {
+                // CREATE: generate kalau masih kosong
+                if (!this.formPekerjaan.no_kontrak) {
+                    this.generateNoKontrak();
+                }
+            } else {
+                // EDIT: kalau perusahaan berubah dari original, generate ulang (opsional)
+                if (newVal !== this.originalPerusahaan) {
+                    const stillOriginal =
+                        this.formPekerjaan.no_kontrak ===
+                        this.originalNoKontrak;
+                    if (!this.formPekerjaan.no_kontrak || stillOriginal) {
+                        this.generateNoKontrak();
+                    }
+                }
+                // kalau newVal === originalPerusahaan, restore kontrak dilakukan di then() di atas
+            }
+
+            this.prevPerusahaan = newVal;
+        },
+
         async getFPerusahaanDanDivisi() {
             try {
                 const res = await axios.get('/referensi/perusahaan-divisi');
@@ -1791,6 +1869,7 @@ export default {
             }
         },
         onPerusahaanChange() {
+            this.mode = 'create';
             console.log('Perusahaan dipilih:', this.formPekerjaan.perusahaan);
             console.log('Data perusahaan:', this.data_perusahaan);
 
@@ -1827,6 +1906,36 @@ export default {
             } else {
                 console.log('Perusahaan tidak ditemukan dalam data');
             }
+        },
+        hitungSelesai() {
+            const { mulai, masa_kerja } = this.formPekerjaan;
+
+            if (!mulai || !masa_kerja) {
+                this.formPekerjaan.selesai = '';
+                return;
+            }
+
+            const startDate = new Date(mulai);
+            const endDate = new Date(startDate);
+
+            endDate.setMonth(endDate.getMonth() + Number(masa_kerja));
+
+            // format YYYY-MM-DD
+            this.formPekerjaan.selesai = endDate.toISOString().split('T')[0];
+        },
+        generateNoKontrak() {
+            if (!this.formPekerjaan.perusahaan) return;
+
+            axios
+                .post('/referensi/generate-no-kontrak', {
+                    perusahaan: this.formPekerjaan.perusahaan,
+                })
+                .then((res) => {
+                    this.formPekerjaan.no_kontrak = res.data.no_kontrak;
+                })
+                .catch((err) => {
+                    console.error(err);
+                });
         },
         // ====== LOAD DATA ======
         async getDataKaryawan() {
@@ -1902,6 +2011,7 @@ export default {
                     pola_kerja: j.pola_kerja ?? '',
                     hari_kerja: j.hari_kerja ?? '',
                     status_kontrak: j.status ?? j.keterangan_status ?? '',
+                    masa_kerja: j.masa_kerja ?? '',
                 }));
 
                 // ===============================
@@ -2044,8 +2154,35 @@ export default {
         },
 
         editPekerjaan(i) {
+            this.mode = 'edit';
             this.editPekerjaanIndex = i;
-            this.formPekerjaan = { ...this.listPekerjaan[i] };
+
+            this.suppressPerusahaanHandler = true;
+
+            const row = this.listPekerjaan[i];
+            this.formPekerjaan = { ...row };
+
+            // baseline edit
+            this.originalPerusahaan = this.formPekerjaan.perusahaan ?? null;
+            this.originalNoKontrak = this.formPekerjaan.no_kontrak ?? '';
+            this.originalBagian = this.formPekerjaan.bagian ?? '';
+
+            this.prevPerusahaan = this.formPekerjaan.perusahaan;
+
+            // penting: paksa load divisi untuk perusahaan ini,
+            // lalu set ulang bagian setelah options siap
+            Promise.resolve(this.onPerusahaanChange())
+                .then(() => {
+                    this.$nextTick(() => {
+                        this.formPekerjaan.bagian = this.originalBagian; // re-apply supaya Select2 nge-pick
+                        this.select2DivisiKey++; // force refresh select2
+                    });
+                })
+                .finally(() => {
+                    this.$nextTick(() => {
+                        this.suppressPerusahaanHandler = false;
+                    });
+                });
         },
 
         batalEditPekerjaan() {
@@ -2222,6 +2359,7 @@ export default {
                             pola_kerja: job.pola_kerja,
                             hari_kerja: job.hari_kerja,
                             status: job.status_kontrak,
+                            masa_kerja: job.masa_kerja,
                         })),
                     ),
                 );

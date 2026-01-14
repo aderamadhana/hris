@@ -658,6 +658,7 @@ class EmployeeController extends Controller
                             'jabatan' => $job['jabatan'] ?? null,
                             'penempatan' => $job['penempatan'] ?? null,
                             'no_kontrak' => $job['no_kontrak'] ?? null,
+                            'tgl_daftar' => date('Y-m-d'),
                             'cost_center' => $job['cost_center'] ?? null,
                             'jenis_kontrak' => $job['jenis_kontrak'] ?? null,
                             'tgl_awal_kerja' => $job['tgl_awal_kerja'] ?? null,
@@ -666,6 +667,7 @@ class EmployeeController extends Controller
                             'pola_kerja' => $job['pola_kerja'] ?? null,
                             'hari_kerja' => $job['hari_kerja'] ?? null,
                             'status' => $job['status'] ?? null,
+                            'masa_kerja' => $job['masa_kerja'] ?? null,
                         ]);
                     }
                 }
@@ -896,6 +898,7 @@ class EmployeeController extends Controller
                             'employee_id' => $employee->id,
                             'perusahaan' => $job['perusahaan'] ?? null,
                             'jabatan' => $job['jabatan'] ?? null,
+                            'tgl_daftar' => date('Y-m-d'),
                             'penempatan' => $job['penempatan'] ?? null,
                             'no_kontrak' => $job['no_kontrak'] ?? null,
                             'cost_center' => $job['cost_center'] ?? null,
@@ -906,6 +909,7 @@ class EmployeeController extends Controller
                             'pola_kerja' => $job['pola_kerja'] ?? null,
                             'hari_kerja' => $job['hari_kerja'] ?? null,
                             'status' => $job['status'] ?? null,
+                            'masa_kerja' => $job['masa_kerja'] ?? null,
                         ]);
                     }
                 }
@@ -1187,5 +1191,36 @@ class EmployeeController extends Controller
         ]);
 
         return back()->with('success', 'Data karyawan berhasil dinonaktifkan');
+    }
+
+    public function changeShift(Request $request, $id)
+    {
+        // Validasi input
+        $request->validate([
+            'shift_id' => 'required|exists:shift,id'
+        ]);
+
+        try {
+            // Cari employee
+            $employee = Employee::findOrFail($id); // Typo: findOrFails -> findOrFail
+            
+            // Update shift_id
+            $employee->update([
+                'shift_id' => $request->shift_id // Gunakan shift_id dari request, bukan employee->id
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Konfigurasi shift berhasil disimpan',
+                'data' => $employee
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan konfigurasi shift',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

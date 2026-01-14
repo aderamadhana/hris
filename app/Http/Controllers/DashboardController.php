@@ -130,9 +130,9 @@ class DashboardController extends Controller
         return Perusahaan::active()
             ->whereHas('divisi')
             ->get()
-            ->filter(function($perusahaan) {
-                return $perusahaan->hasActiveEmployees();
-            })
+            // ->filter(function($perusahaan) {
+            //     return $perusahaan->hasActiveEmployees();
+            // })
             ->count();
     }
 

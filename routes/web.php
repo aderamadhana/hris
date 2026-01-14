@@ -53,6 +53,7 @@ Route::middleware('auth')->group(function () {
                 ]);
             });
             Route::post('/non-aktif/{id}', [EmployeeController::class, 'nonAktif']);
+            Route::post('/shift/{id}', [EmployeeController::class, 'changeShift']);
         });
 
         Route::prefix('pelamar')->group(function () {
@@ -178,6 +179,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/karyawan', [EmployeeController::class, 'downloadEmployees']);
         Route::get('/profil/{id}', [EmployeeController::class, 'downloadProfil']);
         Route::get('/payroll', [PayrollController::class, 'downloadPayroll']);
+        Route::get('/presensi', [PresensiController::class, 'downloadPresensi']);
+        Route::get('/client', [PerusahaanController::class, 'downloadPerusahaan']);
     });
 
 
@@ -221,6 +224,7 @@ Route::middleware('auth')->group(function () {
             return Inertia::render('presensi/all-presensi');
         });
         Route::get('/presensi/all', [PresensiLogController::class, 'index']);
+        Route::post('/presensi/{id}/update-status', [PresensiLogController::class, 'updateStatus']);
 
         
         Route::get('/aktivitas', function () {
@@ -293,6 +297,7 @@ Route::prefix('referensi')->group(function () {
     Route::get('/perusahaan-terakhir/{employeeId}', [ReferensiController::class, 'getPerusahaanTerakhir']);
     Route::get('/perusahaan-divisi', [ReferensiController::class, 'getPerusahaanDanDivisi']);
     Route::get('/get-shift-options', [ReferensiController::class, 'getShiftOptions']);
+    Route::post('/generate-no-kontrak', [ReferensiController::class, 'generateNoKontrak']);
     
 });
 
