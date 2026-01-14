@@ -28,10 +28,10 @@ class Employee extends Model
 
     public function currentEmployment()
     {
-        return $this->hasOne(EmployeeEmployment::class, 'employee_id')
-            ->latestOfMany('tgl_awal_kerja'); // atau created_at kalau lebih tepat
+        return $this->hasOne(EmployeeEmployment::class, 'employee_id', 'id')
+            ->orderByDesc('id')  // ✅ Gunakan orderByDesc
+            ->limit(1);           // ✅ Pastikan hanya ambil 1
     }
-
     public function educations()
     {
         return $this->hasMany(EmployeeEducation::class);
@@ -117,7 +117,7 @@ class Employee extends Model
 
     public function scopeActive($query)
     {
-        return $query->whereNotNull('status_kary');
+        return $query->where('status_active', 1)->whereNotIn('id',[1,2]);
     }
     
     // Relasi ke employment history yang aktif

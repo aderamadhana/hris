@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Presensi;
 use App\Models\Employee;
 use App\Models\RekapPresensiHarian;
+use App\Exports\PresensiExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Excel as ExcelExcel;
 use Carbon\Carbon;
 
 class PresensiController extends Controller
@@ -183,9 +186,15 @@ class PresensiController extends Controller
         if ($presensi->jenis_presensi === 'masuk') {
             $rekap->waktu_masuk = $presensi->waktu_presensi;
             $rekap->foto_masuk = $presensi->foto_presensi;
+            $rekap->lat_masuk = $presensi->latitude;
+            $rekap->long_masuk = $presensi->longitude;
+            $rekap->akurasi_gps_masuk = $presensi->akurasi_gps;
         } else {
             $rekap->waktu_pulang = $presensi->waktu_presensi;
             $rekap->foto_pulang = $presensi->foto_presensi;
+            $rekap->lat_pulang = $presensi->latitude;
+            $rekap->long_pulang = $presensi->longitude;
+            $rekap->akurasi_gps_pulang = $presensi->akurasi_gps;
         }
 
         // Update status kehadiran
@@ -616,5 +625,16 @@ class PresensiController extends Controller
             'success' => true,
             'message' => 'Export sedang diproses',
         ]);
+    }
+    public function downloadPresensi(Request $request){
+        $search = $request->input('search');
+        $filtered_perusahaan = (int) $request->input('filtered_perusahaan', 1);
+        $filtered_jabatan = $request->input('filtered_jabatan');
+        $filtered_tanggal_absen = $request->input('filtered_tanggal_absen');
+
+        return Excel::download(
+            new PresensiExport($search, $filtered_perusahaan, $filtered_jabatan, $filtered_tanggal_absen),
+            'presensi.xlsx'
+        );
     }
 }

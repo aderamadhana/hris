@@ -148,7 +148,7 @@
                     <span>Memproses...</span>
                 </template>
 
-                <template v-else> Hapus Data </template>
+                <template v-else> Hapus </template>
             </Button>
             <Button
                 variant="primary"
@@ -164,7 +164,7 @@
                     <span>Memproses...</span>
                 </template>
 
-                <template v-else> Simpan Perubahan </template>
+                <template v-else> Simpan </template>
             </Button>
         </div>
     </Modal>

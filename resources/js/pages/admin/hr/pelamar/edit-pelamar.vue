@@ -54,6 +54,7 @@
                                                 placeholder="Contoh: 123456"
                                                 inputmode="numeric"
                                                 required
+                                                @input="onlyNumber"
                                             />
                                         </div>
 
@@ -201,6 +202,7 @@
                                                 maxlength="16"
                                                 autocomplete="off"
                                                 required
+                                                @input="onlyNumber"
                                             />
                                         </div>
                                         <div class="form-group">
@@ -216,6 +218,7 @@
                                                 maxlength="16"
                                                 autocomplete="off"
                                                 required
+                                                @input="onlyNumber"
                                             />
                                         </div>
 
@@ -737,7 +740,7 @@
                                             type="text"
                                             v-model="formPekerjaan.no_kontrak"
                                             class="form-input"
-                                            placeholder="Contoh: PKWT/001/2025"
+                                            readonly
                                         />
                                     </div>
 
@@ -776,7 +779,9 @@
                                     </div>
 
                                     <div class="form-group">
-                                        <label class="field-label">Mulai</label>
+                                        <label class="field-label"
+                                            >Mulai Kontrak</label
+                                        >
                                         <input
                                             type="date"
                                             v-model="formPekerjaan.mulai"
@@ -786,12 +791,33 @@
 
                                     <div class="form-group">
                                         <label class="field-label"
-                                            >Selesai</label
+                                            >Masa Kerja</label
+                                        >
+                                        <select
+                                            v-model="formPekerjaan.masa_kerja"
+                                            class="form-input"
+                                        >
+                                            <option value="">
+                                                Pilih Durasi
+                                            </option>
+                                            <option value="1">1 Bulan</option>
+                                            <option value="2">2 Bulan</option>
+                                            <option value="3">3 Bulan</option>
+                                            <option value="6">6 Bulan</option>
+                                            <option value="12">12 Bulan</option>
+                                            <option value="24">24 Bulan</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="field-label"
+                                            >Selesai Kontrak</label
                                         >
                                         <input
                                             type="date"
                                             v-model="formPekerjaan.selesai"
                                             class="form-input"
+                                            readonly
                                         />
                                     </div>
 
@@ -1697,6 +1723,7 @@ export default {
                 pola_kerja: '',
                 hari_kerja: '',
                 status_kontrak: '',
+                masa_kerja: '',
             },
             listPekerjaan: [],
 
@@ -1774,9 +1801,50 @@ export default {
         'formPekerjaan.perusahaan'(newVal, oldVal) {
             console.log('Perusahaan berubah dari', oldVal, 'ke', newVal);
             this.onPerusahaanChange();
+            this.generateNoKontrak();
         },
+        'formPekerjaan.mulai': 'hitungSelesai',
+        'formPekerjaan.masa_kerja': 'hitungSelesai',
     },
     methods: {
+        onlyNumber(e) {
+            this.formEmployee.nrp = e.target.value.replace(/\D+/g, '');
+            this.formAlamat.ktp = e.target.value.replace(/\D+/g, '');
+            this.formEmployee.kk = e.target.value.replace(/\D+/g, '');
+        },
+
+        generateNoKontrak() {
+            if (!this.formPekerjaan.perusahaan) return;
+
+            axios
+                .post('/referensi/generate-no-kontrak', {
+                    perusahaan: this.formPekerjaan.perusahaan,
+                })
+                .then((res) => {
+                    this.formPekerjaan.no_kontrak = res.data.no_kontrak;
+                })
+                .catch((err) => {
+                    console.error(err);
+                });
+        },
+
+        hitungSelesai() {
+            const { mulai, masa_kerja } = this.formPekerjaan;
+
+            if (!mulai || !masa_kerja) {
+                this.formPekerjaan.selesai = '';
+                return;
+            }
+
+            const startDate = new Date(mulai);
+            const endDate = new Date(startDate);
+
+            endDate.setMonth(endDate.getMonth() + Number(masa_kerja));
+
+            // format YYYY-MM-DD
+            this.formPekerjaan.selesai = endDate.toISOString().split('T')[0];
+        },
+
         async getFPerusahaanDanDivisi() {
             try {
                 const res = await axios.get('/referensi/perusahaan-divisi');
@@ -2222,6 +2290,7 @@ export default {
                             pola_kerja: job.pola_kerja,
                             hari_kerja: job.hari_kerja,
                             status: job.status_kontrak,
+                            masa_kerja: job.masa_kerja,
                         })),
                     ),
                 );
@@ -2426,6 +2495,7 @@ export default {
                 pola_kerja: '',
                 hari_kerja: '',
                 status_kontrak: '',
+                masa_kerja: '',
             };
         },
 

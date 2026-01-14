@@ -55,13 +55,11 @@
                     <div class="card-icon">
                         <font-awesome-icon icon="user-clock" />
                     </div>
-                    <div class="overview-label">Kontrak Hampir Habis</div>
+                    <div class="overview-label">
+                        Kontrak Hampir Habis ({{ defaultExpiringDays }} hari)
+                    </div>
                     <div class="overview-value">
                         {{ totalKontrakHampirHabis }}
-                    </div>
-                    <div class="overview-badge positive">
-                        <i class="fas fa-exclamation-circle"></i>
-                        {{ defaultExpiringDays }} hari
                     </div>
                 </div>
 
@@ -76,9 +74,6 @@
                     </div>
                     <div class="overview-label">Total Kontrak Expired</div>
                     <div class="overview-value">{{ totalAllExpired }}</div>
-                    <div class="overview-badge negative">
-                        <i class="fas fa-exclamation-circle"></i> Perlu Tindakan
-                    </div>
                 </div>
             </div>
             <div v-if="isDownloading" class="fullpage-loader">
@@ -1032,35 +1027,29 @@ export default {
         },
 
         async saveShiftConfig() {
-            this.closeShiftModal();
-            triggerAlert('warning', 'Fitur masih dalam tahap pengembangan');
-            // if (!this.selectedUser.id) return;
+            if (!this.selectedUser.id) return;
 
-            // if (!this.shiftForm.shift_id || !this.shiftForm.effective_date) {
-            //     triggerAlert(
-            //         'warning',
-            //         'Shift dan tanggal mulai berlaku wajib diisi.',
-            //     );
-            //     return;
-            // }
+            if (!this.shiftForm.shift_id) {
+                triggerAlert('warning', 'Shift wajib diisi.');
+                return;
+            }
 
-            // this.shiftProcessing = true;
+            this.shiftProcessing = true;
 
-            // try {
-            //     await axios.post(`/employee/${this.selectedUser.id}/shift`, {
-            //         shift_id: this.shiftForm.shift_id,
-            //         effective_date: this.shiftForm.effective_date,
-            //         note: this.shiftForm.note,
-            //     });
-
-            //     triggerAlert('success', 'Konfigurasi shift berhasil disimpan.');
-            //     this.closeShiftModal();
-            // } catch (e) {
-            //     console.error(e);
-            //     triggerAlert('error', 'Gagal menyimpan konfigurasi shift.');
-            // } finally {
-            //     this.shiftProcessing = false;
-            // }
+            try {
+                await axios.post(`/hr/karyawan/shift/${this.selectedUser.id}`, {
+                    shift_id: this.shiftForm.shift_id,
+                });
+                this.shiftProcessing = false;
+                this.closeShiftModal();
+                triggerAlert('success', 'Konfigurasi shift berhasil disimpan.');
+                this.fetchEmployees();
+            } catch (e) {
+                console.error(e);
+                triggerAlert('error', 'Gagal menyimpan konfigurasi shift.');
+            } finally {
+                this.shiftProcessing = false;
+            }
         },
     },
 };

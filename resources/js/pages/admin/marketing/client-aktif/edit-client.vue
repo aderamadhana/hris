@@ -458,8 +458,10 @@ export default {
                     onSuccess: () => {
                         triggerAlert(
                             'success',
-                            'Data perusahaan berhasil disimpan',
+                            'Data client berhasil disimpan',
                         );
+
+                        router.visit(`/marketing/client/aktif`);
                     },
                     onError: (errors) => {
                         this.errors = errors;
@@ -695,33 +697,6 @@ export default {
                                     </div>
                                 </div>
 
-                                <div
-                                    class="gap-4 sm:grid-cols-2 grid grid-cols-1"
-                                >
-                                    <div class="form-group">
-                                        <label for="" class="field-label"
-                                            >Tanggal Awal MOU</label
-                                        >
-                                        <input
-                                            type="date"
-                                            v-model="divisi.tanggal_awal_mou"
-                                            id=""
-                                            class="form-input"
-                                        />
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="" class="field-label"
-                                            >Tanggal Akhir MOU</label
-                                        >
-                                        <input
-                                            type="date"
-                                            v-model="divisi.tanggal_akhir_mou"
-                                            :min="divisi.tanggal_awal_mou"
-                                            id=""
-                                            class="form-input"
-                                        />
-                                    </div>
-                                </div>
                                 <div class="pt-4 border-t">
                                     <h4
                                         class="font-semibold text-sm text-slate-700 mb-1"

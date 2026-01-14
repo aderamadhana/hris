@@ -13,6 +13,16 @@
                 </div>
                 <div class="page-actions">
                     <Button
+                        variant="warning"
+                        size="md"
+                        :loading="isDownloadingClient"
+                        @click="downloadClient()"
+                        class="download-btn"
+                    >
+                        <font-awesome-icon icon="download" class="icon" />
+                        Download Client
+                    </Button>
+                    <Button
                         variant="success"
                         :loading="isDownloading"
                         @click="syncPerusahaan"
@@ -92,6 +102,7 @@
                                     <th>Awal MOU</th>
                                     <th>Akhir MOU</th>
                                     <th>Status</th>
+                                    <th>Total Karyawan</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -141,24 +152,29 @@
                                             }}
                                         </span>
                                     </td>
-                                    <td class="actions-cell">
-                                        <Link
-                                            :href="`/marketing/client/aktif/edit/${item.id}`"
-                                            class="action-btn primary"
-                                            title="Edit"
-                                        >
-                                            <font-awesome-icon
-                                                icon="pen-to-square"
-                                            />
-                                        </Link>
+                                    <td>{{ item.total_karyawan_aktif }}</td>
+                                    <td class="col-actions">
+                                        <div class="actions-wrap">
+                                            <Link
+                                                :href="`/marketing/client/aktif/edit/${item.id}`"
+                                                class="action-btn primary"
+                                                title="Edit"
+                                            >
+                                                <font-awesome-icon
+                                                    icon="pen-to-square"
+                                                />
+                                            </Link>
 
-                                        <button
-                                            class="action-btn danger"
-                                            title="Hapus"
-                                            @click="hapus(item.id)"
-                                        >
-                                            <font-awesome-icon icon="trash" />
-                                        </button>
+                                            <button
+                                                class="action-btn danger"
+                                                title="Hapus"
+                                                @click="hapus(item.id)"
+                                            >
+                                                <font-awesome-icon
+                                                    icon="trash"
+                                                />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -232,6 +248,7 @@ export default {
             items: [],
             loading: false,
             isDownloading: false,
+            isDownloadingClient: false,
 
             currentPage: 1,
             perPage: 10,
@@ -282,9 +299,9 @@ export default {
                 });
 
                 this.items = res.data.data;
-                this.currentPage = res.data.current_page;
-                this.totalItems = res.data.total;
-                this.totalPages = res.data.last_page;
+                this.currentPage = res.data.meta.current_page;
+                this.totalItems = res.data.meta.total;
+                this.totalPages = res.data.meta.last_page;
             } catch (e) {
                 console.log(e);
                 triggerAlert('error', 'Gagal memuat data perusahaan');
@@ -329,6 +346,46 @@ export default {
                 triggerAlert('error', 'Sync gagal');
             } finally {
                 this.isDownloading = false;
+            }
+        },
+        async downloadClient() {
+            try {
+                this.isDownloadingClient = true;
+                const response = await axios.get('/export/client', {
+                    responseType: 'blob',
+                    params: {
+                        search: this.search,
+                        status: this.status,
+                    },
+                });
+
+                const blob = new Blob([response.data], {
+                    type: response.headers['content-type'],
+                });
+
+                const pad2 = (n) => String(n).padStart(2, '0');
+                const d = new Date();
+                const tgl = pad2(d.getDate());
+                const bln = pad2(d.getMonth() + 1);
+                const thn = d.getFullYear();
+                const hari = pad2(d.getHours());
+                const jam = pad2(d.getMinutes());
+                const detik = pad2(d.getSeconds());
+
+                const filename = `data_client_${tgl}${bln}${thn}${hari}${jam}${detik}.xlsx`;
+
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Download gagal', error);
+            } finally {
+                this.isDownloadingClient = false;
             }
         },
     },

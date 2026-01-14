@@ -108,49 +108,6 @@
 
                 <!-- TABLE CARD -->
                 <div class="table-card">
-                    <div
-                        class="table-hint"
-                        role="note"
-                        aria-label="Petunjuk tabel periode"
-                    >
-                        <div class="table-hint__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none">
-                                <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                />
-                                <path
-                                    d="M12 16V12"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                />
-                                <circle
-                                    cx="12"
-                                    cy="8"
-                                    r="1"
-                                    fill="currentColor"
-                                />
-                            </svg>
-                        </div>
-
-                        <div class="table-hint__body">
-                            <div class="table-hint__title">
-                                Kelola periode
-                                <span class="table-hint__badge">Tips</span>
-                            </div>
-                            <div class="table-hint__text">
-                                Klik <b>Judul Periode</b> untuk <b>Edit</b>. dan
-                                <b>Hapus</b> periode.
-                            </div>
-                        </div>
-
-                        <div class="table-hint__actions"></div>
-                    </div>
-
                     <div class="table-responsive-custom">
                         <table class="table">
                             <thead>
@@ -227,6 +184,7 @@
                                                 @click="uploadGaji(period)"
                                                 variant="success"
                                                 title="Upload Gaji"
+                                                style="width: 120px"
                                             >
                                                 <font-awesome-icon
                                                     icon="upload"
@@ -238,6 +196,7 @@
                                                 @click="downloadGaji(period)"
                                                 variant="primary"
                                                 title="Download Gaji"
+                                                style="width: 120px"
                                             >
                                                 <font-awesome-icon
                                                     icon="download"

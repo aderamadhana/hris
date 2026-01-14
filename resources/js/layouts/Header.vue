@@ -9,11 +9,11 @@
                 <font-awesome-icon icon="bars" />
             </button>
             <div class="logo-image-sidebar">
-                <!-- <img
+                <img
                     src="/assets/images/logo_baru.png"
                     alt="HRIS Logo"
                     loading="lazy"
-                /> -->
+                />
             </div>
 
             <!-- SWITCH CABANG -->

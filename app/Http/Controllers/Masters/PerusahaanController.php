@@ -4,14 +4,17 @@ namespace App\Http\Controllers\Masters;
 
 use App\Http\Controllers\Controller;
 use App\Models\Perusahaan;
-use App\Models\EmployeeEmployment;
+use App\Models\Employee;
 use App\Models\Divisi;
+use App\Models\EmployeeEmployment;
+use App\Exports\PerusahaanExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PerusahaanController extends Controller
 {
@@ -21,33 +24,69 @@ class PerusahaanController extends Controller
         $search  = $request->string('search')->trim();
         $status  = $request->string('status')->trim();
 
-        $query = Perusahaan::query();
+        // Ambil semua nama perusahaan UNIK dari employee_employment_histories
+        $perusahaanFromEmployment = DB::table('employee_employment_histories')
+            ->select('perusahaan as nama_perusahaan')
+            ->selectRaw('COUNT(*) as total_history')
+            ->groupBy('perusahaan')
+            ->orderByDesc('total_history');
 
-        // Search: nama / kode perusahaan
+        // Apply search
         if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('nama_perusahaan', 'like', "%{$search}%")
-                  ->orWhere('kode_perusahaan', 'like', "%{$search}%");
-            });
+            $perusahaanFromEmployment->where('perusahaan', 'like', "%{$search}%");
         }
 
-        // Filter status
-        if (in_array($status, ['aktif', 'tidak_aktif'])) {
-            $query->where('status', $status);
-        }
+        // Get paginated result
+        $result = $perusahaanFromEmployment->paginate($perPage);
 
-        // Urutkan: MOU terdekat habis di atas
-        $query->orderByRaw("
-            CASE 
-                WHEN tanggal_akhir_mou IS NULL THEN 1
-                ELSE 0
-            END
-        ")
-        ->orderBy('tanggal_akhir_mou', 'asc');
+        // Transform dan hitung total karyawan aktif
+        $data = $result->getCollection()->map(function ($item) {
+            // Hitung karyawan aktif yang employment terbarunya di perusahaan ini
+            $totalKaryawanAktif = DB::table('employees as e')
+                ->join('employee_employment_histories as eeh', function($join) {
+                    $join->on('e.id', '=', 'eeh.employee_id')
+                        ->whereRaw('eeh.id = (
+                            SELECT MAX(id) 
+                            FROM employee_employment_histories 
+                            WHERE employee_id = e.id
+                        )');
+                })
+                ->where('e.status_active', '1')
+                ->where('eeh.perusahaan', $item->nama_perusahaan)
+                ->count();
 
-        $perusahaan = $query->paginate($perPage);
+            // Cari data dari tabel perusahaan (jika ada)
+            $perusahaanData = DB::table('perusahaan')
+                ->where('nama_perusahaan', $item->nama_perusahaan)
+                ->orWhere('nama_perusahaan', 'like', '%' . $item->nama_perusahaan . '%')
+                ->first();
 
-        return response()->json($perusahaan);
+            return [
+                'id' => $perusahaanData->id ?? null,
+                'kode_perusahaan' => $perusahaanData->kode_perusahaan ?? '-',
+                'nama_perusahaan' => $item->nama_perusahaan,
+                'alamat' => $perusahaanData->alamat ?? '-',
+                'tanggal_awal_mou' => $perusahaanData->tanggal_awal_mou ?? null,
+                'tanggal_akhir_mou' => $perusahaanData->tanggal_akhir_mou ?? null,
+                'berkas_mou' => $perusahaanData->berkas_mou ?? null,
+                'keterangan' => $perusahaanData->keterangan ?? null,
+                'status' => $perusahaanData->status ?? 'aktif',
+                'total_karyawan_aktif' => $totalKaryawanAktif,
+                'total_history' => $item->total_history,
+                'created_at' => $perusahaanData->created_at ?? null,
+                'updated_at' => $perusahaanData->updated_at ?? null,
+            ];
+        });
+
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'total' => $result->total(),
+                'per_page' => $result->perPage(),
+                'current_page' => $result->currentPage(),
+                'last_page' => $result->lastPage(),
+            ]
+        ]);
     }
 
     public function create()
@@ -379,4 +418,13 @@ class PerusahaanController extends Controller
         return $candidate;
     }
 
+    public function downloadPerusahaan(Request $request){
+        $status = $request->input('status');
+        $search = $request->input('search');
+
+        return Excel::download(
+            new PerusahaanExport($search,$status),
+            'perusahaan.xlsx'
+        );
+    }
 }
