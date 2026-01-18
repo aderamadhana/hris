@@ -168,28 +168,6 @@
                     <canvas ref="employeeTrendChart"></canvas>
                 </div>
             </div>
-
-            <!-- Status Karyawan -->
-            <div class="chart-card">
-                <h3 class="chart-title">Status Karyawan</h3>
-                <div class="chart-container">
-                    <canvas ref="employeeStatusChart"></canvas>
-                </div>
-                <div class="legend-list">
-                    <div
-                        v-for="item in employeeStatus"
-                        :key="item.name"
-                        class="legend-item"
-                    >
-                        <div
-                            class="legend-color"
-                            :style="{ backgroundColor: item.color }"
-                        ></div>
-                        <span class="legend-label">{{ item.name }}</span>
-                        <span class="legend-value">{{ item.value }}</span>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Second Row Charts -->

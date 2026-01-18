@@ -24,7 +24,8 @@ const isHrActive = computed(() => {
         path.value.startsWith('/pelamar') || // kalau masih dipakai
         path.value.startsWith('/hr/payroll') ||
         path.value.startsWith('/hr/surat-peringatan') ||
-        path.value.startsWith('/hr/lowongan-kerja')
+        path.value.startsWith('/hr/lowongan-kerja') ||
+        path.value.startsWith('/hr/shift')
     );
 });
 
@@ -175,6 +176,15 @@ const fiturBelumTersedia = () => {
                             }"
                         >
                             <span>Lowongan Kerja</span>
+                        </Link>
+                        <Link
+                            href="/hr/shift"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith('/hr/shift'),
+                            }"
+                        >
+                            <span>Shift</span>
                         </Link>
                     </div>
                 </transition>

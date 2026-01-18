@@ -16,6 +16,7 @@ use App\Http\Controllers\PresensiLogController;
 
 use App\Http\Controllers\Masters\PayrollPeriodController;
 use App\Http\Controllers\Masters\PerusahaanController;
+use App\Http\Controllers\Masters\ShiftController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
@@ -93,6 +94,19 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/lowongan-kerja', function () {
             return Inertia::render('UnderDeveloping');
+        });
+
+        Route::prefix('shift')->group(function () {
+            Route::get('/', function () {
+                return Inertia::render('master/shift/all-shift');
+            });
+            
+            Route::get('/all', [ShiftController::class, 'index']);
+            Route::get('/{shiftId}/edit', [ShiftController::class, 'edit']);
+            Route::get('/get-data/{id}', [ShiftController::class, 'getData']);
+            Route::post('/store', [ShiftController::class, 'store']);
+            Route::put('/update/{shiftId}', [ShiftController::class, 'update']);
+            Route::delete('/delete/{shiftId}', [ShiftController::class, 'destroy']);
         });
     });
 

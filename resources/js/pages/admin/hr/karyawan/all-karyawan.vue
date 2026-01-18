@@ -201,48 +201,6 @@
 
                 <!-- TABEL DALAM CARD (Original) -->
                 <div class="table-card">
-                    <div
-                        class="table-hint"
-                        role="note"
-                        aria-label="Petunjuk tabel karyawan"
-                    >
-                        <div class="table-hint__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none">
-                                <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                />
-                                <path
-                                    d="M12 16V12"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                />
-                                <circle
-                                    cx="12"
-                                    cy="8"
-                                    r="1"
-                                    fill="currentColor"
-                                />
-                            </svg>
-                        </div>
-
-                        <div class="table-hint__body">
-                            <div class="table-hint__title">
-                                Konfigurasi shift karyawan
-                                <span class="table-hint__badge">Tips</span>
-                            </div>
-                            <div class="table-hint__text">
-                                Klik <b>Nama</b> untuk membuka pengaturan shift.
-                            </div>
-                        </div>
-
-                        <div class="table-hint__actions"></div>
-                    </div>
-
                     <div class="table-responsive-custom">
                         <table class="table">
                             <thead>
