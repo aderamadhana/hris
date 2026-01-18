@@ -20,8 +20,8 @@ class Shift extends Model
     ];
 
     protected $casts = [
-        'jam_masuk' => 'datetime:H:i',
-        'jam_pulang' => 'datetime:H:i',
+        // 'jam_masuk' => 'datetime:H:i',
+        // 'jam_pulang' => 'datetime:H:i',
         'is_active' => 'boolean',
     ];
 
