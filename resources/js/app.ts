@@ -81,7 +81,7 @@ import {
 import 'select2/dist/css/select2.min.css'
 import 'select2'
 
-const appName = 'HRIS System';
+const appName = 'PT. MITRA WIRA MAS';
 
 library.add(
     faEye,
