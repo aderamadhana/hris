@@ -571,7 +571,25 @@ class PayslipImport implements
      */
     private function sanitizeNik($value): string
     {
-        return preg_replace('/\D+/', '', trim((string) $value));
+        $cleaned = preg_replace('/\D+/', '', trim((string) $value));
+        
+        if ($cleaned === '') {
+            return '';
+        }
+        
+        // Validasi: NIK harus antara 13-16 digit (toleransi)
+        $length = strlen($cleaned);
+        if ($length < 13 || $length > 16) {
+            // Log warning untuk NIK yang tidak wajar
+            Log::warning("NIK dengan panjang tidak standar: {$cleaned} ({$length} digit)");
+        }
+        
+        // Pad ke 16 digit jika kurang
+        if ($length < 16) {
+            $cleaned = str_pad($cleaned, 16, '0', STR_PAD_LEFT);
+        }
+        
+        return $cleaned;
     }
 
     /**
