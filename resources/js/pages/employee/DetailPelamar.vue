@@ -674,16 +674,16 @@ export default {
                     label: 'SIO Forklift',
                     value: this.dokumen?.sio_forklift,
                 },
-                {
-                    key: 'form_bpjs_tk',
-                    label: 'Formulir BPJS TK',
-                    value: this.dokumen?.form_bpjs_tk,
-                },
-                {
-                    key: 'form_bpjs_kes',
-                    label: 'Formulir BPJS Kesehatan',
-                    value: this.dokumen?.form_bpjs_kes,
-                },
+                // {
+                //     key: 'form_bpjs_tk',
+                //     label: 'Formulir BPJS TK',
+                //     value: this.dokumen?.form_bpjs_tk,
+                // },
+                // {
+                //     key: 'form_bpjs_kes',
+                //     label: 'Formulir BPJS Kesehatan',
+                //     value: this.dokumen?.form_bpjs_kes,
+                // },
                 {
                     key: 'paklaring',
                     label: 'Surat Pengalaman Kerja / Paklaring',

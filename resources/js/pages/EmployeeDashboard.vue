@@ -1,4 +1,11 @@
 <template>
+    <div v-if="loading" class="fullpage-loader">
+        <div class="fullpage-loader__card">
+            <div class="fullpage-loader__spinner"></div>
+            <div class="fullpage-loader__title">Loading data dashboard</div>
+            <div class="fullpage-loader__subtitle">Mohon tunggu sebentar</div>
+        </div>
+    </div>
     <!-- HEADER -->
     <div class="dashboard-header">
         <div class="header-content">
@@ -17,13 +24,8 @@
         </button>
     </div>
     <div class="card dashboard-page">
-        <div v-if="loading" class="loading-state">
-            <div class="spinner"></div>
-            <p>Memuat data dashboard...</p>
-        </div>
-
         <!-- CONTENT -->
-        <div v-else class="dashboard-content">
+        <div class="dashboard-content">
             <!-- Status Banner -->
             <div class="date-now">
                 <p class="dashboard-subtitle">{{ todayDate }}</p>
@@ -61,159 +63,185 @@
             <div class="main-grid">
                 <!-- LEFT COLUMN -->
                 <div class="left-column">
-                    <!-- Clock Times Card -->
-                    <div class="clock-card">
+                    <!-- Combined Attendance Card -->
+                    <div class="attendance-card">
                         <div class="card-header">
-                            <h3 class="card-title">Waktu Kehadiran</h3>
+                            <h3 class="card-title">Presensi Hari Ini</h3>
                             <div class="realtime-badge">
                                 <span class="pulse-dot"></span>
                                 Live
                             </div>
                         </div>
+
                         <div class="card-body">
-                            <div class="clock-times">
-                                <div class="clock-item clock-in-item">
-                                    <div class="clock-icon clock-in">
-                                        <font-awesome-icon
-                                            :icon="[
-                                                'fas',
-                                                'arrow-right-to-bracket',
-                                            ]"
-                                        />
-                                    </div>
-                                    <div class="clock-details">
-                                        <span class="clock-label"
-                                            >Clock In</span
-                                        >
-                                        <span class="clock-value">{{
-                                            clockInTime
-                                        }}</span>
-                                    </div>
-                                </div>
-
-                                <div class="clock-item clock-out-item">
-                                    <div class="clock-icon clock-out">
-                                        <font-awesome-icon
-                                            :icon="[
-                                                'fas',
-                                                'arrow-right-from-bracket',
-                                            ]"
-                                        />
-                                    </div>
-                                    <div class="clock-details">
-                                        <span class="clock-label"
-                                            >Clock Out</span
-                                        >
-                                        <span class="clock-value">{{
-                                            clockOutTime
-                                        }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Detail Timeline -->
-                    <div class="timeline-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Detail Presensi Hari Ini</h3>
-                        </div>
-                        <div class="card-body">
-                            <div
-                                v-if="todayAttendance?.detail?.length"
-                                class="timeline"
-                            >
-                                <div
-                                    v-for="item in todayAttendance.detail"
-                                    :key="item.id"
-                                    class="timeline-item"
-                                >
-                                    <div class="timeline-marker"></div>
-                                    <div class="timeline-content">
-                                        <div class="timeline-header">
-                                            <div class="timeline-time">
-                                                <font-awesome-icon
-                                                    :icon="['fas', 'clock']"
-                                                />
-                                                {{ item.waktu_formatted }}
-                                            </div>
-                                            <span
-                                                class="timeline-badge"
-                                                :class="
-                                                    item.is_valid_location
-                                                        ? 'valid'
-                                                        : 'invalid'
-                                                "
-                                            >
-                                                <font-awesome-icon
-                                                    :icon="[
-                                                        'fas',
-                                                        item.is_valid_location
-                                                            ? 'check-circle'
-                                                            : 'exclamation-circle',
-                                                    ]"
-                                                />
-                                                {{
-                                                    item.is_valid_location
-                                                        ? 'Valid'
-                                                        : 'Invalid'
-                                                }}
-                                            </span>
-                                        </div>
-
-                                        <div class="timeline-type">
-                                            {{
-                                                item.jenis_presensi === 'masuk'
-                                                    ? 'Clock In'
-                                                    : 'Clock Out'
-                                            }}
-                                        </div>
-
-                                        <div
-                                            v-if="item.foto_presensi"
-                                            class="timeline-photo"
-                                        >
-                                            <img
-                                                :src="item.foto_presensi"
-                                                alt="Foto Presensi"
+                            <!-- Clock Times Section -->
+                            <div class="clock-times-section">
+                                <div class="clock-times">
+                                    <div
+                                        class="clock-item clock-in-item"
+                                        @click="goToAbsen()"
+                                    >
+                                        <div class="clock-icon clock-in">
+                                            <font-awesome-icon
+                                                :icon="[
+                                                    'fas',
+                                                    'arrow-right-to-bracket',
+                                                ]"
                                             />
                                         </div>
+                                        <div class="clock-details">
+                                            <span class="clock-label"
+                                                >Clock In</span
+                                            >
+                                            <span class="clock-value">{{
+                                                clockInTime
+                                            }}</span>
+                                        </div>
+                                    </div>
 
-                                        <div
-                                            v-if="
-                                                item.jarak_dari_lokasi ||
-                                                item.device_info
-                                            "
-                                            class="timeline-meta"
-                                        >
-                                            <span v-if="item.jarak_dari_lokasi">
-                                                <font-awesome-icon
-                                                    :icon="[
-                                                        'fas',
-                                                        'location-dot',
-                                                    ]"
-                                                />
-                                                {{ item.jarak_dari_lokasi }}m
-                                            </span>
-                                            <span v-if="item.device_info">
-                                                <font-awesome-icon
-                                                    :icon="[
-                                                        'fas',
-                                                        'mobile-screen',
-                                                    ]"
-                                                />
-                                                {{ item.device_info }}
-                                            </span>
+                                    <div class="clock-divider"></div>
+
+                                    <div
+                                        class="clock-item clock-out-item"
+                                        @click="goToAbsen()"
+                                    >
+                                        <div class="clock-icon clock-out">
+                                            <font-awesome-icon
+                                                :icon="[
+                                                    'fas',
+                                                    'arrow-right-from-bracket',
+                                                ]"
+                                            />
+                                        </div>
+                                        <div class="clock-details">
+                                            <span class="clock-label"
+                                                >Clock Out</span
+                                            >
+                                            <span class="clock-value">{{
+                                                clockOutTime
+                                            }}</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div v-else class="empty-state">
-                                <font-awesome-icon
-                                    :icon="['fas', 'calendar-xmark']"
-                                />
-                                <p>Belum ada aktivitas presensi hari ini</p>
+                            <!-- Divider -->
+                            <div class="section-divider">
+                                <span>Detail Presensi</span>
+                            </div>
+
+                            <!-- Timeline Section -->
+                            <div class="timeline-section">
+                                <div
+                                    v-if="todayAttendance?.detail?.length"
+                                    class="timeline"
+                                >
+                                    <div
+                                        v-for="item in todayAttendance.detail"
+                                        :key="item.id"
+                                        class="timeline-item"
+                                    >
+                                        <div class="timeline-marker"></div>
+                                        <div class="timeline-content">
+                                            <div class="timeline-header">
+                                                <div class="timeline-time">
+                                                    <font-awesome-icon
+                                                        :icon="['fas', 'clock']"
+                                                    />
+                                                    {{ item.waktu_formatted }}
+                                                </div>
+                                                <span
+                                                    class="timeline-badge"
+                                                    :class="
+                                                        item.is_valid_location
+                                                            ? 'valid'
+                                                            : 'invalid'
+                                                    "
+                                                >
+                                                    <font-awesome-icon
+                                                        :icon="[
+                                                            'fas',
+                                                            item.is_valid_location
+                                                                ? 'check-circle'
+                                                                : 'exclamation-circle',
+                                                        ]"
+                                                    />
+                                                    {{
+                                                        item.is_valid_location
+                                                            ? 'Valid'
+                                                            : 'Invalid'
+                                                    }}
+                                                </span>
+                                            </div>
+
+                                            <div class="timeline-type">
+                                                {{
+                                                    item.jenis_presensi ===
+                                                    'masuk'
+                                                        ? 'Clock In'
+                                                        : 'Clock Out'
+                                                }}
+                                            </div>
+
+                                            <div
+                                                v-if="item.foto_presensi"
+                                                class="timeline-photo"
+                                            >
+                                                <img
+                                                    :src="item.foto_presensi"
+                                                    alt="Foto Presensi"
+                                                />
+                                            </div>
+
+                                            <div
+                                                v-if="
+                                                    item.jarak_dari_lokasi ||
+                                                    item.device_info
+                                                "
+                                                class="timeline-meta"
+                                            >
+                                                <span
+                                                    v-if="
+                                                        item.jarak_dari_lokasi
+                                                    "
+                                                >
+                                                    <font-awesome-icon
+                                                        :icon="[
+                                                            'fas',
+                                                            'location-dot',
+                                                        ]"
+                                                    />
+                                                    {{
+                                                        item.jarak_dari_lokasi
+                                                    }}m
+                                                </span>
+                                                <span v-if="item.device_info">
+                                                    <font-awesome-icon
+                                                        :icon="[
+                                                            'fas',
+                                                            'mobile-screen',
+                                                        ]"
+                                                    />
+                                                    {{ item.device_info }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div v-else class="empty-state">
+                                    <div class="empty-icon">
+                                        <font-awesome-icon
+                                            :icon="['fas', 'calendar-xmark']"
+                                        />
+                                    </div>
+                                    <p class="empty-text">
+                                        Belum ada presensi hari ini
+                                    </p>
+                                    <p class="empty-subtext">
+                                        Silakan lakukan clock in untuk memulai
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -412,7 +440,7 @@
 <script>
 import Modal from '@/components/Modal.vue';
 import { triggerAlert } from '@/utils/alert';
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 
 export default {
@@ -734,6 +762,10 @@ export default {
 
         refreshData() {
             this.fetchDashboardData();
+        },
+
+        goToAbsen() {
+            router.visit(`/attendance`);
         },
     },
 };
@@ -1137,18 +1169,25 @@ export default {
 .clock-item {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1.25rem;
-    background: #f8fafc;
+    gap: 16px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
     border-radius: 12px;
-    border: 2px solid #e2e8f0;
-    transition: all 0.2s;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
 }
 
 .clock-item:hover {
-    border-color: #cbd5e1;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.15);
+    border-color: transparent;
+}
+
+.clock-item:hover::before {
+    opacity: 1;
 }
 
 .clock-icon {
@@ -1882,6 +1921,380 @@ export default {
     .shift-info {
         width: 100%;
         justify-content: center;
+    }
+}
+
+/* Combined Attendance Card */
+.attendance-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.realtime-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #059669;
+}
+
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.card-body {
+    padding: 24px;
+}
+
+/* Clock Times Section */
+.clock-times-section {
+    margin-bottom: 24px;
+}
+
+.clock-times {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+}
+
+.clock-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.clock-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+}
+
+.clock-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.clock-icon.clock-in {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.clock-icon.clock-out {
+    background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+}
+
+.clock-item:hover .clock-icon {
+    transform: scale(1.1);
+}
+
+.clock-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.clock-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.clock-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.clock-divider {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        #e2e8f0 20%,
+        #e2e8f0 80%,
+        transparent
+    );
+}
+
+/* Section Divider */
+.section-divider {
+    position: relative;
+    text-align: center;
+    margin: 32px 0 24px 0;
+}
+
+.section-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        to right,
+        transparent,
+        #e2e8f0 20%,
+        #e2e8f0 80%,
+        transparent
+    );
+}
+
+.section-divider span {
+    position: relative;
+    background: #ffffff;
+    padding: 0 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Timeline Section */
+.timeline-section {
+    padding-top: 8px;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 32px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #3b82f6, #ec4899);
+    opacity: 0.3;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 24px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -28px;
+    top: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    z-index: 1;
+}
+
+.timeline-item:last-child .timeline-marker {
+    border-color: #ec4899;
+    box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.1);
+}
+
+.timeline-content {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.timeline-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.timeline-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.timeline-badge.valid {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.timeline-badge.invalid {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.timeline-type {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 12px;
+}
+
+.timeline-photo {
+    margin: 12px 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.timeline-photo img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.timeline-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.timeline-meta span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+}
+
+.empty-icon {
+    font-size: 64px;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #64748b;
+    margin: 0 0 8px 0;
+}
+
+.empty-subtext {
+    font-size: 13px;
+    color: #94a3b8;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .clock-times {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .clock-divider {
+        display: none;
+    }
+
+    .card-header {
+        padding: 16px 20px;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .clock-item {
+        padding: 16px;
+    }
+
+    .clock-icon {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        font-size: 18px;
+    }
+
+    .clock-value {
+        font-size: 20px;
     }
 }
 </style>

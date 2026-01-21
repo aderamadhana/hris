@@ -1774,8 +1774,8 @@ export default {
                 { key: 'ktp', label: 'KTP' },
                 { key: 'kk', label: 'Kartu Keluarga' },
                 { key: 'lisensi', label: 'Lisensi' },
-                { key: 'form_bpjs_tk', label: 'Formulir BPJS TK' },
-                { key: 'form_bpjs_kes', label: 'Formulir BPJS Kesehatan' },
+                // { key: 'form_bpjs_tk', label: 'Formulir BPJS TK' },
+                // { key: 'form_bpjs_kes', label: 'Formulir BPJS Kesehatan' },
                 {
                     key: 'paklaring',
                     label: 'Surat Pengalaman Kerja / Paklaring',

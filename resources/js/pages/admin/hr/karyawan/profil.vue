@@ -764,16 +764,16 @@ export default {
                     label: 'Lisensi',
                     value: this.document?.lisensi,
                 },
-                {
-                    key: 'form_bpjs_tk',
-                    label: 'Formulir BPJS TK',
-                    value: this.document?.form_bpjs_tk,
-                },
-                {
-                    key: 'form_bpjs_kes',
-                    label: 'Formulir BPJS Kesehatan',
-                    value: this.document?.form_bpjs_kes,
-                },
+                // {
+                //     key: 'form_bpjs_tk',
+                //     label: 'Formulir BPJS TK',
+                //     value: this.document?.form_bpjs_tk,
+                // },
+                // {
+                //     key: 'form_bpjs_kes',
+                //     label: 'Formulir BPJS Kesehatan',
+                //     value: this.document?.form_bpjs_kes,
+                // },
                 {
                     key: 'paklaring',
                     label: 'Surat Pengalaman Kerja / Paklaring',

@@ -32,21 +32,38 @@
             <!-- RINGKASAN -->
             <div class="overview-row">
                 <div class="overview-card primary">
-                    <div class="card-icon">
-                        <font-awesome-icon icon="users" />
-                    </div>
-                    <div class="overview-label">Total Pelamar</div>
-                    <div class="overview-value">
-                        {{ statistics.total_applicants }}
+                    <div class="card-content">
+                        <div class="card-left">
+                            <div class="overview-label">Total Pelamar</div>
+                            <div class="overview-value">
+                                {{ statistics.total_applicants }}
+                            </div>
+                            <div class="overview-badge positive">
+                                <span>●</span> Terdaftar
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <font-awesome-icon icon="users" />
+                        </div>
                     </div>
                 </div>
+
                 <div class="overview-card warning">
-                    <div class="card-icon warning">
-                        <font-awesome-icon icon="users" />
-                    </div>
-                    <div class="overview-label">Butuh Perpanjang Kontrak</div>
-                    <div class="overview-value">
-                        {{ statistics.total_needs_renewal }}
+                    <div class="card-content">
+                        <div class="card-left">
+                            <div class="overview-label">
+                                Butuh Perpanjang Kontrak
+                            </div>
+                            <div class="overview-value">
+                                {{ statistics.total_needs_renewal }}
+                            </div>
+                            <div class="overview-badge warning">
+                                <span>●</span> Perlu Tindakan
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <font-awesome-icon icon="file-contract" />
+                        </div>
                     </div>
                 </div>
             </div>

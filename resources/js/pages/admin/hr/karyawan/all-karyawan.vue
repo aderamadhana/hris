@@ -44,22 +44,39 @@
 
             <div class="overview-row">
                 <div class="overview-card primary">
-                    <div class="card-icon">
-                        <font-awesome-icon icon="users" />
+                    <div class="card-content">
+                        <div class="card-left">
+                            <div class="overview-label">Total Karyawan</div>
+                            <div class="overview-value">
+                                {{ totalAllKaryawan }}
+                            </div>
+                            <div class="overview-badge positive">
+                                <span>●</span> Aktif
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <font-awesome-icon icon="users" />
+                        </div>
                     </div>
-                    <div class="overview-label">Total Karyawan</div>
-                    <div class="overview-value">{{ totalAllKaryawan }}</div>
                 </div>
 
                 <div class="overview-card warning">
-                    <div class="card-icon">
-                        <font-awesome-icon icon="user-clock" />
-                    </div>
-                    <div class="overview-label">
-                        Kontrak Hampir Habis ({{ defaultExpiringDays }} hari)
-                    </div>
-                    <div class="overview-value">
-                        {{ totalKontrakHampirHabis }}
+                    <div class="card-content">
+                        <div class="card-left">
+                            <div class="overview-label">
+                                Kontrak Hampir Habis
+                            </div>
+                            <div class="overview-value">
+                                {{ totalKontrakHampirHabis }}
+                            </div>
+                            <div class="overview-badge warning">
+                                <span>●</span> {{ defaultExpiringDays }} hari
+                                lagi
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <font-awesome-icon icon="user-clock" />
+                        </div>
                     </div>
                 </div>
 
@@ -68,14 +85,25 @@
                     @click="showExpired"
                     @keydown.enter.prevent="showExpired"
                 >
-                    <div class="card-icon">
-                        <font-awesome-icon icon="user-xmark" />
-                        <!-- alternatif: <font-awesome-icon icon="triangle-exclamation" /> -->
+                    <div class="card-content">
+                        <div class="card-left">
+                            <div class="overview-label">
+                                Total Kontrak Expired
+                            </div>
+                            <div class="overview-value">
+                                {{ totalAllExpired }}
+                            </div>
+                            <div class="overview-badge negative">
+                                <span>●</span> Perlu Ditindak
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <font-awesome-icon icon="user-xmark" />
+                        </div>
                     </div>
-                    <div class="overview-label">Total Kontrak Expired</div>
-                    <div class="overview-value">{{ totalAllExpired }}</div>
                 </div>
             </div>
+
             <div v-if="isDownloading" class="fullpage-loader">
                 <div class="fullpage-loader__card">
                     <div class="fullpage-loader__spinner"></div>
