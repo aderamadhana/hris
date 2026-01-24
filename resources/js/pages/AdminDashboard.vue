@@ -163,7 +163,7 @@
         <div class="charts-section">
             <!-- Tren Karyawan -->
             <div class="chart-card large">
-                <h3 class="chart-title">Tren Karyawan (6 Bulan Terakhir)</h3>
+                <h3 class="chart-title">Tren Karyawan (12 Bulan Terakhir)</h3>
                 <div class="chart-container">
                     <canvas ref="employeeTrendChart"></canvas>
                 </div>

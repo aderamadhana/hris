@@ -24,23 +24,24 @@ class PerusahaanController extends Controller
         $search  = $request->string('search')->trim();
         $status  = $request->string('status')->trim();
 
-        // Ambil semua nama perusahaan UNIK dari employee_employment_histories
-        $perusahaanFromEmployment = DB::table('employee_employment_histories')
-            ->select('perusahaan as nama_perusahaan')
-            ->selectRaw('COUNT(*) as total_history')
-            ->groupBy('perusahaan')
-            ->orderByDesc('total_history');
+        // Ambil data dari Model Perusahaan
+        $query = Perusahaan::query();
 
         // Apply search
         if ($search !== '') {
-            $perusahaanFromEmployment->where('perusahaan', 'like', "%{$search}%");
+            $query->where('nama_perusahaan', 'like', "%{$search}%");
+        }
+
+        // Apply status filter
+        if ($status !== '') {
+            $query->where('status', $status);
         }
 
         // Get paginated result
-        $result = $perusahaanFromEmployment->paginate($perPage);
+        $result = $query->paginate($perPage);
 
         // Transform dan hitung total karyawan aktif
-        $data = $result->getCollection()->map(function ($item) {
+        $data = $result->getCollection()->map(function ($perusahaan) {
             // Hitung karyawan aktif yang employment terbarunya di perusahaan ini
             $totalKaryawanAktif = DB::table('employees as e')
                 ->join('employee_employment_histories as eeh', function($join) {
@@ -52,29 +53,34 @@ class PerusahaanController extends Controller
                         )');
                 })
                 ->where('e.status_active', '1')
-                ->where('eeh.perusahaan', $item->nama_perusahaan)
+                ->where(function($q) use ($perusahaan) {
+                    $q->where('eeh.perusahaan', $perusahaan->nama_perusahaan)
+                    ->orWhere('eeh.perusahaan', 'like', '%' . $perusahaan->nama_perusahaan . '%');
+                })
                 ->count();
 
-            // Cari data dari tabel perusahaan (jika ada)
-            $perusahaanData = DB::table('perusahaan')
-                ->where('nama_perusahaan', $item->nama_perusahaan)
-                ->orWhere('nama_perusahaan', 'like', '%' . $item->nama_perusahaan . '%')
-                ->first();
+            // Hitung total history dari employee_employment_histories
+            $totalHistory = DB::table('employee_employment_histories')
+                ->where(function($q) use ($perusahaan) {
+                    $q->where('perusahaan', $perusahaan->nama_perusahaan)
+                    ->orWhere('perusahaan', 'like', '%' . $perusahaan->nama_perusahaan . '%');
+                })
+                ->count();
 
             return [
-                'id' => $perusahaanData->id ?? null,
-                'kode_perusahaan' => $perusahaanData->kode_perusahaan ?? '-',
-                'nama_perusahaan' => $item->nama_perusahaan,
-                'alamat' => $perusahaanData->alamat ?? '-',
-                'tanggal_awal_mou' => $perusahaanData->tanggal_awal_mou ?? null,
-                'tanggal_akhir_mou' => $perusahaanData->tanggal_akhir_mou ?? null,
-                'berkas_mou' => $perusahaanData->berkas_mou ?? null,
-                'keterangan' => $perusahaanData->keterangan ?? null,
-                'status' => $perusahaanData->status ?? 'aktif',
+                'id' => $perusahaan->id,
+                'kode_perusahaan' => $perusahaan->kode_perusahaan ?? '-',
+                'nama_perusahaan' => $perusahaan->nama_perusahaan,
+                'alamat' => $perusahaan->alamat ?? '-',
+                'tanggal_awal_mou' => $perusahaan->tanggal_awal_mou,
+                'tanggal_akhir_mou' => $perusahaan->tanggal_akhir_mou,
+                'berkas_mou' => $perusahaan->berkas_mou,
+                'keterangan' => $perusahaan->keterangan,
+                'status' => $perusahaan->status ?? 'aktif',
                 'total_karyawan_aktif' => $totalKaryawanAktif,
-                'total_history' => $item->total_history,
-                'created_at' => $perusahaanData->created_at ?? null,
-                'updated_at' => $perusahaanData->updated_at ?? null,
+                'total_history' => 0,
+                'created_at' => $perusahaan->created_at,
+                'updated_at' => $perusahaan->updated_at,
             ];
         });
 

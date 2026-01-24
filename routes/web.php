@@ -13,13 +13,20 @@ use App\Http\Controllers\ReferensiController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\PresensiLogController;
+use App\Http\Controllers\LokerController;
 
 use App\Http\Controllers\Masters\PayrollPeriodController;
 use App\Http\Controllers\Masters\PerusahaanController;
 use App\Http\Controllers\Masters\ShiftController;
 
+
+
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
+    Route::get('/landing', function () {
+        return Inertia::render('Welcome');
+    })->name('/landing');
     Route::post('/login', [LoginController::class, 'store'])->name('login.store');
     Route::get('/reset-to-default', [LoginController::class, 'resetPasswordToDefault']);
 });
@@ -92,10 +99,6 @@ Route::middleware('auth')->group(function () {
             return Inertia::render('UnderDeveloping');
         });
 
-        Route::get('/lowongan-kerja', function () {
-            return Inertia::render('UnderDeveloping');
-        });
-
         Route::prefix('shift')->group(function () {
             Route::get('/', function () {
                 return Inertia::render('master/shift/all-shift');
@@ -164,6 +167,24 @@ Route::middleware('auth')->group(function () {
         Route::get('/kecelakaan-kerja', function () {
             return Inertia::render('UnderDeveloping');
         });
+    });
+    
+    Route::prefix('beranda')->group(function () {
+        Route::prefix('lowongan-kerja')->group(function () {
+            Route::get('/', function () {
+                return Inertia::render('admin/beranda/lowongan-kerja/all-loker');
+            });
+            
+            Route::get('/all', [LokerController::class, 'index']);
+            Route::post('/store', [LokerController::class, 'store']);
+        });
+        Route::get('/pengumuman', function () {
+            return Inertia::render('UnderDeveloping');
+        });
+    });
+
+    Route::get('/konfigurasi', function () {
+        return Inertia::render('UnderDeveloping');
     });
 
     Route::get('/riwayat-kontrak', function () {
@@ -312,13 +333,14 @@ Route::prefix('referensi')->group(function () {
     Route::get('/perusahaan-divisi', [ReferensiController::class, 'getPerusahaanDanDivisi']);
     Route::get('/get-shift-options', [ReferensiController::class, 'getShiftOptions']);
     Route::post('/generate-no-kontrak', [ReferensiController::class, 'generateNoKontrak']);
-    
+    Route::get('/landing-page', [ReferensiController::class, 'getLandingPage']);
+    Route::get('/landing-page/loker/{slug}', [ReferensiController::class, 'getDetailLoker']);
 });
 
 
 // Redirect root ke login atau dashboard
 Route::get('/', function () {
-    return auth()->check() ? redirect('/dashboard') : redirect('/login');
+    return auth()->check() ? redirect('/dashboard') : redirect('/landing');
 });
 
 

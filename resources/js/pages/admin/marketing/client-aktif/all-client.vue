@@ -22,14 +22,14 @@
                         <font-awesome-icon icon="download" class="icon" />
                         Download Client
                     </Button>
-                    <!-- <Button
+                    <Button
                         variant="success"
                         :loading="isDownloading"
                         @click="syncPerusahaan"
                     >
                         <font-awesome-icon icon="sync" class="icon" />
                         Sync Client
-                    </Button> -->
+                    </Button>
                     <Button variant="primary" @click="tambahPerusahaan">
                         <font-awesome-icon icon="plus" class="icon" />
                         Tambah Client
@@ -244,7 +244,7 @@ export default {
     data() {
         return {
             search: '',
-            status: '',
+            status: 'aktif',
             items: [],
             loading: false,
             isDownloading: false,

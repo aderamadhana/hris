@@ -202,7 +202,7 @@ class DashboardController extends Controller
     {
         $trends = [];
         
-        for ($i = 5; $i >= 0; $i--) {
+        for ($i = 11; $i >= 0; $i--) {
             $month = Carbon::now()->subMonths($i);
             $startDate = $month->copy()->startOfMonth();
             $endDate = $month->copy()->endOfMonth();
