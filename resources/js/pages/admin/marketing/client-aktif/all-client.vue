@@ -251,7 +251,7 @@ export default {
             isDownloadingClient: false,
 
             currentPage: 1,
-            perPage: 10,
+            perPage: 50,
             totalItems: 0,
             totalPages: 0,
         };

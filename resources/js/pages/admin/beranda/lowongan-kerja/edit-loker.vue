@@ -446,22 +446,29 @@ export default {
         async submitLoker() {
             this.processingUpdate = true;
 
-            router.put(`/hr/loker/update/${this.loker.id}`, this.form, {
-                onSuccess: () => {
-                    triggerAlert('success', 'Loker berhasil diupdate');
-                    this.$emit('closeModal');
-                    this.$emit('refreshData');
-                },
+            router.put(
+                `/beranda/lowongan-kerja/update/${this.loker.id}`,
+                this.form,
+                {
+                    onSuccess: () => {
+                        triggerAlert('success', 'Loker berhasil diupdate');
+                        this.$emit('closeModal');
+                        this.$emit('refreshData');
+                    },
 
-                onError: (errors) => {
-                    this.errors = errors;
-                    triggerAlert('error', 'Periksa kembali data yang diinput');
-                },
+                    onError: (errors) => {
+                        this.errors = errors;
+                        triggerAlert(
+                            'error',
+                            'Periksa kembali data yang diinput',
+                        );
+                    },
 
-                onFinish: () => {
-                    this.processingUpdate = false;
+                    onFinish: () => {
+                        this.processingUpdate = false;
+                    },
                 },
-            });
+            );
         },
 
         async deleteLoker() {
@@ -470,7 +477,7 @@ export default {
 
             this.processingDelete = true;
 
-            router.delete(`/hr/loker/delete/${this.loker.id}`, {
+            router.delete(`/beranda/lowongan-kerja/delete/${this.loker.id}`, {
                 onSuccess: () => {
                     triggerAlert('success', 'Loker berhasil dihapus');
                     this.$emit('closeModal');

@@ -118,15 +118,35 @@ class LokerController extends Controller
         $paginator->getCollection()->transform(function ($l) {
             return [
                 'id' => $l->id,
+
+                // Informasi utama
                 'judul' => $l->judul,
                 'slug' => $l->slug,
                 'tipe_pekerjaan' => $l->tipe_pekerjaan,
+
+                'perusahaan_id' => $l->perusahaan_id,
                 'perusahaan_nama' => $l->perusahaan_nama,
+
+                'penempatan_id' => $l->penempatan_id,
                 'penempatan_nama' => $l->penempatan_nama,
+
                 'jam_kerja' => $l->jam_kerja,
+
+                // Informasi tambahan
+                'ringkasan' => $l->ringkasan,
+                'deskripsi' => $l->deskripsi,
+                'persyaratan' => $l->persyaratan,
+
+                // Gaji
                 'gaji_min' => $l->gaji_min,
                 'gaji_max' => $l->gaji_max,
                 'mata_uang' => $l->mata_uang,
+
+                // Link apply
+                'link_lamar' => $l->link_lamar,
+                'whatsapp_kontak' => $l->whatsapp_kontak,
+
+                // Status
                 'aktif' => (bool) $l->aktif,
                 'tanggal_publish' => optional($l->tanggal_publish)?->format('Y-m-d H:i:s'),
                 'tanggal_berakhir' => optional($l->tanggal_berakhir)?->format('Y-m-d H:i:s'),
@@ -249,5 +269,120 @@ class LokerController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Loker berhasil disimpan');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $loker = Loker::findOrFail($id);
+
+        $validated = $request->validate([
+            'judul' => ['required', 'string', 'max:255'],
+
+            'slug' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z0-9]+([-_][a-zA-Z0-9]+)*$/',
+            ],
+
+            'tipe_pekerjaan' => ['required', 'string', 'max:50'],
+
+            // ✅ tetap pakai ID, nama diambil dari master
+            'perusahaan_id' => ['required', 'integer', 'exists:perusahaan,id'],
+            'penempatan_id' => ['required', 'integer', 'exists:divisi,id'],
+
+            'jam_kerja' => ['nullable', 'string', 'max:50'],
+
+            'ringkasan' => ['nullable', 'string', 'max:255'],
+            'deskripsi' => ['nullable', 'string'],
+            'persyaratan' => ['nullable', 'string'],
+
+            'gaji_min' => ['nullable', 'integer', 'min:0'],
+            'gaji_max' => ['nullable', 'integer', 'min:0'],
+            'mata_uang' => ['nullable', 'string', 'max:3'],
+
+            'link_lamar' => ['nullable', 'string', 'max:255'],
+            'whatsapp_kontak' => ['nullable', 'string', 'max:30'],
+
+            'aktif' => ['nullable', 'boolean'],
+
+            // 'tanggal_publish' => ['nullable', 'date_format:Y-m-d\TH:i'],
+            // 'tanggal_berakhir' => ['nullable', 'date_format:Y-m-d\TH:i'],
+        ], [
+            'slug.regex' => 'Slug hanya boleh huruf/angka dan pemisah - atau _. Contoh: security-guard / security_guard',
+        ]);
+
+        // ✅ ambil master perusahaan
+        $perusahaan = Perusahaan::findOrFail((int) $validated['perusahaan_id']);
+
+        // ✅ ambil master divisi (penempatan)
+        $divisi = Divisi::findOrFail((int) $validated['penempatan_id']);
+
+        // ✅ boolean (kalau checkbox)
+        $validated['aktif'] = $request->boolean('aktif');
+
+        // ✅ parse datetime-local
+        $tanggalPublish = $request->filled('tanggal_publish')
+            ? Carbon::createFromFormat('Y-m-d\TH:i', $request->tanggal_publish)
+            : null;
+
+        $tanggalBerakhir = $request->filled('tanggal_berakhir')
+            ? Carbon::createFromFormat('Y-m-d\TH:i', $request->tanggal_berakhir)
+            : null;
+
+        // ✅ validasi tambahan gaji
+        if (!is_null($validated['gaji_min']) && !is_null($validated['gaji_max'])) {
+            if ((int) $validated['gaji_max'] < (int) $validated['gaji_min']) {
+                return response()->json([
+                    'message' => 'Validasi gagal',
+                    'errors' => [
+                        'gaji_max' => ['Gaji maksimum tidak boleh lebih kecil dari gaji minimum.'],
+                    ],
+                ], 422);
+            }
+        }
+
+        // ✅ update data
+        $loker->update([
+            'judul' => $validated['judul'],
+            'slug' => $validated['slug'],
+            'tipe_pekerjaan' => $validated['tipe_pekerjaan'],
+
+            'perusahaan_id' => (int) $validated['perusahaan_id'],
+            'perusahaan_nama' => $perusahaan->nama_perusahaan ?? $perusahaan->nama ?? null,
+
+            'penempatan_id' => (int) $validated['penempatan_id'],
+            'penempatan_nama' => $divisi->nama_divisi ?? $divisi->nama ?? null,
+
+            'jam_kerja' => $validated['jam_kerja'] ?? null,
+
+            'ringkasan' => $validated['ringkasan'] ?? null,
+            'deskripsi' => $validated['deskripsi'] ?? null,
+            'persyaratan' => $validated['persyaratan'] ?? null,
+
+            'gaji_min' => $validated['gaji_min'] ?? null,
+            'gaji_max' => $validated['gaji_max'] ?? null,
+            'mata_uang' => $validated['mata_uang'] ?? 'IDR',
+
+            'link_lamar' => $validated['link_lamar'] ?? null,
+            'whatsapp_kontak' => $validated['whatsapp_kontak'] ?? null,
+
+            'aktif' => $validated['aktif'],
+
+            'tanggal_publish' => $tanggalPublish,
+            'tanggal_berakhir' => $tanggalBerakhir,
+        ]);
+
+        return redirect()->back()->with('success', 'Loker berhasil diupdate');
+    }
+    
+    public function delete($id)
+    {
+        $loker = Loker::findOrFail($id);
+
+        // Soft delete
+        $loker->delete();
+
+        return redirect()->back()->with('success', 'Loker berhasil dihapus');
     }
 }

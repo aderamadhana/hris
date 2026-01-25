@@ -14,6 +14,7 @@ use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\PresensiLogController;
 use App\Http\Controllers\LokerController;
+use App\Http\Controllers\PengumumanController;
 
 use App\Http\Controllers\Masters\PayrollPeriodController;
 use App\Http\Controllers\Masters\PerusahaanController;
@@ -177,9 +178,18 @@ Route::middleware('auth')->group(function () {
             
             Route::get('/all', [LokerController::class, 'index']);
             Route::post('/store', [LokerController::class, 'store']);
+            Route::put('/update/{id}', [LokerController::class, 'update']);
+            Route::delete('/delete/{id}', [LokerController::class, 'delete']);
         });
-        Route::get('/pengumuman', function () {
-            return Inertia::render('UnderDeveloping');
+        Route::prefix('pengumuman')->group(function () {
+            Route::get('/', function () {
+                return Inertia::render('admin/beranda/pengumuman/all-pengumuman');
+            });
+            
+            Route::get('/all', [PengumumanController::class, 'index']);
+            Route::post('/store', [PengumumanController::class, 'store']);
+            Route::put('/update/{id}', [PengumumanController::class, 'update']);
+            Route::delete('/delete/{id}', [PengumumanController::class, 'delete']);
         });
     });
 
