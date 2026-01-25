@@ -1,7 +1,7 @@
 <template>
-    <div>
+    <div class="landing-root">
         <!-- NAVBAR -->
-        <header class="header">
+        <header class="header-landing">
             <div class="nav container">
                 <a href="#beranda" class="brand" @click="setActive('#beranda')">
                     <img
@@ -26,9 +26,9 @@
                     </a>
                 </nav>
 
-                <a class="btn btn--gold btn--sm" @click="masukAplikasi">
+                <button class="btn btn--gold btn--sm" @click="masukAplikasi">
                     Masuk Aplikasi
-                </a>
+                </button>
             </div>
         </header>
 
@@ -77,6 +77,56 @@
 
             <!-- CONTENT -->
             <div class="container">
+                <div>
+                    <div
+                        v-if="$page.props.flash.success && showSuccess"
+                        class="alert alert-success"
+                    >
+                        <div class="alert-left">
+                            <span class="alert-icon">✓</span>
+
+                            <div class="alert-text">
+                                <div class="alert-title">Berhasil</div>
+                                <div class="alert-msg">
+                                    {{ $page.props.flash.success }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="alert-close"
+                            @click="showSuccess = false"
+                        >
+                            ×
+                        </button>
+                    </div>
+
+                    <!-- ERROR -->
+                    <div
+                        v-if="$page.props.flash.error && showError"
+                        class="alert alert-error"
+                    >
+                        <div class="alert-left">
+                            <span class="alert-icon">!</span>
+
+                            <div class="alert-text">
+                                <div class="alert-title">Gagal</div>
+                                <div class="alert-msg">
+                                    {{ $page.props.flash.error }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="alert-close"
+                            @click="showError = false"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
                 <!-- SEJARAH + FOTO PENDIRI -->
                 <section id="sejarah" class="row row--two">
                     <div class="reveal block" style="--d: 60">
@@ -92,13 +142,7 @@
                         </div>
 
                         <div class="content">
-                            <p
-                                style="
-                                    margin: 0;
-                                    color: rgba(15, 23, 42, 0.72);
-                                    font-weight: 600;
-                                "
-                            >
+                            <p class="paragraph">
                                 PT Mitra Wira Mas berdiri untuk menjawab
                                 kebutuhan perusahaan akan SDM yang siap kerja,
                                 disiplin, dan sesuai SOP.
@@ -146,7 +190,7 @@
                             <img
                                 :src="founderImage"
                                 alt="Foto Pendiri"
-                                load="lazy"
+                                loading="lazy"
                             />
                         </div>
                         <div class="photo__cap">
@@ -196,7 +240,16 @@
                         </div>
 
                         <div class="content">
-                            <div class="note">
+                            <div v-if="loadingLanding" class="loading-state">
+                                <div class="spinner"></div>
+                                <p>Memuat data...</p>
+                            </div>
+
+                            <div v-else-if="errorLanding" class="error-state">
+                                {{ errorLanding }}
+                            </div>
+
+                            <div v-else class="note">
                                 <div
                                     class="note__item"
                                     v-for="(n, i) in notes"
@@ -208,6 +261,10 @@
                                     </div>
                                     <p class="note__title">{{ n.title }}</p>
                                     <p class="note__desc">{{ n.desc }}</p>
+                                </div>
+
+                                <div v-if="!notes.length" class="empty-state">
+                                    Tidak ada pengumuman.
                                 </div>
                             </div>
                         </div>
@@ -222,7 +279,16 @@
                         </div>
 
                         <div class="content">
-                            <div class="jobs">
+                            <div v-if="loadingLanding" class="loading-state">
+                                <div class="spinner"></div>
+                                <p>Memuat data...</p>
+                            </div>
+
+                            <div v-else-if="errorLanding" class="error-state">
+                                {{ errorLanding }}
+                            </div>
+
+                            <div v-else class="jobs">
                                 <article
                                     class="job"
                                     v-for="(j, i) in jobs"
@@ -279,6 +345,10 @@
                                         </a>
                                     </div>
                                 </article>
+
+                                <div v-if="!jobs.length" class="empty-state">
+                                    Tidak ada lowongan tersedia.
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -346,14 +416,7 @@
 
                         <div class="footer__col">
                             <h4>Sosial</h4>
-                            <p
-                                style="
-                                    margin: 0 0 10px;
-                                    color: rgba(255, 255, 255, 0.72);
-                                    font-weight: 600;
-                                    font-size: 0.92rem;
-                                "
-                            >
+                            <p class="footer__socialText">
                                 Ikuti update terbaru kami
                             </p>
 
@@ -381,14 +444,12 @@
                             >© {{ year }} PT Mitra Wira Mas. All rights
                             reserved.</span
                         >
-                        <div class="footer__links">
-                            <!-- <a href="#">Terms</a>
-                            <a href="#">Privacy</a> -->
-                        </div>
+                        <div class="footer__links"></div>
                     </div>
                 </div>
             </footer>
         </main>
+
         <Modal v-if="showLokerModal" @close="closeDetailLoker" size="lg">
             <div class="loker-modal">
                 <div class="loker-modal__header">
@@ -496,11 +557,6 @@
                 </div>
             </div>
         </Modal>
-        <!-- <PelamarApplyForm
-            :loker="lokerDetail"
-            @close="closeDetailLoker"
-            @submitted="closeDetailLoker"
-        /> -->
     </div>
 </template>
 
@@ -508,13 +564,15 @@
 import Modal from '@/components/Modal.vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import PelamarApplyForm from './PelamarApplyForm.vue';
+
 export default {
     name: 'LandingPage',
-    components: { Modal, PelamarApplyForm },
+    components: { Modal },
+
     data() {
         return {
-            // ✅ Inertia safe: ambil dari public/assets (jangan import)
+            showSuccess: true,
+            showError: true,
             heroImage: '/assets/hero-team.jpg',
             founderImage: '/assets/founder.jpg',
             companyLogo: '/assets/images/logo_baru.png',
@@ -535,7 +593,6 @@ export default {
             loadingLanding: true,
             errorLanding: null,
 
-            // ✅ Mitra logos dari public/assets
             mitraLogos: [
                 '/assets/mitra/mitra-1.jpg',
                 '/assets/mitra/mitra-1.jpg',
@@ -546,7 +603,6 @@ export default {
                 '/assets/mitra/mitra-1.jpg',
             ],
 
-            // modal detail loker
             showLokerModal: false,
             lokerLoading: false,
             lokerDetail: null,
@@ -554,10 +610,18 @@ export default {
 
             activeHash: '#beranda',
 
-            // observers reference
             revealObs: null,
             spyObs: null,
         };
+    },
+
+    watch: {
+        '$page.props.flash.success'(val) {
+            this.showSuccess = !!val;
+        },
+        '$page.props.flash.error'(val) {
+            this.showError = !!val;
+        },
     },
 
     computed: {
@@ -575,7 +639,9 @@ export default {
             if (!min && !max) return 'Negosiasi';
             if (min && !max) return `${cur} ${this.formatRupiah(min)}+`;
             if (!min && max) return `${cur} s/d ${this.formatRupiah(max)}`;
-            return `${cur} ${this.formatRupiah(min)} - ${this.formatRupiah(max)}`;
+            return `${cur} ${this.formatRupiah(min)} - ${this.formatRupiah(
+                max,
+            )}`;
         },
 
         persyaratanList() {
@@ -591,16 +657,17 @@ export default {
         formatRupiah(num) {
             return new Intl.NumberFormat('id-ID').format(Number(num || 0));
         },
+
         setActive(hash) {
             this.activeHash = hash;
         },
+
         async fetchLandingData() {
             this.loadingLanding = true;
             this.errorLanding = null;
 
             try {
                 const res = await axios.get('/referensi/landing-page');
-
                 this.notes = res.data?.notes || [];
                 this.jobs = res.data?.jobs || [];
             } catch (err) {
@@ -610,6 +677,7 @@ export default {
                 this.loadingLanding = false;
             }
         },
+
         handleHashChange() {
             this.activeHash = window.location.hash || '#beranda';
         },
@@ -655,6 +723,7 @@ export default {
 
             sections.forEach((sec) => this.spyObs.observe(sec));
         },
+
         async openDetailLoker(slug) {
             this.showLokerModal = true;
             this.lokerLoading = true;
@@ -683,26 +752,12 @@ export default {
         klikLamar() {
             if (!this.lokerDetail) return;
 
-            // 1) jika ada link lamar
             if (this.lokerDetail.link_lamar) {
                 window.open(this.lokerDetail.link_lamar, '_blank');
                 return;
             }
 
-            // 2) fallback ke whatsapp
-            if (this.lokerDetail.whatsapp_kontak) {
-                const nomor = this.lokerDetail.whatsapp_kontak.replace(
-                    /\D/g,
-                    '',
-                );
-                const msg = encodeURIComponent(
-                    `Halo, saya ingin melamar posisi "${this.lokerDetail.judul}".`,
-                );
-                window.open(`https://wa.me/${nomor}?text=${msg}`, '_blank');
-                return;
-            }
-
-            alert('Kontak melamar belum tersedia.');
+            router.visit(`/landing/` + this.lokerDetail.id);
         },
 
         masukAplikasi() {
@@ -728,7 +783,10 @@ export default {
 </script>
 
 <style>
-:root {
+/* =========================================================
+   ✅ ISOLATION ROOT (PENTING: MENCEGAH BOCOR KE APPLY PAGE)
+========================================================= */
+.landing-root {
     --navy: #071a33;
     --navy2: #051225;
     --gold: #d6a33a;
@@ -741,17 +799,12 @@ export default {
 
     --shadow: 0 14px 38px rgba(10, 20, 40, 0.12);
     --radius: 18px;
-}
 
-* {
-    box-sizing: border-box;
-}
-html,
-body {
-    margin: 0;
-    padding: 0;
-}
-body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+
     font-family:
         'Inter',
         system-ui,
@@ -760,45 +813,41 @@ body {
         Roboto,
         Arial,
         sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.5;
 }
 
-a {
+/* Reset lokal */
+.landing-root * {
+    box-sizing: border-box;
+}
+.landing-root a {
     text-decoration: none;
     color: inherit;
 }
-img {
+.landing-root img {
     max-width: 100%;
     display: block;
 }
-
-/* ✅ icon size normalize */
-svg {
+.landing-root svg {
     width: 1em;
     height: 1em;
 }
 
 /* ✅ Content padding kiri-kanan 10% */
-.container {
+.landing-root .container {
     width: 100%;
     padding-left: 10%;
     padding-right: 10%;
 }
 
-section,
-footer {
+.landing-root section,
+.landing-root footer {
     scroll-margin-top: 90px;
-}
-html {
-    scroll-behavior: smooth;
 }
 
 /* =========================
    NAVBAR
 ========================= */
-.header {
+.landing-root .header-landing {
     position: sticky;
     top: 0;
     z-index: 99;
@@ -811,7 +860,7 @@ html {
     backdrop-filter: blur(10px);
 }
 
-.nav {
+.landing-root .nav {
     height: 72px;
     display: flex;
     align-items: center;
@@ -819,12 +868,12 @@ html {
     gap: 16px;
 }
 
-.brand {
+.landing-root .brand {
     display: flex;
     align-items: center;
     gap: 10px;
 }
-.brand__logo {
+.landing-root .brand__logo {
     width: 46px;
     height: 46px;
     object-fit: contain;
@@ -835,49 +884,26 @@ html {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
-.brand__mark {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    display: grid;
-    place-items: center;
-    background: rgba(214, 163, 58, 0.14);
-    color: var(--gold);
-    font-weight: 900;
-    letter-spacing: 0.5px;
-}
-.brand__text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.05;
-    color: #fff;
-}
-.brand__text small {
-    opacity: 0.75;
-    font-weight: 700;
-    letter-spacing: 0.22em;
-    font-size: 0.72rem;
-}
 
-.nav__menu {
+.landing-root .nav__menu {
     display: flex;
     align-items: center;
     gap: 16px;
 }
-.nav__link {
+.landing-root .nav__link {
     color: rgba(255, 255, 255, 0.75);
     font-weight: 700;
     font-size: 0.92rem;
     padding: 8px 4px;
     position: relative;
 }
-.nav__link:hover {
+.landing-root .nav__link:hover {
     color: #fff;
 }
-.nav__link.is-active {
+.landing-root .nav__link.is-active {
     color: #fff;
 }
-.nav__link.is-active::after {
+.landing-root .nav__link.is-active::after {
     content: '';
     position: absolute;
     left: 0;
@@ -891,7 +917,7 @@ html {
 /* =========================
    BUTTON
 ========================= */
-.btn {
+.landing-root .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -907,42 +933,42 @@ html {
         opacity 0.15s ease,
         background 0.15s ease;
 }
-.btn:hover {
+.landing-root .btn:hover {
     transform: translateY(-1px);
 }
-.btn:active {
+.landing-root .btn:active {
     transform: translateY(0);
     opacity: 0.92;
 }
 
-.btn--gold {
+.landing-root .btn--gold {
     background: var(--gold);
     color: #111;
     border-color: rgba(0, 0, 0, 0.08);
 }
-.btn--gold:hover {
+.landing-root .btn--gold:hover {
     background: var(--gold2);
 }
 
-.btn--outline {
+.landing-root .btn--outline {
     background: transparent;
     border-color: rgba(255, 255, 255, 0.25);
     color: rgba(255, 255, 255, 0.9);
 }
-.btn--outline:hover {
+.landing-root .btn--outline:hover {
     border-color: rgba(255, 255, 255, 0.4);
     color: #fff;
 }
 
-.btn--dark {
+.landing-root .btn--dark {
     background: var(--navy);
     color: #fff;
 }
-.btn--dark:hover {
+.landing-root .btn--dark:hover {
     background: var(--navy2);
 }
 
-.btn--sm {
+.landing-root .btn--sm {
     padding: 9px 12px;
     font-size: 0.9rem;
 }
@@ -950,7 +976,7 @@ html {
 /* =========================
    BLOCK STYLE
 ========================= */
-.block {
+.landing-root .block {
     background: var(--card);
     border: 1px solid rgba(10, 20, 40, 0.06);
     border-radius: var(--radius);
@@ -958,7 +984,7 @@ html {
     overflow: hidden;
 }
 
-.block__head {
+.landing-root .block__head {
     padding: 18px 18px 0;
     display: flex;
     align-items: flex-start;
@@ -966,28 +992,34 @@ html {
     gap: 12px;
 }
 
-.title {
+.landing-root .title {
     margin: 0;
     font-size: 1.15rem;
     font-weight: 900;
     letter-spacing: 0.02em;
 }
 
-.sub {
+.landing-root .sub {
     margin: 8px 0 0;
     color: rgba(15, 23, 42, 0.68);
     font-weight: 600;
     font-size: 0.92rem;
 }
 
-.content {
+.landing-root .content {
     padding: 18px;
+}
+
+.landing-root .paragraph {
+    margin: 0;
+    color: rgba(15, 23, 42, 0.72);
+    font-weight: 600;
 }
 
 /* =========================
    ✅ BANNER FULL HEIGHT
 ========================= */
-.banner {
+.landing-root .banner {
     width: 100%;
     min-height: calc(100svh - 72px);
     display: flex;
@@ -1003,13 +1035,13 @@ html {
     position: relative;
 }
 
-.banner__inner {
+.landing-root .banner__inner {
     padding: 44px 0;
     max-width: 820px;
     color: #fff;
 }
 
-.banner__kicker {
+.landing-root .banner__kicker {
     display: inline-block;
     font-weight: 900;
     letter-spacing: 0.22em;
@@ -1018,27 +1050,27 @@ html {
     margin-bottom: 10px;
 }
 
-.banner__title {
+.landing-root .banner__title {
     margin: 0 0 12px;
     font-size: clamp(1.9rem, 3.2vw, 2.8rem);
     line-height: 1.12;
     font-weight: 900;
 }
 
-.banner__desc {
+.landing-root .banner__desc {
     margin: 0 0 18px;
     color: rgba(255, 255, 255, 0.78);
     max-width: 64ch;
     font-weight: 600;
 }
 
-.banner__actions {
+.landing-root .banner__actions {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
 }
 
-.banner::after {
+.landing-root .banner::after {
     content: '';
     position: absolute;
     left: 0;
@@ -1051,22 +1083,22 @@ html {
 /* =========================
    GRID LAYOUT
 ========================= */
-.page {
+.landing-root .page {
     padding: 0px;
 }
 
-.row {
+.landing-root .row {
     margin-top: 16px;
     display: grid;
     gap: 16px;
 }
 
-.row--two {
+.landing-root .row--two {
     grid-template-columns: 1.35fr 0.65fr;
     align-items: stretch;
 }
 
-.row--split {
+.landing-root .row--split {
     grid-template-columns: 1fr 1fr;
     align-items: stretch;
 }
@@ -1074,7 +1106,7 @@ html {
 /* =========================
    SEJARAH SIMPLE
 ========================= */
-.mini-list {
+.landing-root .mini-list {
     margin: 12px 0 0;
     padding: 0;
     list-style: none;
@@ -1082,7 +1114,7 @@ html {
     gap: 10px;
 }
 
-.mini-list li {
+.landing-root .mini-list li {
     display: flex;
     gap: 10px;
     align-items: flex-start;
@@ -1092,18 +1124,18 @@ html {
     border: 1px solid rgba(214, 163, 58, 0.18);
 }
 
-.mini-list svg {
+.landing-root .mini-list svg {
     margin-top: 2px;
     color: rgba(214, 163, 58, 0.95);
 }
 
-.mini-list strong {
+.landing-root .mini-list strong {
     display: block;
     font-weight: 900;
     font-size: 0.95rem;
     margin-bottom: 2px;
 }
-.mini-list span {
+.landing-root .mini-list span {
     display: block;
     color: rgba(15, 23, 42, 0.7);
     font-weight: 600;
@@ -1113,35 +1145,35 @@ html {
 /* =========================
    FOTO PENDIRI
 ========================= */
-.photo {
+.landing-root .photo {
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
-.photo__wrap {
+.landing-root .photo__wrap {
     flex: 1;
     background: #0b1220;
     overflow: hidden;
 }
 
-.photo__wrap img {
+.landing-root .photo__wrap img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.photo__cap {
+.landing-root .photo__cap {
     padding: 14px 16px;
     border-top: 1px solid rgba(10, 20, 40, 0.08);
     background: #fff;
 }
-.photo__cap strong {
+.landing-root .photo__cap strong {
     display: block;
     font-weight: 900;
     margin-bottom: 3px;
 }
-.photo__cap span {
+.landing-root .photo__cap span {
     color: rgba(15, 23, 42, 0.65);
     font-weight: 700;
     font-size: 0.9rem;
@@ -1150,17 +1182,15 @@ html {
 /* =========================
    MITRA LOGO
 ========================= */
-.logos {
+.landing-root .logos {
     display: grid;
     gap: 12px;
     margin-top: 12px;
-
-    /* lebih lebar biar logo bisa besar */
     grid-template-columns: repeat(auto-fit, minmax(210px, 210px));
     justify-content: center;
 }
 
-.logo {
+.landing-root .logo {
     border: 1px solid rgba(10, 20, 40, 0.06);
     border-radius: 16px;
     background: #fff;
@@ -1173,7 +1203,7 @@ html {
         box-shadow 0.15s ease;
 }
 
-.logo img {
+.landing-root .logo img {
     width: 170px;
     max-height: 100px;
     object-fit: contain;
@@ -1182,12 +1212,12 @@ html {
     transition: 0.15s ease;
 }
 
-.logo:hover {
+.landing-root .logo:hover {
     transform: translateY(-4px);
     box-shadow: 0 18px 46px rgba(10, 20, 40, 0.14);
 }
 
-.logo:hover img {
+.landing-root .logo:hover img {
     filter: grayscale(0);
     opacity: 1;
 }
@@ -1195,13 +1225,13 @@ html {
 /* =========================
    PENGUMUMAN SIMPLE
 ========================= */
-.note {
+.landing-root .note {
     display: grid;
     gap: 12px;
     margin-top: 12px;
 }
 
-.note__item {
+.landing-root .note__item {
     padding: 14px 14px;
     border-radius: 16px;
     background: #fff;
@@ -1209,7 +1239,7 @@ html {
     box-shadow: 0 14px 34px rgba(10, 20, 40, 0.08);
 }
 
-.note__top {
+.landing-root .note__top {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1217,7 +1247,7 @@ html {
     margin-bottom: 6px;
 }
 
-.badge {
+.landing-root .badge {
     padding: 6px 10px;
     border-radius: 999px;
     background: rgba(214, 163, 58, 0.14);
@@ -1227,19 +1257,19 @@ html {
     color: rgba(15, 23, 42, 0.92);
 }
 
-.date {
+.landing-root .date {
     color: rgba(15, 23, 42, 0.55);
     font-weight: 800;
     font-size: 0.82rem;
 }
 
-.note__title {
+.landing-root .note__title {
     margin: 0 0 6px;
     font-weight: 900;
     font-size: 0.98rem;
 }
 
-.note__desc {
+.landing-root .note__desc {
     margin: 0;
     color: rgba(15, 23, 42, 0.68);
     font-weight: 600;
@@ -1249,13 +1279,13 @@ html {
 /* =========================
    LOKER
 ========================= */
-.jobs {
+.landing-root .jobs {
     display: grid;
     gap: 12px;
     margin-top: 12px;
 }
 
-.job {
+.landing-root .job {
     padding: 14px 14px;
     border-radius: 16px;
     background: #fff;
@@ -1266,12 +1296,12 @@ html {
         box-shadow 0.15s ease;
 }
 
-.job:hover {
+.landing-root .job:hover {
     transform: translateY(-4px);
     box-shadow: 0 18px 46px rgba(10, 20, 40, 0.14);
 }
 
-.job__top {
+.landing-root .job__top {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1279,13 +1309,13 @@ html {
     margin-bottom: 8px;
 }
 
-.job__title {
+.landing-root .job__title {
     margin: 0;
     font-weight: 900;
     font-size: 1rem;
 }
 
-.job__type {
+.landing-root .job__type {
     padding: 6px 10px;
     border-radius: 999px;
     background: rgba(7, 26, 51, 0.08);
@@ -1296,7 +1326,7 @@ html {
     white-space: nowrap;
 }
 
-.job__meta {
+.landing-root .job__meta {
     display: flex;
     flex-wrap: wrap;
     gap: 10px 14px;
@@ -1306,17 +1336,17 @@ html {
     margin-bottom: 10px;
 }
 
-.job__meta span {
+.landing-root .job__meta span {
     display: inline-flex;
     align-items: center;
     gap: 8px;
 }
 
-.job__meta svg {
+.landing-root .job__meta svg {
     color: rgba(214, 163, 58, 0.95);
 }
 
-.job__actions {
+.landing-root .job__actions {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
@@ -1326,7 +1356,7 @@ html {
 /* =========================
    ✅ FOOTER
 ========================= */
-.footer {
+.landing-root .footer {
     background: linear-gradient(180deg, #050b16, #030713);
     color: rgba(255, 255, 255, 0.88);
     border-top: 1px solid rgba(255, 255, 255, 0.07);
@@ -1337,29 +1367,29 @@ html {
     padding-bottom: 20px;
 }
 
-.footer__top {
+.landing-root .footer__top {
     padding: 34px 0 26px;
 }
 
-.footer__grid {
+.landing-root .footer__grid {
     display: grid;
     grid-template-columns: 1.2fr 1fr 1fr 1fr;
     gap: 22px;
     align-items: start;
 }
 
-.footer__brand {
+.landing-root .footer__brand {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.footer__brandRow {
+.landing-root .footer__brandRow {
     display: flex;
     align-items: center;
     gap: 10px;
 }
-.footer__logoImg {
+.landing-root .footer__logoImg {
     width: 56px;
     height: 56px;
     object-fit: contain;
@@ -1371,36 +1401,7 @@ html {
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.footer__logo {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: grid;
-    place-items: center;
-    background: rgba(214, 163, 58, 0.14);
-    color: var(--gold);
-    font-weight: 900;
-    letter-spacing: 0.5px;
-}
-
-.footer__brandText strong {
-    display: block;
-    color: #fff;
-    font-weight: 900;
-    line-height: 1.1;
-}
-
-.footer__brandText small {
-    display: block;
-    margin-top: 2px;
-    opacity: 0.7;
-    font-weight: 800;
-    letter-spacing: 0.18em;
-    font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.78);
-}
-
-.footer__desc {
+.landing-root .footer__desc {
     margin: 0;
     color: rgba(255, 255, 255, 0.72);
     font-weight: 600;
@@ -1408,7 +1409,7 @@ html {
     max-width: 40ch;
 }
 
-.footer__col h4 {
+.landing-root .footer__col h4 {
     margin: 0 0 12px;
     font-size: 0.95rem;
     letter-spacing: 0.08em;
@@ -1416,21 +1417,21 @@ html {
     color: rgba(255, 255, 255, 0.92);
 }
 
-.footer__col p,
-.footer__col a {
+.landing-root .footer__col p,
+.landing-root .footer__col a {
     margin: 0 0 8px;
     color: rgba(255, 255, 255, 0.72);
     font-weight: 600;
     font-size: 0.92rem;
     display: block;
 }
-.footer__col a:hover {
+.landing-root .footer__col a:hover {
     color: #fff;
     text-decoration: underline;
     text-underline-offset: 3px;
 }
 
-.footer__contactItem {
+.landing-root .footer__contactItem {
     display: flex;
     gap: 10px;
     align-items: flex-start;
@@ -1439,18 +1440,25 @@ html {
     font-weight: 600;
     font-size: 0.92rem;
 }
-.footer__contactItem svg {
+.landing-root .footer__contactItem svg {
     color: rgba(214, 163, 58, 0.95);
     margin-top: 2px;
 }
 
-.social {
+.landing-root .footer__socialText {
+    margin: 0 0 10px;
+    color: rgba(255, 255, 255, 0.72);
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+
+.landing-root .social {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
     margin-top: 6px;
 }
-.social a {
+.landing-root .social a {
     width: 40px;
     height: 40px;
     border-radius: 12px;
@@ -1463,12 +1471,12 @@ html {
         transform 0.15s ease,
         border-color 0.15s ease;
 }
-.social a:hover {
+.landing-root .social a:hover {
     transform: translateY(-2px);
     border-color: rgba(214, 163, 58, 0.6);
 }
 
-.footer__bottom {
+.landing-root .footer__bottom {
     border-top: 1px solid rgba(255, 255, 255, 0.07);
     padding: 14px 0;
     color: rgba(255, 255, 255, 0.55);
@@ -1476,7 +1484,7 @@ html {
     font-size: 0.86rem;
 }
 
-.footer__bottomRow {
+.landing-root .footer__bottomRow {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1484,26 +1492,10 @@ html {
     flex-wrap: wrap;
 }
 
-.footer__links {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-.footer__links a {
-    color: rgba(255, 255, 255, 0.55);
-    font-weight: 700;
-    font-size: 0.86rem;
-}
-.footer__links a:hover {
-    color: #fff;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-
 /* =========================
    REVEAL
 ========================= */
-.reveal {
+.landing-root .reveal {
     opacity: 0;
     transform: translateY(16px);
     filter: blur(1.5px);
@@ -1513,12 +1505,16 @@ html {
         filter 0.7s ease;
     transition-delay: calc(var(--d, 0) * 1ms);
 }
-.reveal.is-visible {
+.landing-root .reveal.is-visible {
     opacity: 1;
     transform: translateY(0);
     filter: blur(0);
 }
-.loker-modal__header {
+
+/* =========================
+   MODAL DETAIL
+========================= */
+.landing-root .loker-modal__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1526,12 +1522,12 @@ html {
     border-bottom: 1px solid rgba(15, 23, 42, 0.08);
 }
 
-.loker-modal__title {
+.landing-root .loker-modal__title {
     font-weight: 900;
     font-size: 1rem;
 }
 
-.loker-modal__close {
+.landing-root .loker-modal__close {
     width: 36px;
     height: 36px;
     border-radius: 10px;
@@ -1542,23 +1538,23 @@ html {
     line-height: 1;
 }
 
-.loker-modal__body {
+.landing-root .loker-modal__body {
     padding: 16px 18px;
 }
 
-.loker-detail__judul {
+.landing-root .loker-detail__judul {
     margin: 0 0 10px;
     font-weight: 900;
 }
 
-.loker-detail__meta {
+.landing-root .loker-detail__meta {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
     margin-bottom: 12px;
 }
 
-.pill {
+.landing-root .pill {
     padding: 6px 10px;
     border-radius: 999px;
     background: rgba(7, 26, 51, 0.08);
@@ -1567,7 +1563,7 @@ html {
     font-size: 0.82rem;
 }
 
-.loker-detail__info {
+.landing-root .loker-detail__info {
     display: grid;
     gap: 6px;
     color: rgba(15, 23, 42, 0.75);
@@ -1575,106 +1571,244 @@ html {
     margin-bottom: 12px;
 }
 
-.loker-detail__section {
+.landing-root .loker-detail__section {
     margin-top: 14px;
 }
 
-.sec-title {
+.landing-root .sec-title {
     font-weight: 900;
     margin-bottom: 6px;
 }
 
-.sec-text {
+.landing-root .sec-text {
     color: rgba(15, 23, 42, 0.75);
     font-weight: 600;
 }
 
-.preline {
+.landing-root .preline {
     white-space: pre-line;
 }
 
-.req-list {
+.landing-root .req-list {
     margin: 0;
     padding-left: 18px;
     color: rgba(15, 23, 42, 0.75);
     font-weight: 650;
 }
 
-.loker-detail__actions {
+.landing-root .loker-detail__actions {
     margin-top: 16px;
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
 }
 
-.error-state {
+/* States */
+.landing-root .error-state {
     color: #b91c1c;
     font-weight: 800;
 }
+.landing-root .empty-state {
+    color: rgba(15, 23, 42, 0.55);
+    font-weight: 700;
+    padding: 10px 0 0;
+}
+
+.landing-root .loading-state {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(15, 23, 42, 0.65);
+    font-weight: 700;
+}
+.landing-root .spinner {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(15, 23, 42, 0.2);
+    border-top-color: rgba(15, 23, 42, 0.7);
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* =========================
    RESPONSIVE
 ========================= */
 @media (max-width: 1100px) {
-    .footer__grid {
+    .landing-root .footer__grid {
         grid-template-columns: 1.2fr 1fr 1fr;
     }
 }
 
 @media (max-width: 980px) {
-    .row--two {
+    .landing-root .row--two {
         grid-template-columns: 1fr;
     }
-    .row--split {
+    .landing-root .row--split {
         grid-template-columns: 1fr;
     }
-    .logos {
+    .landing-root .logos {
         grid-template-columns: repeat(3, 1fr);
     }
-    .nav__menu {
+    .landing-root .nav__menu {
         display: none;
     }
 
-    .container {
+    .landing-root .container {
         padding-left: 6%;
         padding-right: 6%;
     }
 
-    .footer__grid {
+    .landing-root .footer__grid {
         grid-template-columns: 1fr 1fr;
     }
 }
 
 @media (max-width: 560px) {
-    .logos {
+    .landing-root .logos {
         grid-template-columns: repeat(auto-fit, minmax(170px, 170px));
     }
 
-    .logo img {
+    .landing-root .logo img {
         width: 150px;
         max-height: 58px;
     }
 
-    .container {
+    .landing-root .container {
         padding-left: 5%;
         padding-right: 5%;
     }
 
-    .footer__grid {
+    .landing-root .footer__grid {
         grid-template-columns: 1fr;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    * {
+    .landing-root * {
         transition: none !important;
     }
-    .reveal {
+    .landing-root .reveal {
         opacity: 1;
         transform: none;
         filter: none;
     }
-    html {
-        scroll-behavior: auto;
-    }
+}
+
+.alert {
+    width: 100%;
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+
+    font-family: Arial, sans-serif;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+    margin-bottom: 12px;
+}
+
+.alert-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0; /* penting biar text bisa wrap */
+}
+
+.alert-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+.alert-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.alert-title {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.alert-msg {
+    font-size: 12px;
+    opacity: 0.9;
+    word-break: break-word;
+    white-space: normal;
+}
+
+/* close button */
+.alert-close {
+    flex: 0 0 auto;
+
+    width: 28px;
+    height: 28px;
+
+    border: 1px solid #d1d5db;
+    background: #fff;
+    border-radius: 8px;
+
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: 0.15s ease;
+}
+
+.alert-close:hover {
+    background: #f3f4f6;
+}
+
+.alert-close:active {
+    transform: scale(0.98);
+}
+
+/* SUCCESS */
+.alert-success {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.alert-success .alert-icon {
+    background: #22c55e;
+    color: #fff;
+}
+
+/* ERROR */
+.alert-error {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #7f1d1d;
+}
+
+.alert-error .alert-icon {
+    background: #ef4444;
+    color: #fff;
 }
 </style>

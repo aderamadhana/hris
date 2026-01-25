@@ -181,14 +181,17 @@
                     <select
                         class="chart-dropdown"
                         v-model="filters.kontrakHabis"
-                        @change="fetchStats"
+                        @change="handleFilterChange"
                     >
                         <option value="7">7 hari ke depan</option>
                         <option value="30">30 hari ke depan</option>
                     </select>
                 </div>
                 <div class="chart-container">
-                    <canvas ref="kontrakHampirHabisChart"></canvas>
+                    <canvas
+                        ref="kontrakHampirHabisChart"
+                        :key="'kontrak-' + filters.kontrakHabis"
+                    ></canvas>
                 </div>
             </div>
 
@@ -200,7 +203,7 @@
                         class="chart-dropdown"
                         v-model="filters.perusahaanSelected"
                         :settings="{ width: '40%' }"
-                        @change="fetchStats"
+                        @change="handleFilterChange"
                     >
                         <option value="">Pilih</option>
                         <option
@@ -213,7 +216,10 @@
                     </Select2>
                 </div>
                 <div class="chart-container">
-                    <canvas ref="departmentChart"></canvas>
+                    <canvas
+                        ref="departmentChart"
+                        :key="'dept-' + filters.perusahaanSelected"
+                    ></canvas>
                 </div>
             </div>
         </div>
@@ -573,6 +579,12 @@ export default defineComponent({
             };
         },
 
+        // Handle filter change - destroy charts before fetching
+        async handleFilterChange() {
+            this.destroyCharts();
+            await this.fetchStats();
+        },
+
         // Load Chart.js once, return a promise
         loadChartJS() {
             if (typeof Chart !== 'undefined') return Promise.resolve();
@@ -713,6 +725,11 @@ export default defineComponent({
 
             // Trend Chart
             if (this.$refs.employeeTrendChart) {
+                // Destroy chart lama jika ada
+                if (this.charts.trend) {
+                    this.charts.trend.destroy();
+                }
+
                 this.charts.trend = new Chart(this.$refs.employeeTrendChart, {
                     type: 'line',
                     data: {
@@ -756,6 +773,11 @@ export default defineComponent({
 
             // Status Chart
             if (this.$refs.employeeStatusChart) {
+                // Destroy chart lama jika ada
+                if (this.charts.status) {
+                    this.charts.status.destroy();
+                }
+
                 this.charts.status = new Chart(this.$refs.employeeStatusChart, {
                     type: 'doughnut',
                     data: {
@@ -779,8 +801,13 @@ export default defineComponent({
                 });
             }
 
-            // Recruitment Chart
+            // Recruitment Chart (Kontrak Hampir Habis)
             if (this.$refs.kontrakHampirHabisChart) {
+                // Destroy chart lama jika ada
+                if (this.charts.recruitment) {
+                    this.charts.recruitment.destroy();
+                }
+
                 this.charts.recruitment = new Chart(
                     this.$refs.kontrakHampirHabisChart,
                     {
@@ -834,6 +861,11 @@ export default defineComponent({
 
             // Department Chart
             if (this.$refs.departmentChart) {
+                // Destroy chart lama jika ada
+                if (this.charts.department) {
+                    this.charts.department.destroy();
+                }
+
                 this.charts.department = new Chart(this.$refs.departmentChart, {
                     type: 'bar',
                     data: {

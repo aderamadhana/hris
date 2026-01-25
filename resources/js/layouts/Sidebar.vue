@@ -172,7 +172,7 @@ const fiturBelumTersedia = () => {
                             <span>Payroll</span>
                         </Link>
 
-                        <Link
+                        <!-- <Link
                             href="/hr/surat-peringatan"
                             class="sidebar-subitem"
                             :class="{
@@ -180,7 +180,7 @@ const fiturBelumTersedia = () => {
                             }"
                         >
                             <span>Surat Peringatan</span>
-                        </Link>
+                        </Link> -->
                         <Link
                             href="/hr/shift"
                             class="sidebar-subitem"
@@ -220,7 +220,7 @@ const fiturBelumTersedia = () => {
                                 ),
                             }"
                         >
-                            <span>Client Aktif</span>
+                            <span>Client</span>
                         </Link>
                     </div>
                 </transition>
@@ -408,14 +408,14 @@ const fiturBelumTersedia = () => {
                 <span class="label">Riwayat Kontrak</span>
             </Link>
 
-            <Link
+            <!-- <Link
                 href="/surat-peringatan"
                 class="sidebar-item"
                 :class="{ active: path.startsWith('/surat-peringatan') }"
             >
                 <font-awesome-icon icon="triangle-exclamation" class="icon" />
                 <span class="label">Surat Peringatan</span>
-            </Link>
+            </Link> -->
         </nav>
     </aside>
 </template>

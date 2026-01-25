@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
+use App\Models\Loker;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\PresensiLogController;
 use App\Http\Controllers\LokerController;
 use App\Http\Controllers\PengumumanController;
+use App\Http\Controllers\LamaranController;
 
 use App\Http\Controllers\Masters\PayrollPeriodController;
 use App\Http\Controllers\Masters\PerusahaanController;
@@ -28,8 +30,18 @@ Route::middleware('guest')->group(function () {
     Route::get('/landing', function () {
         return Inertia::render('Welcome');
     })->name('/landing');
+
+    Route::get('/landing/{id}', function ($id) {
+        $loker = Loker::findOrFail($id);
+
+        return Inertia::render('PelamarApplyForm', [
+            'loker' => $loker
+        ]);
+    });
+
     Route::post('/login', [LoginController::class, 'store'])->name('login.store');
     Route::get('/reset-to-default', [LoginController::class, 'resetPasswordToDefault']);
+    Route::post('/apply/{loker}', [LamaranController::class, 'store'])->name('lamaran.store');
 });
 
 // Authenticated routes (untuk user yang sudah login)

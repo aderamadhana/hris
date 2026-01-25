@@ -90,6 +90,13 @@
                                 Memproses...
                             </span>
                         </button>
+                        <button
+                            class="btn-outline"
+                            type="button"
+                            @click="goToLanding()"
+                        >
+                            <span>Kembali ke Halaman Utama</span>
+                        </button>
                     </form>
 
                     <p class="footer-note">
@@ -105,6 +112,7 @@
 </template>
 
 <script>
+import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 
 export default {
@@ -119,6 +127,9 @@ export default {
     },
 
     methods: {
+        goToLanding() {
+            router.visit(`/landing`);
+        },
         async handleLogin() {
             this.processing = true;
             this.errors = {};
@@ -476,6 +487,7 @@ small {
 /* button utama */
 .btn-login {
     margin-top: 12px;
+    margin-bottom: 12px;
     width: 100%;
     padding: 11px 14px;
     border-radius: 999px;
@@ -525,7 +537,7 @@ small {
     border: 1px solid #d1d5db;
     background: #ffffff;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     color: #111827;
     cursor: pointer;
     display: inline-flex;
