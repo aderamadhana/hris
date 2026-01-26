@@ -17,6 +17,7 @@ use App\Http\Controllers\PresensiLogController;
 use App\Http\Controllers\LokerController;
 use App\Http\Controllers\PengumumanController;
 use App\Http\Controllers\LamaranController;
+use App\Http\Controllers\LogAktifitasController;
 
 use App\Http\Controllers\Masters\PayrollPeriodController;
 use App\Http\Controllers\Masters\PerusahaanController;
@@ -282,11 +283,14 @@ Route::middleware('auth')->group(function () {
         });
         Route::get('/presensi/all', [PresensiLogController::class, 'index']);
         Route::post('/presensi/{id}/update-status', [PresensiLogController::class, 'updateStatus']);
-
         
-        Route::get('/aktivitas', function () {
-            return Inertia::render('UnderDeveloping');
+        Route::get('/aktifitas', function () {
+            return Inertia::render('log-aktifitas/all-log_aktifitas');
         });
+        Route::get('/aktifitas/all', [LogAktifitasController::class, 'index']);
+        Route::get('/aktifitas/recent', [LogAktifitasController::class, 'recentActivities']);
+        Route::post('/aktifitas/store', [LogAktifitasController::class, 'storeActivities']);
+        Route::put('/aktifitas/update/{id}', [LogAktifitasController::class, 'updateActivities']);
     });
 
     Route::prefix('admin')->group(function () {
@@ -349,6 +353,7 @@ Route::middleware('auth')->group(function () {
 
 Route::prefix('referensi')->group(function () {
     Route::get('/get-payroll_periods', [ReferensiController::class, 'getPayrollPeriod']);
+    Route::get('/get-aktifitas', [ReferensiController::class, 'getAktifitas']);
     Route::get('/get-filter_perusahaan_dan_jabatan', [ReferensiController::class, 'getFilterPerusahaanDanJabatan']);
     Route::get('/get-payroll-periods-by-employee-id/{id}', [ReferensiController::class, 'getPayrollPeriodByEmployeeId']);
     Route::get('/perusahaan-terakhir/{employeeId}', [ReferensiController::class, 'getPerusahaanTerakhir']);

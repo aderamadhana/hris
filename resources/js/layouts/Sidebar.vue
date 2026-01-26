@@ -252,10 +252,10 @@ const fiturBelumTersedia = () => {
                         </Link>
 
                         <Link
-                            href="/logs/aktivitas"
+                            href="/logs/aktifitas"
                             class="sidebar-subitem"
                             :class="{
-                                active: path.startsWith('/logs/aktivitas'),
+                                active: path.startsWith('/logs/aktifitas'),
                             }"
                         >
                             <span>Data Aktivitas</span>

@@ -10,7 +10,8 @@ use App\Models\{
     Shift,
     Perusahaan,
     Loker,
-    Pengumuman
+    Pengumuman,
+    Aktifitas
 };
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -362,6 +363,16 @@ class ReferensiController extends Controller
             'link_lamar' => $loker->link_lamar,
             'whatsapp_kontak' => $loker->whatsapp_kontak,
             'tanggal_publish' => optional($loker->tanggal_publish)->format('d M Y'),
+        ]);
+    }
+
+    public function getAktifitas()
+    {
+        $loker = Aktifitas::get();
+        return response()->json([
+            'success' => true,
+            'message' => 'Data aktifitas berhasil diambil',
+            'data' => $loker,
         ]);
     }
 

@@ -82,6 +82,9 @@ import {
     faPhone,
     faPaperPlane,
     faEnvelope,
+    faCheckCircle,
+    faExclamationCircle,
+    faClipboardList
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -163,7 +166,10 @@ library.add(
     faEnvelope,
     faInstagram,
     faLinkedin,
-    faFacebook
+    faFacebook,
+    faCheckCircle,
+    faExclamationCircle,
+    faClipboardList
 )
 
 createInertiaApp({
