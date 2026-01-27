@@ -169,94 +169,77 @@
 
                                     <td>
                                         <div class="presensi-cell">
-                                            <div>
-                                                <div>
-                                                    Shift:
-                                                    {{
-                                                        item.data_presensi
-                                                            ?.nama_shift || '-'
-                                                    }}
-                                                    <template
-                                                        v-if="
-                                                            toHHMM(
-                                                                item
-                                                                    .data_presensi
-                                                                    ?.jam_masuk,
-                                                            ) &&
-                                                            toHHMM(
-                                                                item
-                                                                    .data_presensi
-                                                                    ?.jam_pulang,
-                                                            )
-                                                        "
+                                            <!-- Meta -->
+                                            <div class="presensi-meta">
+                                                <div class="meta-row">
+                                                    <span class="meta-label"
+                                                        >Shift</span
                                                     >
-                                                        ({{
-                                                            toHHMM(
-                                                                item
-                                                                    .data_presensi
-                                                                    .jam_masuk,
-                                                            )
-                                                        }}
-                                                        -
-                                                        {{
-                                                            toHHMM(
-                                                                item
-                                                                    .data_presensi
-                                                                    .jam_pulang,
-                                                            )
-                                                        }})
-                                                    </template>
-
-                                                    <span
-                                                        v-if="
-                                                            item.data_presensi
-                                                                ?.jam_shift_masuk &&
-                                                            item.data_presensi
-                                                                ?.jam_shift_pulang
-                                                        "
-                                                    >
-                                                        ({{
-                                                            item.data_presensi
-                                                                .jam_shift_masuk
-                                                        }}
-                                                        -
+                                                    <span class="meta-value">
                                                         {{
                                                             item.data_presensi
-                                                                .jam_shift_pulang
-                                                        }})
+                                                                ?.nama_shift ||
+                                                            '-'
+                                                        }}
+                                                        <template
+                                                            v-if="
+                                                                item
+                                                                    .data_presensi
+                                                                    ?.jam_masuk &&
+                                                                item
+                                                                    .data_presensi
+                                                                    ?.jam_pulang
+                                                            "
+                                                        >
+                                                            ({{
+                                                                toHHMM(
+                                                                    item
+                                                                        .data_presensi
+                                                                        .jam_masuk,
+                                                                )
+                                                            }}
+                                                            -
+                                                            {{
+                                                                toHHMM(
+                                                                    item
+                                                                        .data_presensi
+                                                                        .jam_pulang,
+                                                                )
+                                                            }})
+                                                        </template>
+                                                        <template
+                                                            v-else-if="
+                                                                item
+                                                                    .data_presensi
+                                                                    ?.jam_shift_masuk &&
+                                                                item
+                                                                    .data_presensi
+                                                                    ?.jam_shift_pulang
+                                                            "
+                                                        >
+                                                            ({{
+                                                                item
+                                                                    .data_presensi
+                                                                    .jam_shift_masuk
+                                                            }}
+                                                            -
+                                                            {{
+                                                                item
+                                                                    .data_presensi
+                                                                    .jam_shift_pulang
+                                                            }})
+                                                        </template>
                                                     </span>
                                                 </div>
 
-                                                <div>
-                                                    In:
-                                                    {{
-                                                        item.data_presensi
-                                                            ?.clock_in || '-'
-                                                    }}
-                                                </div>
-                                                <div>
-                                                    Out:
-                                                    {{
-                                                        item.data_presensi
-                                                            ?.clock_out || '-'
-                                                    }}
-                                                </div>
-
-                                                <div>
-                                                    Durasi:
-                                                    <span
-                                                        v-if="
-                                                            item.data_presensi
-                                                                ?.total_jam_kerja_hhmm
-                                                        "
+                                                <div class="meta-row">
+                                                    <span class="meta-label"
+                                                        >Durasi</span
                                                     >
+                                                    <span class="meta-value">
                                                         {{
                                                             item.data_presensi
-                                                                .total_jam_kerja_hhmm
-                                                        }}
-                                                    </span>
-                                                    <span v-else>
-                                                        {{
+                                                                ?.total_jam_kerja_hhmm ||
                                                             item.data_presensi
                                                                 ?.durasi_label ||
                                                             '-'
@@ -265,29 +248,163 @@
                                                 </div>
                                             </div>
 
-                                            <div class="presensi-photos">
-                                                <img
-                                                    v-if="
-                                                        item.data_presensi
-                                                            ?.foto_masuk_url
-                                                    "
-                                                    :src="
-                                                        item.data_presensi
-                                                            .foto_masuk_url
-                                                    "
-                                                    class="thumb"
-                                                />
-                                                <img
-                                                    v-if="
-                                                        item.data_presensi
-                                                            ?.foto_pulang_url
-                                                    "
-                                                    :src="
-                                                        item.data_presensi
-                                                            .foto_pulang_url
-                                                    "
-                                                    class="thumb"
-                                                />
+                                            <!-- IN / OUT -->
+                                            <div class="presensi-io">
+                                                <!-- IN -->
+                                                <div class="io-card">
+                                                    <div class="io-head">
+                                                        <span class="io-title"
+                                                            >IN</span
+                                                        >
+                                                        <span class="io-time">{{
+                                                            item.data_presensi
+                                                                ?.clock_in ||
+                                                            '-'
+                                                        }}</span>
+
+                                                        <button
+                                                            v-if="
+                                                                hasInData(item)
+                                                            "
+                                                            class="io-btn danger"
+                                                            @click="
+                                                                deleteIO(
+                                                                    item,
+                                                                    'in',
+                                                                )
+                                                            "
+                                                            :disabled="
+                                                                deletingIO[
+                                                                    item.id
+                                                                ]?.in
+                                                            "
+                                                            title="Hapus data IN"
+                                                        >
+                                                            <font-awesome-icon
+                                                                v-if="
+                                                                    deletingIO[
+                                                                        item.id
+                                                                    ]?.in
+                                                                "
+                                                                icon="spinner"
+                                                                spin
+                                                            />
+                                                            <font-awesome-icon
+                                                                v-else
+                                                                icon="trash"
+                                                            />
+                                                        </button>
+                                                    </div>
+
+                                                    <div class="io-body">
+                                                        <img
+                                                            v-if="
+                                                                item
+                                                                    .data_presensi
+                                                                    ?.foto_masuk_url
+                                                            "
+                                                            :src="
+                                                                item
+                                                                    .data_presensi
+                                                                    .foto_masuk_url
+                                                            "
+                                                            class="thumb zoomable"
+                                                            alt="Foto masuk"
+                                                            @click="
+                                                                openPreview(
+                                                                    item
+                                                                        .data_presensi
+                                                                        .foto_masuk_url,
+                                                                    'Foto Masuk',
+                                                                )
+                                                            "
+                                                        />
+                                                        <div
+                                                            v-else
+                                                            class="thumb placeholder"
+                                                        >
+                                                            Tidak ada foto
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- OUT -->
+                                                <div class="io-card">
+                                                    <div class="io-head">
+                                                        <span class="io-title"
+                                                            >OUT</span
+                                                        >
+                                                        <span class="io-time">{{
+                                                            item.data_presensi
+                                                                ?.clock_out ||
+                                                            '-'
+                                                        }}</span>
+
+                                                        <button
+                                                            v-if="
+                                                                hasOutData(item)
+                                                            "
+                                                            class="io-btn danger"
+                                                            @click="
+                                                                deleteIO(
+                                                                    item,
+                                                                    'out',
+                                                                )
+                                                            "
+                                                            :disabled="
+                                                                deletingIO[
+                                                                    item.id
+                                                                ]?.out
+                                                            "
+                                                            title="Hapus data OUT"
+                                                        >
+                                                            <font-awesome-icon
+                                                                v-if="
+                                                                    deletingIO[
+                                                                        item.id
+                                                                    ]?.out
+                                                                "
+                                                                icon="spinner"
+                                                                spin
+                                                            />
+                                                            <font-awesome-icon
+                                                                v-else
+                                                                icon="trash"
+                                                            />
+                                                        </button>
+                                                    </div>
+
+                                                    <div class="io-body">
+                                                        <img
+                                                            v-if="
+                                                                item
+                                                                    .data_presensi
+                                                                    ?.foto_pulang_url
+                                                            "
+                                                            :src="
+                                                                item
+                                                                    .data_presensi
+                                                                    .foto_pulang_url
+                                                            "
+                                                            class="thumb zoomable"
+                                                            alt="Foto pulang"
+                                                            @click="
+                                                                openPreview(
+                                                                    item
+                                                                        .data_presensi
+                                                                        .foto_pulang_url,
+                                                                    'Foto Pulang',
+                                                                )
+                                                            "
+                                                        />
+                                                        <div
+                                                            v-else
+                                                            class="thumb placeholder"
+                                                        >
+                                                            Tidak ada foto
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -377,11 +494,35 @@
                 </div>
             </div>
         </section>
+
+        <Modal size="lg" v-if="preview.open">
+            <div class="modal-header">
+                <h3>Preview</h3>
+                <button class="modal-close" @click="closePreview">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <img
+                        :src="preview.src"
+                        class="img-modal-img"
+                        :alt="preview.title"
+                    />
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <Button variant="secondary" @click="closePreview">
+                    Tutup
+                </Button>
+            </div>
+        </Modal>
     </AppLayout>
 </template>
 
 <script>
 import Button from '@/components/Button.vue';
+import Modal from '@/components/Modal.vue';
 import Select2 from '@/components/Select2.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
@@ -389,7 +530,7 @@ import { Link } from '@inertiajs/vue3';
 import axios from 'axios';
 
 export default {
-    components: { AppLayout, Button, Link, Select2 },
+    components: { AppLayout, Button, Link, Select2, Modal },
 
     data() {
         return {
@@ -412,6 +553,8 @@ export default {
             filtered_tanggal_absen: '',
             showFilters: false,
             loadingStatus: {},
+            deletingIO: {},
+            preview: { open: false, src: '', title: '' },
         };
     },
 
@@ -659,9 +802,84 @@ export default {
                 this.loadingStatus = { ...this.loadingStatus }; // Trigger reactivity
             }
         },
-    },
+        hasInData(item) {
+            const p = item.data_presensi;
+            return !!(p?.clock_in || p?.foto_masuk_url);
+        },
+        hasOutData(item) {
+            const p = item.data_presensi;
+            return !!(p?.clock_out || p?.foto_pulang_url);
+        },
 
+        async deleteIO(item, part) {
+            // part: 'in' | 'out'
+            if (!item?.id) return;
+
+            const label = part === 'in' ? 'IN' : 'OUT';
+            const ok = window.confirm(
+                `Hapus data ${label} untuk ${item.nama_karyawan} (${item.tanggal})?`,
+            );
+            if (!ok) return;
+
+            if (!this.deletingIO[item.id])
+                this.deletingIO[item.id] = { in: false, out: false };
+            this.deletingIO[item.id][part] = true;
+
+            try {
+                // Pilih salah satu pola API:
+
+                // A) Endpoint khusus delete bagian:
+                // await axios.delete(`/api/presensi/${item.id}/${part}`);
+
+                // B) PATCH null-kan field:
+                const payload =
+                    part === 'in'
+                        ? { clock_in: null, foto_masuk_url: null }
+                        : { clock_out: null, foto_pulang_url: null };
+
+                await axios.patch(`/api/presensi/${item.id}`, payload);
+
+                // Update UI lokal (tanpa reload)
+                if (!item.data_presensi) item.data_presensi = {};
+                if (part === 'in') {
+                    item.data_presensi.clock_in = null;
+                    item.data_presensi.foto_masuk_url = null;
+                } else {
+                    item.data_presensi.clock_out = null;
+                    item.data_presensi.foto_pulang_url = null;
+                }
+
+                // Kalau durasi dihitung dari in/out, biasanya perlu refresh dari server.
+                // Minimal: null-kan tampilan durasi agar tidak misleading.
+                item.data_presensi.total_jam_kerja_hhmm = null;
+                item.data_presensi.durasi_label = '-';
+            } catch (e) {
+                console.error(e);
+                alert('Gagal menghapus data. Cek log / response API.');
+            } finally {
+                this.deletingIO[item.id][part] = false;
+            }
+        },
+        openPreview(src, title = '') {
+            if (!src) return;
+            this.preview = { open: true, src, title };
+            document.body.style.overflow = 'hidden';
+        },
+        closePreview() {
+            this.preview.open = false;
+            this.preview.src = '';
+            this.preview.title = '';
+            document.body.style.overflow = '';
+        },
+    },
+    beforeUnmount() {
+        window.removeEventListener('keydown', this._onEsc);
+    },
     mounted() {
+        this._onEsc = (e) => {
+            if (e.key === 'Escape') this.closePreview();
+        };
+        window.addEventListener('keydown', this._onEsc);
         this.fetchAbsensi();
 
         this.getFilteredPerusahaanDanJabatan();

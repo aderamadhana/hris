@@ -4,7 +4,7 @@
             <!-- HEADER -->
             <div class="page-header">
                 <div>
-                    <h2 class="page-title">Edit Data Karyawan</h2>
+                    <h2 class="page-title">Edit Profil</h2>
                     <p class="page-subtitle">
                         Ubah profil, pendidikan, pekerjaan, keluarga, kesehatan,
                         dan kelengkapan dokumen.
@@ -751,19 +751,6 @@
 
                                     <div class="form-group">
                                         <label class="field-label"
-                                            >No. Kontrak User</label
-                                        >
-                                        <input
-                                            type="text"
-                                            v-model="
-                                                formPekerjaan.no_kontrak_user
-                                            "
-                                            class="form-input"
-                                        />
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="field-label"
                                             >Jenis Kontrak</label
                                         >
                                         <select
@@ -961,13 +948,6 @@
                                                     >No. Kontrak:
                                                     {{
                                                         job.no_kontrak || '-'
-                                                    }}</span
-                                                >
-                                                <span class="chip"
-                                                    >No. Kontrak User:
-                                                    {{
-                                                        job.no_kontrak_user ||
-                                                        '-'
                                                     }}</span
                                                 >
                                                 <span
@@ -1636,13 +1616,10 @@ import Select2 from '@/components/Select2.vue';
 import Tabs from '@/components/Tabs.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
-import { router, usePage } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 
 export default {
-    props: {
-        employee_id: String,
-    },
     components: { AppLayout, Tabs, Select2 },
 
     setup() {
@@ -1684,7 +1661,6 @@ export default {
             editKeluargaIndex: null,
             originalPerusahaan: null,
             originalNoKontrak: '',
-            originalNoKontrakUser: '',
             originalBagian: '',
             mode: 'create',
             // ===== FORM STATE =====
@@ -1734,7 +1710,6 @@ export default {
                 perusahaan: '',
                 bagian: '',
                 no_kontrak: '',
-                no_kontrak_user: '',
                 cost_center: '',
                 jenis_kontrak: '',
                 mulai: '',
@@ -1964,7 +1939,7 @@ export default {
             this.loading = true;
             try {
                 const { data } = await axios.get(
-                    `/employee/${this.employee_id}`,
+                    `/employee/${this.user.employee_id}`,
                 );
 
                 // ===============================
@@ -2025,7 +2000,6 @@ export default {
                     perusahaan: j.perusahaan ?? '',
                     bagian: j.penempatan ?? '',
                     no_kontrak: j.no_kontrak ?? '',
-                    no_kontrak_user: j.no_kontrak_user ?? '',
                     cost_center: j.cost_center ?? '',
                     jenis_kontrak: j.jenis_kontrak ?? '',
                     mulai: j.tgl_awal_kerja ?? '',
@@ -2188,8 +2162,6 @@ export default {
             // baseline edit
             this.originalPerusahaan = this.formPekerjaan.perusahaan ?? null;
             this.originalNoKontrak = this.formPekerjaan.no_kontrak ?? '';
-            this.originalNoKontrakUser =
-                this.formPekerjaan.no_kontrak_user ?? '';
             this.originalBagian = this.formPekerjaan.bagian ?? '';
 
             this.prevPerusahaan = this.formPekerjaan.perusahaan;
@@ -2376,7 +2348,6 @@ export default {
                             jabatan: job.jabatan,
                             penempatan: job.bagian,
                             no_kontrak: job.no_kontrak,
-                            no_kontrak_user: job.no_kontrak_user,
                             cost_center: job.cost_center,
                             jenis_kontrak: job.jenis_kontrak,
                             tgl_awal_kerja: job.mulai,
@@ -2472,7 +2443,7 @@ export default {
                 }
 
                 await axios.post(
-                    `/employee/store-edit/${this.employee_id}`,
+                    `/employee/store-edit/${this.user.employee_id}`,
                     formData,
                     {
                         headers: { 'Content-Type': 'multipart/form-data' },
@@ -2480,7 +2451,7 @@ export default {
                 );
 
                 triggerAlert('success', 'Semua data berhasil disimpan!');
-                router.visit(`/hr/karyawan`);
+                // router.visit(`/hr/karyawan`);
             } catch (error) {
                 if (axios.isAxiosError(error) && error.response) {
                     if (error.response.status === 422) {
@@ -2582,7 +2553,6 @@ export default {
                 perusahaan: '',
                 bagian: '',
                 no_kontrak: '',
-                no_kontrak_user: '',
                 cost_center: '',
                 jenis_kontrak: '',
                 mulai: '',

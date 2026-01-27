@@ -152,9 +152,31 @@
         table tbody tr:first-child {
             page-break-before: avoid;
         }
+        .doc-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .doc-card { width: 90%; border: 1px solid #ddd; padding: 8px; box-sizing: border-box; margin: 0 auto; }
+        .doc-label { font-weight: bold; margin-bottom: 6px; }
+        .doc-img { width: 100%; height: auto; max-height: 260px; object-fit: contain; }
+        .doc-file, .doc-empty { font-size: 12px; color: #444; }
     </style>
 </head>
 <body>
+    @php
+        use Illuminate\Support\Facades\Storage;
+
+        // $documents dari controller: 'documents' => $employee->documents
+        $docFields = [
+            'pas_foto' => 'Pas Foto',
+            'dokumen_ktp' => 'KTP',
+            'dokumen_kk' => 'Kartu Keluarga',
+            'dokumen_skck' => 'SKCK',
+            'dokumen_ijazah_terakhir' => 'Ijazah Terakhir',
+            'dokumen_surat_pengalaman_kerja' => 'Surat Pengalaman Kerja',
+            'dokumen_bpjs_ketenagakerjaan' => 'BPJS Ketenagakerjaan',
+            'dokumen_formulir_bpjs_kesehatan' => 'Formulir BPJS Kesehatan',
+            'dokumen_sio_forklift' => 'SIO Forklift',
+            'dokumen_lisensi' => 'Lisensi',
+        ];
+    @endphp
     <div class="container">
         {{-- Header --}}
         <div class="header no-break">
@@ -476,6 +498,33 @@
                     <div class="info-label">Ukuran Sepatu / Seragam</div>
                     <div class="info-value">{{ $employee->shoe_size ?? '-' }} / {{ $employee->uniform_size ?? '-' }}</div>
                 </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">DOKUMEN</div>
+
+            <div class="doc-grid">
+                @foreach ($docFields as $field => $label)
+                    @php
+                        $relPath = data_get($documents, $field); // contoh: employee_documents/64/xxx.png
+                        $ext = $relPath ? strtolower(pathinfo($relPath, PATHINFO_EXTENSION)) : null;
+                        $isImage = in_array($ext, ['jpg','jpeg','png','webp']);
+                        $absPath = $relPath ? Storage::disk('public')->path($relPath) : null; // absolute path
+                    @endphp
+
+                    <div class="doc-card">
+                        <div class="doc-label">{{ $label }}</div>
+
+                        @if ($relPath && $isImage && file_exists($absPath))
+                            <img src="file://{{ $absPath }}" class="doc-img" alt="{{ $label }}">
+                        @elseif ($relPath)
+                            <div class="doc-file">{{ basename($relPath) }}</div>
+                        @else
+                            <div class="doc-empty">-</div>
+                        @endif
+                    </div>
+                @endforeach
             </div>
         </div>
 

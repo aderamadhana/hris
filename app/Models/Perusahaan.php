@@ -22,10 +22,10 @@ class Perusahaan extends Model
         'status',
     ];
 
-    protected $casts = [
-        'tanggal_awal_mou' => 'date:Y-m-d',
-        'tanggal_akhir_mou' => 'date:Y-m-d',
-    ];
+    // protected $casts = [
+    //     'tanggal_awal_mou' => 'date:Y-m-d',
+    //     'tanggal_akhir_mou' => 'date:Y-m-d',
+    // ];
 
     // Relationships
     public function divisi()

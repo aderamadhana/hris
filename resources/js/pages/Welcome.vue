@@ -133,29 +133,36 @@
                         <div class="block__head">
                             <div>
                                 <h2 class="title">
-                                    Sejarah Perusahaan & Nama Pendiri
+                                    Sejarah Perusahaan & Pendiri
                                 </h2>
                                 <p class="sub">
-                                    Simple, singkat, dan fokus ke kredibilitas.
+                                    <!-- Simple, singkat, dan fokus ke kredibilitas. -->
                                 </p>
                             </div>
                         </div>
 
                         <div class="content">
                             <p class="paragraph">
-                                PT Mitra Wira Mas berdiri untuk menjawab
-                                kebutuhan perusahaan akan SDM yang siap kerja,
-                                disiplin, dan sesuai SOP.
+                                <strong>PT. Mitra Wira Mas</strong> didirikan
+                                pada tahun 2007 oleh Bapak Alm. H. Jasiman untuk
+                                memenuhi kebutuhan pemborongan pekerjaan oleh
+                                sebuah perusahaan besar di kota tersebut.
+                                Merupakan perusahaan alih daya di indonesia yang
+                                menyediakan berbagai layanan sesuai kebutuhan
+                                anda. Solusi tepat untuk mendukung kebutuhan
+                                bisnis anda.
                             </p>
 
                             <ul class="mini-list">
                                 <li>
                                     <font-awesome-icon icon="check" />
                                     <div>
-                                        <strong>Pendiri: Nama Pendiri</strong>
+                                        <strong>Fokus</strong>
                                         <span
-                                            >Berfokus pada kualitas SDM dan SOP
-                                            kerja.</span
+                                            >Perusahaan dapat fokus pada bisnis
+                                            inti (core business) sehingga tidak
+                                            perlu merisaukan resiko terkait
+                                            permassalahan ketenagakerjaan</span
                                         >
                                     </div>
                                 </li>
@@ -163,10 +170,15 @@
                                 <li>
                                     <font-awesome-icon icon="check" />
                                     <div>
-                                        <strong>Penempatan</strong>
+                                        <strong
+                                            >Kualitas terstandarisasi</strong
+                                        >
                                         <span
-                                            >Area Jabodetabek dan
-                                            sekitarnya.</span
+                                            >Perusahaan bisa memastikan bahwa
+                                            tugas tertentu dilakukan dengan baik
+                                            dan sesuai dengan standar industri
+                                            dengan mempercayakan tugas kepada
+                                            perusahaan jasa outsourcing.</span
                                         >
                                     </div>
                                 </li>
@@ -174,11 +186,58 @@
                                 <li>
                                     <font-awesome-icon icon="check" />
                                     <div>
-                                        <strong>Komitmen</strong>
+                                        <strong>Kontrol dan Komunikasi</strong>
                                         <span
-                                            >Administrasi rapi dan kontrol
-                                            rutin.</span
-                                        >
+                                            >Perusahaan dapat memastikan bahwa
+                                            tugas yang dipercayakan kepada
+                                            perusahaan jasa outsourcing
+                                            dilaksanakan sesuai dengan harapan
+                                            dan standar yang ditetapkan. Hal ini
+                                            dilakukan dengan menjaga komunikasi
+                                            antara perusahaan dan perusahaan
+                                            outsourcing.
+                                        </span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <font-awesome-icon icon="check" />
+                                    <div>
+                                        <strong>Responsif</strong>
+                                        <span
+                                            >Perusahaan dapat merespon kebutuhan
+                                            pasar atau perubahan situasi bisnis
+                                            dengan lebih cepat.
+                                        </span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <font-awesome-icon icon="check" />
+                                    <div>
+                                        <strong
+                                            >Efisiensi dan fleksibilitas
+                                        </strong>
+                                        <span
+                                            >Perusahaan bisa meningkatkan
+                                            efisiensi dan fleksibilitas dengan
+                                            mempercayakan tugas tertentu kepada
+                                            perusahaan jasa outsourcing, karena
+                                            perusahaan jasa outsourcing sudah
+                                            memiliki spesialisasi dan pengalaman
+                                            yang dibutuhkan.
+                                        </span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <font-awesome-icon icon="check" />
+                                    <div>
+                                        <strong>Menghemat biaya </strong>
+                                        <span
+                                            >Perusahaan bisa menghemat biaya
+                                            dengan mempercayakan tugas tertentu
+                                            kepada perusahaan jasa outsourcing,
+                                            contohnya penghematan dan
+                                            pengendalian biaya operasional.
+                                        </span>
                                     </div>
                                 </li>
                             </ul>
@@ -194,8 +253,8 @@
                             />
                         </div>
                         <div class="photo__cap">
-                            <strong>Nama Pendiri</strong>
-                            <span>Founder / Direktur</span>
+                            <strong>Alm. H. Jasiman</strong>
+                            <span>Founder PT. Mitra Wira Mas </span>
                         </div>
                     </div>
                 </section>
@@ -203,27 +262,46 @@
                 <!-- MITRA -->
                 <section id="mitra" class="row">
                     <div class="reveal block" style="--d: 90">
-                        <div class="block__head">
+                        <div class="block__head head-row">
                             <div>
                                 <h2 class="title">
-                                    Logo Perusahaan yang Bekerja Sama
+                                    Perusahaan yang Bekerja Sama
                                 </h2>
                                 <p class="sub">
-                                    Isi logo mitra/klien untuk meningkatkan
-                                    trust.
+                                    Mitra & klien yang telah mempercayai kami
                                 </p>
                             </div>
                         </div>
 
                         <div class="content">
-                            <div class="logos">
-                                <div
-                                    class="logo"
-                                    v-for="(logo, i) in mitraLogos"
-                                    :key="i"
+                            <div class="logo-strip">
+                                <Swiper
+                                    class="logo-swiper"
+                                    :modules="modules"
+                                    :loop="true"
+                                    :speed="10000"
+                                    :autoplay="{
+                                        delay: 0,
+                                        disableOnInteraction: false,
+                                        pauseOnMouseEnter: true,
+                                    }"
+                                    :slides-per-view="'auto'"
+                                    :space-between="28"
                                 >
-                                    <img :src="logo" :alt="`Mitra ${i + 1}`" />
-                                </div>
+                                    <SwiperSlide
+                                        v-for="(logo, i) in mitraLogos"
+                                        :key="i"
+                                        class="logo-slide"
+                                    >
+                                        <div class="logo-chip">
+                                            <img
+                                                :src="logo"
+                                                :alt="`Mitra ${i + 1}`"
+                                                loading="lazy"
+                                            />
+                                        </div>
+                                    </SwiperSlide>
+                                </Swiper>
                             </div>
                         </div>
                     </div>
@@ -235,7 +313,7 @@
                         <div class="block__head">
                             <div>
                                 <h2 class="title">Pengumuman</h2>
-                                <p class="sub">Ringkas dan gampang dibaca.</p>
+                                <!-- <p class="sub">Ringkas dan gampang dibaca.</p> -->
                             </div>
                         </div>
 
@@ -564,17 +642,24 @@
 import Modal from '@/components/Modal.vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
+import 'swiper/css';
+import { Autoplay } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/vue';
 
 export default {
     name: 'LandingPage',
     components: { Modal },
-
+    components: { Swiper, SwiperSlide },
+    props: {
+        mitraLogos: { type: Array, required: true },
+    },
     data() {
         return {
+            modules: [Autoplay],
             showSuccess: true,
             showError: true,
             heroImage: '/assets/hero-team.jpg',
-            founderImage: '/assets/founder.jpg',
+            founderImage: '/assets/founder.png',
             companyLogo: '/assets/images/logo_baru.png',
 
             year: new Date().getFullYear(),
@@ -594,15 +679,21 @@ export default {
             errorLanding: null,
 
             mitraLogos: [
-                '/assets/mitra/mitra-1.jpg',
-                '/assets/mitra/mitra-1.jpg',
-                '/assets/mitra/mitra-1.jpg',
-                '/assets/mitra/mitra-1.jpg',
-                '/assets/mitra/mitra-1.jpg',
-                '/assets/mitra/mitra-1.jpg',
-                '/assets/mitra/mitra-1.jpg',
+                '/assets/mitra/mitra-1.PNG',
+                '/assets/mitra/mitra-2.PNG',
+                '/assets/mitra/mitra-3.PNG',
+                '/assets/mitra/mitra-4.PNG',
+                '/assets/mitra/mitra-5.PNG',
+                '/assets/mitra/mitra-6.PNG',
+                '/assets/mitra/mitra-7.PNG',
+                '/assets/mitra/mitra-8.PNG',
+                '/assets/mitra/mitra-9.PNG',
+                '/assets/mitra/mitra-10.PNG',
+                '/assets/mitra/mitra-11.PNG',
+                '/assets/mitra/mitra-12.PNG',
+                '/assets/mitra/mitra-13.PNG',
+                '/assets/mitra/mitra-14.PNG',
             ],
-
             showLokerModal: false,
             lokerLoading: false,
             lokerDetail: null,
@@ -1810,5 +1901,98 @@ export default {
 .alert-error .alert-icon {
     background: #ef4444;
     color: #fff;
+}
+
+/* Biar tinggi section tidak kebanyakan kosong */
+#mitra .block {
+    padding: 22px 24px;
+}
+
+/* Header lebih rapih */
+#mitra .head-row {
+    margin-bottom: 14px;
+}
+#mitra .title {
+    margin: 0;
+    line-height: 1.2;
+}
+#mitra .sub {
+    margin: 8px 0 0;
+    opacity: 0.8;
+}
+
+/* Strip container + fade edges (kesan premium) */
+.logo-strip {
+    position: relative;
+    padding: 14px 8px;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    background: rgba(255, 255, 255, 0.7);
+    overflow: hidden;
+}
+
+/* Fade kiri/kanan */
+.logo-strip::before,
+.logo-strip::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 64px;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+.logo-strip::before {
+    left: 0;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 1),
+        rgba(255, 255, 255, 0)
+    );
+}
+.logo-strip::after {
+    right: 0;
+    background: linear-gradient(
+        to left,
+        rgba(255, 255, 255, 1),
+        rgba(255, 255, 255, 0)
+    );
+}
+
+/* Swiper: auto scroll “continuous” */
+.logo-swiper .swiper-wrapper {
+    transition-timing-function: linear !important;
+}
+.logo-slide {
+    width: auto !important;
+}
+
+/* Chip logo (bukan kotak besar) */
+.logo-chip {
+    height: 150px;
+    min-width: 200px; /* stabil */
+    padding: 10px 16px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Logo: konsisten tinggi, tidak dipaksa jadi kotak */
+.logo-chip img {
+    height: 100px;
+    max-width: 140px;
+    width: auto;
+    object-fit: contain;
+    /* filter: grayscale(100%); */
+    opacity: 0.72;
+    transition: 180ms ease;
+}
+
+.logo-chip:hover img {
+    /* filter: grayscale(0%); */
+    opacity: 1;
+    transform: translateY(-1px);
 }
 </style>

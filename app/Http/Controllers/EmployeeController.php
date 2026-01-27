@@ -901,6 +901,7 @@ class EmployeeController extends Controller
                             'tgl_daftar' => date('Y-m-d'),
                             'penempatan' => $job['penempatan'] ?? null,
                             'no_kontrak' => $job['no_kontrak'] ?? null,
+                            'no_kontrak_user' => $job['no_kontrak_user'] ?? null,
                             'cost_center' => $job['cost_center'] ?? null,
                             'jenis_kontrak' => $job['jenis_kontrak'] ?? null,
                             'tgl_awal_kerja' => $job['tgl_awal_kerja'] ?? null,

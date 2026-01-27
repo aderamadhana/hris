@@ -51,6 +51,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profil/{id}', [EmployeeController::class, 'profil']);
+    Route::get('/profil/edit-profil/{id}', function () {
+        return Inertia::render('admin/hr/karyawan/edit-profil');
+    });
     Route::get('/change-password', [EmployeeController::class, 'changePassword']);
     Route::post('/proses-change-password', [EmployeeController::class, 'prosesChangePassword']);
 

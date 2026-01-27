@@ -37,6 +37,42 @@
                 </div>
             </div>
 
+            <!-- RINGKASAN -->
+            <div class="overview-row">
+                <div class="overview-card primary">
+                    <div class="card-content">
+                        <div class="card-left">
+                            <div class="overview-label">Total Aktif</div>
+                            <div class="overview-value">
+                                {{ statistics.total_all_active }}
+                            </div>
+                            <div class="overview-badge positive">
+                                <span>●</span> Terdaftar
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <font-awesome-icon icon="users" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overview-card danger">
+                    <div class="card-content">
+                        <div class="card-left">
+                            <div class="overview-label">Total Tidak Aktif</div>
+                            <div class="overview-value">
+                                {{ statistics.total_all_non_active }}
+                            </div>
+                            <div class="overview-badge warning">
+                                <span>●</span> Perlu Tindakan
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <font-awesome-icon icon="file-contract" />
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Toolbar -->
             <div class="dt-toolbar-mobile">
                 <!-- Row 1: Length & Search -->
@@ -246,6 +282,7 @@ export default {
             search: '',
             status: 'aktif',
             items: [],
+            statistics: [],
             loading: false,
             isDownloading: false,
             isDownloadingClient: false,
@@ -300,6 +337,7 @@ export default {
 
                 this.items = res.data.data;
                 this.currentPage = res.data.meta.current_page;
+                this.statistics = res.data.statistics;
                 this.totalItems = res.data.meta.total;
                 this.totalPages = res.data.meta.last_page;
             } catch (e) {

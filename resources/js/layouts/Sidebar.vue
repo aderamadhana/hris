@@ -399,14 +399,14 @@ const fiturBelumTersedia = () => {
                 <span class="label">Slip Gaji</span>
             </Link>
 
-            <Link
+            <!-- <Link
                 href="/riwayat-kontrak"
                 class="sidebar-item"
                 :class="{ active: path.startsWith('/riwayat-kontrak') }"
             >
                 <font-awesome-icon icon="file-contract" class="icon" />
                 <span class="label">Riwayat Kontrak</span>
-            </Link>
+            </Link> -->
 
             <!-- <Link
                 href="/surat-peringatan"

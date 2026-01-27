@@ -4,7 +4,10 @@
             <!-- HEADER -->
             <div class="page-header">
                 <div>
-                    <h2 class="page-title">Detail Karyawan</h2>
+                    <h2 class="page-title" v-if="user.role_id == 2">
+                        Profil Karyawan
+                    </h2>
+                    <h2 class="page-title" v-else>Detail Karyawan</h2>
                     <p class="page-subtitle">
                         Ringkasan profil, riwayat pendidikan, pekerjaan,
                         keluarga, dan kesehatan karyawan.
@@ -874,10 +877,11 @@ export default {
             var id = null;
             if (this.user.role_id == 2) {
                 id = this.user.employee.id;
+                router.visit(`/profil/edit-profil/${id}`);
             } else {
                 id = window.location.pathname.split('/').pop();
+                router.visit(`/hr/karyawan/edit-karyawan/${id}`);
             }
-            router.visit(`/hr/karyawan/edit-karyawan/${id}`);
         },
         openPayslip() {
             var id = null;
