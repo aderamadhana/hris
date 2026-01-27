@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latestF
 
     steps:
       # 1. Checkout repository
@@ -54,7 +54,7 @@ jobs:
             npm run build
 
             echo "===> Laravel optimize & migrate"
-            php artisan migrate --force
+            # php artisan migrate --force
             php artisan optimize:clear
             php artisan optimize
 
