@@ -554,11 +554,10 @@
                     <div class="form-row">
                         <div class="form-group form-group-half">
                             <label for="jam-masuk" class="form-label">
-                                Jam Masuk
+                                Waktu Mulai
                             </label>
                             <input
                                 id="jam-masuk"
-                                readonly
                                 v-model="activityForm.jam_masuk"
                                 type="time"
                                 class="form-input"
@@ -567,11 +566,10 @@
 
                         <div class="form-group form-group-half">
                             <label for="jam-pulang" class="form-label">
-                                Jam Pulang
+                                Waktu Selesai
                             </label>
                             <input
                                 id="jam-pulang"
-                                readonly
                                 v-model="activityForm.jam_pulang"
                                 type="time"
                                 class="form-input"

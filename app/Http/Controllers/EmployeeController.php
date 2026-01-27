@@ -1223,4 +1223,21 @@ class EmployeeController extends Controller
             ], 500);
         }
     }
+    
+    public function resetPassword($id)
+    {
+        $employee = Employee::findOrFail($id);
+        $user = User::where('employee_id', $employee->id)->first();
+
+        if (!$user) {
+            return back()->with('error', 'Password karyawan gagal direset');
+        }
+
+        // UPDATE PASSWORD
+        $user->password = Hash::make($employee->no_ktp);
+        $user->save();
+
+        return back()->with('success', 'Password karyawan berhasil direset');
+    }
+
 }

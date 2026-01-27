@@ -11,6 +11,17 @@
                 </div>
             </div>
         </div>
+        <div v-if="isLoadingResetPassword" class="fullpage-loader">
+            <div class="fullpage-loader__card">
+                <div class="fullpage-loader__spinner"></div>
+                <div class="fullpage-loader__title">
+                    Loading reset password karyawan...
+                </div>
+                <div class="fullpage-loader__subtitle">
+                    Mohon tunggu sebentar
+                </div>
+            </div>
+        </div>
         <section class="page employees-page">
             <!-- HEADER + ACTIONS -->
             <div class="page-header">
@@ -242,6 +253,7 @@
                                     </th>
                                     <th class="col-status">Awal Kontrak</th>
                                     <th class="col-status">Akhir Kontrak</th>
+                                    <th class="col-status">Konfig Password</th>
                                     <th class="col-action">Detail</th>
                                 </tr>
                             </thead>
@@ -335,6 +347,18 @@
                                     <td>{{ u.position }}</td>
                                     <td>{{ u.awal_kontrak }}</td>
                                     <td>{{ u.akhir_kontrak }}</td>
+                                    <td class="col-actions">
+                                        <div class="actions-wrap">
+                                            <Button
+                                                variant="danger"
+                                                title="Lihat Detail Karyawan"
+                                                @click="resetPassword(u)"
+                                            >
+                                                <font-awesome-icon icon="key" />
+                                                Reset Password
+                                            </Button>
+                                        </div>
+                                    </td>
 
                                     <td class="col-actions">
                                         <div class="actions-wrap">
@@ -690,6 +714,7 @@ export default {
             showFilters: false,
             contractExpired: false,
             isLoadingNonAktif: false,
+            isLoadingResetPassword: false,
         };
     },
 
@@ -886,6 +911,22 @@ export default {
         },
         openPayslip(id) {
             router.visit(`/hr/karyawan/daftar-gaji/${id}`);
+        },
+        resetPassword(u) {
+            if (!confirm(`Reset password ${u.name}?`)) return;
+            this.isLoadingResetPassword = true;
+
+            router.post(
+                `/hr/karyawan/reset-password/${u.id}`,
+                {},
+                {
+                    onSuccess: () => {
+                        triggerAlert('success', 'Password berhasil di reset.');
+                        this.fetchEmployees(1);
+                        this.isLoadingResetPassword = false;
+                    },
+                },
+            );
         },
         deleteUser(u) {
             if (!confirm(`Nonaktifkan ${u.name}?`)) return;

@@ -376,4 +376,14 @@ class ReferensiController extends Controller
         ]);
     }
 
+    public function getKaryawan()
+    {
+        $employee = Employee::select('id','shift_id','nama')->where('status_active', 1)->whereNotIn('id', [1,2])->get();
+        return response()->json([
+            'success' => true,
+            'message' => 'Data karyawan berhasil diambil',
+            'data' => $employee,
+        ]);
+    }
+
 }

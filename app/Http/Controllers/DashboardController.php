@@ -169,13 +169,14 @@ class DashboardController extends Controller
      */
     private function getPelamarMasuk($days = 7)
     {
-        // Jika sudah ada Model Applicant:
-        /*
-        $dateLimit = Carbon::now()->subDays($days);
-        return Applicant::where('created_at', '>=', $dateLimit)->count();
-        */
-        
-        return 0; // Sementara return 0
+         $dateLimit = Carbon::now()->subDays($days)->startOfDay();
+
+        return Employee::query()
+            ->where('status_active', 0)
+            ->whereHas('currentEmployment', function ($q) use ($dateLimit) {
+                $q->whereDate('tgl_daftar', '>=', $dateLimit);
+            })
+            ->count();
     }
 
     /**

@@ -12,28 +12,21 @@ use App\Models\LogAktifitas;
 use App\Models\Employee;
 use App\Models\Aktifitas;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\LogAktifitasExport;
 
 class LogAktifitasController extends Controller
 {
     public function index(Request $request)
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Query Params dari FE
-        |--------------------------------------------------------------------------
-        */
         $search              = trim((string) $request->query('search'));
         $status              = $request->query('status'); // reserved
         $jabatanId           = $request->query('filtered_jabatan');     // ID
         $perusahaanId        = $request->query('filtered_perusahaan');  // ID
-        $tanggal             = $request->query('filtered_tanggal_absen');
+        $tanggalDari   = $request->query('filtered_tanggal_dari');
+        $tanggalSampai = $request->query('filtered_tanggal_sampai');
         $perPage             = min((int) $request->query('per_page', 10), 100);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Resolve ID → NAMA (PENTING)
-        |--------------------------------------------------------------------------
-        */
         $jabatanName = null;
         $perusahaanName = null;
 
@@ -45,11 +38,6 @@ class LogAktifitasController extends Controller
             $perusahaanName = Perusahaan::where('id', $perusahaanId)->value('nama_perusahaan');
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Base Query
-        |--------------------------------------------------------------------------
-        */
         $query = LogAktifitas::query()
             ->with([
                 'employee:id,nama',
@@ -57,12 +45,7 @@ class LogAktifitasController extends Controller
             ])
             ->orderByDesc('tgl')
             ->orderByDesc('created_at');
-
-        /*
-        |--------------------------------------------------------------------------
-        | SEARCH (nama karyawan / kode kerja)
-        |--------------------------------------------------------------------------
-        */
+        
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('kode_kerja', 'like', "%{$search}%")
@@ -72,58 +55,28 @@ class LogAktifitasController extends Controller
             });
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | FILTER TANGGAL
-        |--------------------------------------------------------------------------
-        */
-        if ($tanggal) {
-            $query->whereDate('tgl', $tanggal);
+        if ($tanggalDari && $tanggalSampai) {
+            $query->whereBetween('tgl', [$tanggalDari, $tanggalSampai]);
+        } elseif ($tanggalDari) {
+            $query->whereDate('tgl', '>=', $tanggalDari);
+        } elseif ($tanggalSampai) {
+            $query->whereDate('tgl', '<=', $tanggalSampai);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | FILTER JABATAN (pakai NAMA dari employment)
-        |--------------------------------------------------------------------------
-        */
         if ($jabatanName) {
             $query->whereHas('employee.currentEmployment', function ($q) use ($jabatanName) {
                 $q->where('penempatan', $jabatanName);
             });
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | FILTER PERUSAHAAN (pakai NAMA dari employment)
-        |--------------------------------------------------------------------------
-        */
         if ($perusahaanName) {
             $query->whereHas('employee.currentEmployment', function ($q) use ($perusahaanName) {
                 $q->where('perusahaan', $perusahaanName);
             });
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | STATUS (tidak dipakai – disiapkan kalau nanti ada approval)
-        |--------------------------------------------------------------------------
-        */
-        // if ($status) {
-        //     ...
-        // }
-
-        /*
-        |--------------------------------------------------------------------------
-        | PAGINATION
-        |--------------------------------------------------------------------------
-        */
         $paginator = $query->paginate($perPage);
 
-        /*
-        |--------------------------------------------------------------------------
-        | TRANSFORM (sesuai <tbody>)
-        |--------------------------------------------------------------------------
-        */
         $items = collect($paginator->items())->map(function ($item) {
             $employment = $item->employee->currentEmployment;
 
@@ -131,11 +84,14 @@ class LogAktifitasController extends Controller
                 'id' => $item->id,
 
                 'tanggal' => optional($item->tgl)->format('d M Y'),
+                'tanggal_aktifitas' => optional($item->tgl)->format('Y-m-d'),
+                'id_karyawan' => $item->employee->id ?? '-',
 
                 'nama_karyawan' => $item->employee->nama ?? '-',
 
                 'nama_perusahaan' => $employment->perusahaan ?? '-',
                 'nama_divisi'     => $employment->penempatan ?? '-',
+                'rincian'     => $item,
 
                 'data_aktifitas' => [
                     'kode_kerja' => $item->kode_kerja,
@@ -164,11 +120,6 @@ class LogAktifitasController extends Controller
             ];
         });
 
-        /*
-        |--------------------------------------------------------------------------
-        | RESPONSE (FORMAT SESUAI FE)
-        |--------------------------------------------------------------------------
-        */
         return response()->json([
             'data' => $items,
             'meta' => [
@@ -379,6 +330,7 @@ class LogAktifitasController extends Controller
             'tgl'             => ['required', 'date'],
             'shift'           => ['required', 'integer'],
             'aktifitas_id'    => ['required', 'exists:aktifitas,id'],
+            'employee_id'    => ['required', 'integer'],
 
             'jam_masuk'       => ['nullable', 'date_format:H:i:s'],
             'jam_pulang'      => ['nullable', 'date_format:H:i:s'],
@@ -416,6 +368,7 @@ class LogAktifitasController extends Controller
             $log->update([
                 'tgl'             => $validated['tgl'],
                 'shift'           => $validated['shift'],
+                'employee_id'    => $validated['employee_id'],
                 'aktifitas_id'    => $validated['aktifitas_id'],
 
                 'jam_masuk'       => $validated['jam_masuk'] ?? null,
@@ -457,6 +410,21 @@ class LogAktifitasController extends Controller
                 'error'   => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
+    }
+
+    
+    public function downloadAktifitas(Request $request){
+        $status = $request->input('status');
+        $search = $request->input('search');
+        $filtered_jabatan = $request->input('filtered_jabatan');
+        $filtered_perusahaan = $request->input('filtered_perusahaan');
+        $filtered_tanggal_dari = $request->input('filtered_tanggal_dari');
+        $filtered_tanggal_sampai = $request->input('filtered_tanggal_sampai');
+
+        return Excel::download(
+            new LogAktifitasExport($search,$status, $filtered_jabatan, $filtered_perusahaan, $filtered_tanggal_dari, $filtered_tanggal_sampai),
+            'log_aktifitas.xlsx'
+        );
     }
 
 }

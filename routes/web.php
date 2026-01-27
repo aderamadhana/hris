@@ -75,6 +75,7 @@ Route::middleware('auth')->group(function () {
                 ]);
             });
             Route::post('/non-aktif/{id}', [EmployeeController::class, 'nonAktif']);
+            Route::post('/reset-password/{id}', [EmployeeController::class, 'resetPassword']);
             Route::post('/shift/{id}', [EmployeeController::class, 'changeShift']);
         });
 
@@ -239,6 +240,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/payroll', [PayrollController::class, 'downloadPayroll']);
         Route::get('/presensi', [PresensiController::class, 'downloadPresensi']);
         Route::get('/client', [PerusahaanController::class, 'downloadPerusahaan']);
+        Route::get('/aktifitas', [LogAktifitasController::class, 'downloadAktifitas']);
     });
 
 
@@ -362,6 +364,7 @@ Route::prefix('referensi')->group(function () {
     Route::post('/generate-no-kontrak', [ReferensiController::class, 'generateNoKontrak']);
     Route::get('/landing-page', [ReferensiController::class, 'getLandingPage']);
     Route::get('/landing-page/loker/{slug}', [ReferensiController::class, 'getDetailLoker']);
+    Route::get('/karyawan', [ReferensiController::class, 'getKaryawan']);
 });
 
 
