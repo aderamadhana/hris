@@ -143,104 +143,20 @@
 
                         <div class="content">
                             <p class="paragraph">
-                                <strong>PT. Mitra Wira Mas</strong> didirikan
-                                pada tahun 2007 oleh Bapak Alm. H. Jasiman untuk
-                                memenuhi kebutuhan pemborongan pekerjaan oleh
-                                sebuah perusahaan besar di kota tersebut.
-                                Merupakan perusahaan alih daya di indonesia yang
-                                menyediakan berbagai layanan sesuai kebutuhan
-                                anda. Solusi tepat untuk mendukung kebutuhan
-                                bisnis anda.
+                                <strong>Lorem Ipsum</strong> is simply dummy
+                                text of the printing and typesetting industry.
+                                Lorem Ipsum has been the industry's standard
+                                dummy text ever since the 1500s, when an unknown
+                                printer took a galley of type and scrambled it
+                                to make a type specimen book. It has survived
+                                not only five centuries, but also the leap into
+                                electronic typesetting, remaining essentially
+                                unchanged. It was popularised in the 1960s with
+                                the release of Letraset sheets containing Lorem
+                                Ipsum passages, and more recently with desktop
+                                publishing software like Aldus PageMaker
+                                including versions of Lorem Ipsum.
                             </p>
-
-                            <ul class="mini-list">
-                                <li>
-                                    <font-awesome-icon icon="check" />
-                                    <div>
-                                        <strong>Fokus</strong>
-                                        <span
-                                            >Perusahaan dapat fokus pada bisnis
-                                            inti (core business) sehingga tidak
-                                            perlu merisaukan resiko terkait
-                                            permassalahan ketenagakerjaan</span
-                                        >
-                                    </div>
-                                </li>
-
-                                <li>
-                                    <font-awesome-icon icon="check" />
-                                    <div>
-                                        <strong
-                                            >Kualitas terstandarisasi</strong
-                                        >
-                                        <span
-                                            >Perusahaan bisa memastikan bahwa
-                                            tugas tertentu dilakukan dengan baik
-                                            dan sesuai dengan standar industri
-                                            dengan mempercayakan tugas kepada
-                                            perusahaan jasa outsourcing.</span
-                                        >
-                                    </div>
-                                </li>
-
-                                <li>
-                                    <font-awesome-icon icon="check" />
-                                    <div>
-                                        <strong>Kontrol dan Komunikasi</strong>
-                                        <span
-                                            >Perusahaan dapat memastikan bahwa
-                                            tugas yang dipercayakan kepada
-                                            perusahaan jasa outsourcing
-                                            dilaksanakan sesuai dengan harapan
-                                            dan standar yang ditetapkan. Hal ini
-                                            dilakukan dengan menjaga komunikasi
-                                            antara perusahaan dan perusahaan
-                                            outsourcing.
-                                        </span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <font-awesome-icon icon="check" />
-                                    <div>
-                                        <strong>Responsif</strong>
-                                        <span
-                                            >Perusahaan dapat merespon kebutuhan
-                                            pasar atau perubahan situasi bisnis
-                                            dengan lebih cepat.
-                                        </span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <font-awesome-icon icon="check" />
-                                    <div>
-                                        <strong
-                                            >Efisiensi dan fleksibilitas
-                                        </strong>
-                                        <span
-                                            >Perusahaan bisa meningkatkan
-                                            efisiensi dan fleksibilitas dengan
-                                            mempercayakan tugas tertentu kepada
-                                            perusahaan jasa outsourcing, karena
-                                            perusahaan jasa outsourcing sudah
-                                            memiliki spesialisasi dan pengalaman
-                                            yang dibutuhkan.
-                                        </span>
-                                    </div>
-                                </li>
-                                <li>
-                                    <font-awesome-icon icon="check" />
-                                    <div>
-                                        <strong>Menghemat biaya </strong>
-                                        <span
-                                            >Perusahaan bisa menghemat biaya
-                                            dengan mempercayakan tugas tertentu
-                                            kepada perusahaan jasa outsourcing,
-                                            contohnya penghematan dan
-                                            pengendalian biaya operasional.
-                                        </span>
-                                    </div>
-                                </li>
-                            </ul>
                         </div>
                     </div>
 
