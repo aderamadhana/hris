@@ -679,20 +679,20 @@ export default {
             errorLanding: null,
 
             mitraLogos: [
-                '/assets/mitra/mitra-1.PNG',
-                '/assets/mitra/mitra-2.PNG',
-                '/assets/mitra/mitra-3.PNG',
-                '/assets/mitra/mitra-4.PNG',
-                '/assets/mitra/mitra-5.PNG',
-                '/assets/mitra/mitra-6.PNG',
-                '/assets/mitra/mitra-7.PNG',
-                '/assets/mitra/mitra-8.PNG',
-                '/assets/mitra/mitra-9.PNG',
-                '/assets/mitra/mitra-10.PNG',
-                '/assets/mitra/mitra-11.PNG',
-                '/assets/mitra/mitra-12.PNG',
-                '/assets/mitra/mitra-13.PNG',
-                '/assets/mitra/mitra-14.PNG',
+                '/assets/mitra/mitra-1.png',
+                '/assets/mitra/mitra-2.png',
+                '/assets/mitra/mitra-3.png',
+                '/assets/mitra/mitra-4.png',
+                '/assets/mitra/mitra-5.png',
+                '/assets/mitra/mitra-6.png',
+                '/assets/mitra/mitra-7.png',
+                '/assets/mitra/mitra-8.png',
+                '/assets/mitra/mitra-9.png',
+                '/assets/mitra/mitra-10.png',
+                '/assets/mitra/mitra-11.png',
+                '/assets/mitra/mitra-12.png',
+                '/assets/mitra/mitra-13.png',
+                '/assets/mitra/mitra-14.png',
             ],
             showLokerModal: false,
             lokerLoading: false,
@@ -959,21 +959,26 @@ export default {
     gap: 16px;
 }
 
+/* wrapper */
 .landing-root .brand {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-}
-.landing-root .brand__logo {
-    width: 46px;
-    height: 46px;
-    object-fit: contain;
-
-    padding: 6px;
+    padding: 6px 10px;
     border-radius: 12px;
-
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* gambar logo */
+.landing-root .brand__logo {
+    height: 46px; /* tetap tinggi */
+    width: auto; /* biar memanjang sesuai aspect ratio */
+    max-width: 180px; /* batasi biar nggak makan navbar */
+    object-fit: contain;
+    padding: 0; /* jangan padding di img */
+    border-radius: 0; /* opsional */
+    background: transparent;
+    border: 0;
 }
 
 .landing-root .nav__menu {
@@ -1478,17 +1483,20 @@ export default {
 .landing-root .footer__brandRow {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 10px;
 }
 .landing-root .footer__logoImg {
-    width: 56px;
-    height: 56px;
+    height: 46px; /* atau 40px sesuai footer */
+    width: auto;
+    max-width: 220px; /* batasi biar tidak melebar berlebihan */
     object-fit: contain;
+    display: block;
 
     padding: 8px;
     border-radius: 14px;
 
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -1555,7 +1563,7 @@ export default {
     border-radius: 12px;
     display: grid;
     place-items: center;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #fff;
     transition:
