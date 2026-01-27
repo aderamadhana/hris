@@ -409,6 +409,7 @@ class PresensiLogController extends Controller
         if (!$shiftRow) {
             // placeholder supaya FE tidak perlu handle null
             return [
+                'id_shift' => null,
                 'nama_shift' => 'Shift tidak tersedia',
                 'kode_shift' => null,
                 'jam_masuk' => null,
@@ -421,6 +422,7 @@ class PresensiLogController extends Controller
             || stripos((string) $shiftRow->nama_shift, 'fleksibel') !== false;
 
         return [
+            'id_shift' => $shiftRow->id,
             'nama_shift' => $shiftRow->nama_shift,
             'kode_shift' => $shiftRow->kode_shift,
             'jam_masuk' => $isFlexible

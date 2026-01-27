@@ -75,8 +75,23 @@ import {
     faUserClock,
     faUserXmark,faBuildingCircleXmark,
     faUserPlus,
-    faUserMinus
+    faUserMinus,
+    faTachometerAlt,
+    faCog,
+    faBullhorn,
+    faPhone,
+    faPaperPlane,
+    faEnvelope,
+    faCheckCircle,
+    faExclamationCircle,
+    faClipboardList
 } from '@fortawesome/free-solid-svg-icons'
+
+import {
+  faInstagram,
+  faLinkedin,
+  faFacebook,
+} from "@fortawesome/free-brands-svg-icons";
 
 import 'select2/dist/css/select2.min.css'
 import 'select2'
@@ -140,9 +155,21 @@ library.add(
     faTimes,
     faUserClock,
     faUserXmark,
-  faBuildingCircleXmark,
-  faUserPlus,
-  faUserMinus
+    faBuildingCircleXmark,
+    faUserPlus,
+    faUserMinus,
+    faTachometerAlt,
+    faCog,
+    faBullhorn,
+    faPhone,
+    faPaperPlane,
+    faEnvelope,
+    faInstagram,
+    faLinkedin,
+    faFacebook,
+    faCheckCircle,
+    faExclamationCircle,
+    faClipboardList
 )
 
 createInertiaApp({

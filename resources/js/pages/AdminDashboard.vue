@@ -163,7 +163,7 @@
         <div class="charts-section">
             <!-- Tren Karyawan -->
             <div class="chart-card large">
-                <h3 class="chart-title">Tren Karyawan (6 Bulan Terakhir)</h3>
+                <h3 class="chart-title">Tren Karyawan (12 Bulan Terakhir)</h3>
                 <div class="chart-container">
                     <canvas ref="employeeTrendChart"></canvas>
                 </div>
@@ -181,14 +181,18 @@
                     <select
                         class="chart-dropdown"
                         v-model="filters.kontrakHabis"
-                        @change="fetchStats"
+                        @change="handleFilterChange"
                     >
                         <option value="7">7 hari ke depan</option>
                         <option value="30">30 hari ke depan</option>
                     </select>
                 </div>
                 <div class="chart-container">
-                    <canvas ref="kontrakHampirHabisChart"></canvas>
+                    <canvas
+                        v-if="!isLoading"
+                        ref="kontrakHampirHabisChart"
+                        :key="'kontrak-' + filters.kontrakHabis"
+                    ></canvas>
                 </div>
             </div>
 
@@ -200,7 +204,7 @@
                         class="chart-dropdown"
                         v-model="filters.perusahaanSelected"
                         :settings="{ width: '40%' }"
-                        @change="fetchStats"
+                        @change="handleFilterChange"
                     >
                         <option value="">Pilih</option>
                         <option
@@ -213,7 +217,10 @@
                     </Select2>
                 </div>
                 <div class="chart-container">
-                    <canvas ref="departmentChart"></canvas>
+                    <canvas
+                        ref="departmentChart"
+                        :key="'dept-' + filters.perusahaanSelected"
+                    ></canvas>
                 </div>
             </div>
         </div>
@@ -518,24 +525,34 @@ export default defineComponent({
 
     watch: {
         'filters.kontrakHabis'(n, o) {
-            if (!this.isUpdatingFromBackend && n !== o)
+            if (!this.isUpdatingFromBackend && n !== o) {
+                console.log('Watch: kontrakHabis changed', n);
                 this.debouncedFetchStats();
+            }
         },
         'filters.karyawanBaru'(n, o) {
-            if (!this.isUpdatingFromBackend && n !== o)
+            if (!this.isUpdatingFromBackend && n !== o) {
+                console.log('Watch: karyawanBaru changed', n);
                 this.debouncedFetchStats();
+            }
         },
         'filters.pelamar'(n, o) {
-            if (!this.isUpdatingFromBackend && n !== o)
+            if (!this.isUpdatingFromBackend && n !== o) {
+                console.log('Watch: pelamar changed', n);
                 this.debouncedFetchStats();
+            }
         },
         'filters.resign'(n, o) {
-            if (!this.isUpdatingFromBackend && n !== o)
+            if (!this.isUpdatingFromBackend && n !== o) {
+                console.log('Watch: resign changed', n);
                 this.debouncedFetchStats();
+            }
         },
         'filters.perusahaanSelected'(n, o) {
-            if (!this.isUpdatingFromBackend && n !== o)
+            if (!this.isUpdatingFromBackend && n !== o) {
+                console.log('Watch: perusahaanSelected changed', n);
                 this.debouncedFetchStats();
+            }
         },
     },
 
@@ -568,9 +585,27 @@ export default defineComponent({
             this.debouncedFetchStats = () => {
                 clearTimeout(this.debounceTimer);
                 this.debounceTimer = setTimeout(() => {
+                    console.log('Debounced fetch executing...');
                     this.fetchStats();
                 }, 500);
             };
+        },
+
+        // Handle filter change - destroy charts before fetching
+        async handleFilterChange() {
+            console.log('handleFilterChange called');
+
+            // Set loading untuk hide canvas
+            this.isLoading = true;
+
+            // Tunggu DOM update (canvas hilang karena v-if)
+            await this.$nextTick();
+
+            // Destroy charts setelah canvas hilang
+            this.destroyCharts();
+
+            // Fetch data baru
+            await this.fetchStats();
         },
 
         // Load Chart.js once, return a promise
@@ -623,13 +658,19 @@ export default defineComponent({
 
         async fetchStats() {
             const token = ++this._fetchToken;
+            console.log(`[${token}] fetchStats called`);
 
-            // kalau UI kamu pakai v-if="loading" buat section chart,
-            // ini penting supaya chart lama tidak nyangkut ke canvas yang akan di-unmount.
-            this.destroyCharts();
+            // Set loading SEBELUM destroy untuk hide canvas
             this.isLoading = true;
 
+            // Tunggu DOM update (canvas hilang karena v-if)
+            await this.$nextTick();
+
+            // Baru destroy charts (canvas sudah tidak ada di DOM)
+            this.destroyCharts();
+
             try {
+                console.log(`[${token}] Fetching data...`);
                 const response = await axios.get('/dashboard/stats', {
                     params: {
                         kontrak_habis: this.filters.kontrakHabis,
@@ -640,19 +681,44 @@ export default defineComponent({
                     },
                 });
 
-                if (token !== this._fetchToken) return;
-                if (!response.data.success) return;
+                if (token !== this._fetchToken) {
+                    console.log(`[${token}] Cancelled - newer request exists`);
+                    return;
+                }
+
+                if (!response.data.success) {
+                    console.log(`[${token}] Response not successful`);
+                    return;
+                }
 
                 const data = response.data.data;
+                console.log(`[${token}] Data received, updating...`);
 
+                // MATIKAN WATCHERS sebelum update data
                 this.isUpdatingFromBackend = true;
 
                 // stats
                 this.stats = data.stats || this.stats;
 
-                // jangan replace object filters (ini bikin DOM/refs reset)
+                // Update filters INDIVIDUAL (tidak pakai Object.assign untuk avoid trigger semua watchers)
                 if (data.filters) {
-                    Object.assign(this.filters, data.filters);
+                    // Assign satu-satu dengan null check
+                    if (data.filters.kontrakHabis !== undefined) {
+                        this.filters.kontrakHabis = data.filters.kontrakHabis;
+                    }
+                    if (data.filters.karyawanBaru !== undefined) {
+                        this.filters.karyawanBaru = data.filters.karyawanBaru;
+                    }
+                    if (data.filters.pelamar !== undefined) {
+                        this.filters.pelamar = data.filters.pelamar;
+                    }
+                    if (data.filters.resign !== undefined) {
+                        this.filters.resign = data.filters.resign;
+                    }
+                    if (data.filters.perusahaanSelected !== undefined) {
+                        this.filters.perusahaanSelected =
+                            data.filters.perusahaanSelected;
+                    }
                 }
 
                 // chart data
@@ -660,42 +726,69 @@ export default defineComponent({
                 this.employeeStatus = data.employeeStatus || [];
                 this.recruitmentFunnel = data.recruitmentFunnel || [];
                 this.departmentData = data.departmentData || [];
-            } catch (error) {
-                console.error('Error fetching stats:', error);
-            } finally {
-                if (token !== this._fetchToken) return;
 
-                this.isLoading = false;
-
-                // tunggu DOM kembali (canvas muncul lagi)
+                // Tunggu Vue update cycle sebelum enable watchers lagi
                 await this.$nextTick();
 
+                // HIDUPKAN WATCHERS lagi
                 this.isUpdatingFromBackend = false;
-
-                try {
-                    await this.loadChartJS();
-                } catch (e) {
-                    console.error(e);
+                console.log(`[${token}] Data updated successfully`);
+            } catch (error) {
+                console.error(`[${token}] Error fetching stats:`, error);
+                // Reset flag jika error
+                this.isUpdatingFromBackend = false;
+            } finally {
+                if (token !== this._fetchToken) {
+                    console.log(
+                        `[${token}] Finally: Cancelled - newer request exists`,
+                    );
                     return;
                 }
 
-                // nextTick lagi untuk memastikan refs benar-benar terpasang
-                await this.$nextTick();
+                // Tunggu Chart.js load
+                try {
+                    await this.loadChartJS();
+                } catch (e) {
+                    console.error(`[${token}] Chart.js load error:`, e);
+                    this.isLoading = false;
+                    return;
+                }
 
+                // Set loading false (canvas muncul kembali)
+                this.isLoading = false;
+                console.log(
+                    `[${token}] Loading complete, initializing charts...`,
+                );
+
+                // Tunggu canvas benar-benar ada di DOM
+                await this.$nextTick();
+                await this.$nextTick(); // double nextTick untuk ensure
+
+                // Baru initialize charts
                 this.initializeCharts();
+                console.log(`[${token}] Charts initialized`);
             }
         },
 
         async updateFilter(filterName, value) {
-            // optional kalau kamu pakai handler manual di dropdown
+            console.log('updateFilter called:', filterName, value);
+
+            // Set flag untuk prevent watcher trigger
             this.isUpdatingFromBackend = true;
             this.filters[filterName] = value;
+
+            // Tunggu Vue update
+            await this.$nextTick();
+
+            // Enable watcher
             this.isUpdatingFromBackend = false;
 
+            // Fetch data
             await this.fetchStats();
         },
 
         async refreshDashboard() {
+            console.log('refreshDashboard called');
             await this.fetchStats();
         },
 
@@ -707,164 +800,239 @@ export default defineComponent({
         },
 
         initializeCharts() {
-            // Jika canvas belum ada (biasanya karena v-if/transition), skip saja.
-            // fetchStats akan memanggil lagi setelah DOM siap.
-            if (!this.$refs.employeeTrendChart) return;
+            console.log('initializeCharts called');
+
+            // Guard: jangan init jika masih loading
+            if (this.isLoading) {
+                console.warn('Still loading, skipping chart initialization');
+                return;
+            }
+
+            // Guard: pastikan Chart.js sudah loaded
+            if (typeof Chart === 'undefined') {
+                console.warn('Chart.js not loaded yet');
+                return;
+            }
+
+            // Destroy semua chart lama dulu (double check)
+            this.destroyCharts();
 
             // Trend Chart
             if (this.$refs.employeeTrendChart) {
-                this.charts.trend = new Chart(this.$refs.employeeTrendChart, {
-                    type: 'line',
-                    data: {
-                        labels: this.employeeTrend.map((d) => d.bulan),
-                        datasets: [
-                            {
-                                label: 'Karyawan Masuk',
-                                data: this.employeeTrend.map((d) => d.masuk),
-                                borderColor: '#10b981',
-                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                tension: 0.4,
+                try {
+                    console.log('Initializing trend chart');
+                    this.charts.trend = new Chart(
+                        this.$refs.employeeTrendChart,
+                        {
+                            type: 'line',
+                            data: {
+                                labels: this.employeeTrend.map((d) => d.bulan),
+                                datasets: [
+                                    {
+                                        label: 'Karyawan Masuk',
+                                        data: this.employeeTrend.map(
+                                            (d) => d.masuk,
+                                        ),
+                                        borderColor: '#10b981',
+                                        backgroundColor:
+                                            'rgba(16, 185, 129, 0.1)',
+                                        tension: 0.4,
+                                    },
+                                    {
+                                        label: 'Karyawan Keluar',
+                                        data: this.employeeTrend.map(
+                                            (d) => d.keluar,
+                                        ),
+                                        borderColor: '#ef4444',
+                                        backgroundColor:
+                                            'rgba(239, 68, 68, 0.1)',
+                                        tension: 0.4,
+                                    },
+                                    {
+                                        label: 'Total Karyawan',
+                                        data: this.employeeTrend.map(
+                                            (d) => d.total,
+                                        ),
+                                        borderColor: '#3b82f6',
+                                        backgroundColor:
+                                            'rgba(59, 130, 246, 0.1)',
+                                        tension: 0.4,
+                                    },
+                                ],
                             },
-                            {
-                                label: 'Karyawan Keluar',
-                                data: this.employeeTrend.map((d) => d.keluar),
-                                borderColor: '#ef4444',
-                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                tension: 0.4,
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { position: 'top' },
+                                },
+                                scales: {
+                                    y: { beginAtZero: true },
+                                },
                             },
-                            {
-                                label: 'Total Karyawan',
-                                data: this.employeeTrend.map((d) => d.total),
-                                borderColor: '#3b82f6',
-                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                tension: 0.4,
-                            },
-                        ],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'top' },
                         },
-                        scales: {
-                            y: { beginAtZero: true },
-                        },
-                    },
-                });
+                    );
+                } catch (error) {
+                    console.error('Error initializing trend chart:', error);
+                }
             }
 
             // Status Chart
             if (this.$refs.employeeStatusChart) {
-                this.charts.status = new Chart(this.$refs.employeeStatusChart, {
-                    type: 'doughnut',
-                    data: {
-                        labels: this.employeeStatus.map((d) => d.name),
-                        datasets: [
-                            {
-                                data: this.employeeStatus.map((d) => d.value),
-                                backgroundColor: this.employeeStatus.map(
-                                    (d) => d.color,
-                                ),
+                try {
+                    console.log('Initializing status chart');
+                    this.charts.status = new Chart(
+                        this.$refs.employeeStatusChart,
+                        {
+                            type: 'doughnut',
+                            data: {
+                                labels: this.employeeStatus.map((d) => d.name),
+                                datasets: [
+                                    {
+                                        data: this.employeeStatus.map(
+                                            (d) => d.value,
+                                        ),
+                                        backgroundColor:
+                                            this.employeeStatus.map(
+                                                (d) => d.color,
+                                            ),
+                                    },
+                                ],
                             },
-                        ],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                },
+                            },
                         },
-                    },
-                });
+                    );
+                } catch (error) {
+                    console.error('Error initializing status chart:', error);
+                }
             }
 
-            // Recruitment Chart
+            // Recruitment Chart (Kontrak Hampir Habis)
             if (this.$refs.kontrakHampirHabisChart) {
-                this.charts.recruitment = new Chart(
-                    this.$refs.kontrakHampirHabisChart,
-                    {
-                        type: 'bar',
-                        data: {
-                            labels: this.recruitmentFunnel.map(
-                                (d) => d.tanggal,
-                            ),
-                            datasets: [
-                                {
-                                    label: 'Kontrak Berakhir',
-                                    data: this.recruitmentFunnel.map(
-                                        (d) => d.jumlah,
-                                    ),
-                                    backgroundColor: '#f59e0b',
-                                    borderColor: '#d97706',
-                                    borderWidth: 1,
+                try {
+                    console.log('Initializing recruitment chart');
+                    this.charts.recruitment = new Chart(
+                        this.$refs.kontrakHampirHabisChart,
+                        {
+                            type: 'bar',
+                            data: {
+                                labels: this.recruitmentFunnel.map(
+                                    (d) => d.tanggal,
+                                ),
+                                datasets: [
+                                    {
+                                        label: 'Kontrak Berakhir',
+                                        data: this.recruitmentFunnel.map(
+                                            (d) => d.jumlah,
+                                        ),
+                                        backgroundColor: '#f59e0b',
+                                        borderColor: '#d97706',
+                                        borderWidth: 1,
+                                    },
+                                ],
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function (context) {
+                                                const count = context.parsed.y;
+                                                return (
+                                                    count + ' kontrak berakhir'
+                                                );
+                                            },
+                                        },
+                                    },
                                 },
-                            ],
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function (context) {
-                                            const count = context.parsed.y;
-                                            return count + ' kontrak berakhir';
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            stepSize: 1,
+                                            callback: function (value) {
+                                                if (Number.isInteger(value))
+                                                    return value;
+                                            },
                                         },
                                     },
                                 },
                             },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        stepSize: 1,
-                                        callback: function (value) {
-                                            if (Number.isInteger(value))
-                                                return value;
-                                        },
-                                    },
-                                },
-                            },
                         },
-                    },
-                );
+                    );
+                } catch (error) {
+                    console.error(
+                        'Error initializing recruitment chart:',
+                        error,
+                    );
+                }
             }
 
             // Department Chart
             if (this.$refs.departmentChart) {
-                this.charts.department = new Chart(this.$refs.departmentChart, {
-                    type: 'bar',
-                    data: {
-                        labels: this.departmentData.map((d) => d.dept),
-                        datasets: [
-                            {
-                                label: 'Total Karyawan',
-                                data: this.departmentData.map((d) => d.total),
-                                backgroundColor: '#10b981',
+                try {
+                    console.log('Initializing department chart');
+                    this.charts.department = new Chart(
+                        this.$refs.departmentChart,
+                        {
+                            type: 'bar',
+                            data: {
+                                labels: this.departmentData.map((d) => d.dept),
+                                datasets: [
+                                    {
+                                        label: 'Total Karyawan',
+                                        data: this.departmentData.map(
+                                            (d) => d.total,
+                                        ),
+                                        backgroundColor: '#10b981',
+                                    },
+                                ],
                             },
-                        ],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                },
+                                scales: {
+                                    y: { beginAtZero: true },
+                                },
+                            },
                         },
-                        scales: {
-                            y: { beginAtZero: true },
-                        },
-                    },
-                });
+                    );
+                } catch (error) {
+                    console.error(
+                        'Error initializing department chart:',
+                        error,
+                    );
+                }
             }
+
+            console.log('All charts initialized');
         },
 
         destroyCharts() {
+            const chartKeys = Object.keys(this.charts);
+            if (chartKeys.length > 0) {
+                console.log('Destroying charts:', chartKeys);
+            }
+
             Object.keys(this.charts).forEach((key) => {
                 const ch = this.charts[key];
                 if (ch && typeof ch.destroy === 'function') {
-                    ch.destroy();
+                    try {
+                        ch.destroy();
+                    } catch (error) {
+                        console.error(`Error destroying chart ${key}:`, error);
+                    }
                 }
             });
             this.charts = {};

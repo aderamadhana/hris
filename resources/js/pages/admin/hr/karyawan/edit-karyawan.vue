@@ -751,6 +751,19 @@
 
                                     <div class="form-group">
                                         <label class="field-label"
+                                            >No. Kontrak User</label
+                                        >
+                                        <input
+                                            type="text"
+                                            v-model="
+                                                formPekerjaan.no_kontrak_user
+                                            "
+                                            class="form-input"
+                                        />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="field-label"
                                             >Jenis Kontrak</label
                                         >
                                         <select
@@ -948,6 +961,13 @@
                                                     >No. Kontrak:
                                                     {{
                                                         job.no_kontrak || '-'
+                                                    }}</span
+                                                >
+                                                <span class="chip"
+                                                    >No. Kontrak User:
+                                                    {{
+                                                        job.no_kontrak_user ||
+                                                        '-'
                                                     }}</span
                                                 >
                                                 <span
@@ -1664,6 +1684,7 @@ export default {
             editKeluargaIndex: null,
             originalPerusahaan: null,
             originalNoKontrak: '',
+            originalNoKontrakUser: '',
             originalBagian: '',
             mode: 'create',
             // ===== FORM STATE =====
@@ -1713,6 +1734,7 @@ export default {
                 perusahaan: '',
                 bagian: '',
                 no_kontrak: '',
+                no_kontrak_user: '',
                 cost_center: '',
                 jenis_kontrak: '',
                 mulai: '',
@@ -1774,8 +1796,8 @@ export default {
                 { key: 'ktp', label: 'KTP' },
                 { key: 'kk', label: 'Kartu Keluarga' },
                 { key: 'lisensi', label: 'Lisensi' },
-                { key: 'form_bpjs_tk', label: 'Formulir BPJS TK' },
-                { key: 'form_bpjs_kes', label: 'Formulir BPJS Kesehatan' },
+                // { key: 'form_bpjs_tk', label: 'Formulir BPJS TK' },
+                // { key: 'form_bpjs_kes', label: 'Formulir BPJS Kesehatan' },
                 {
                     key: 'paklaring',
                     label: 'Surat Pengalaman Kerja / Paklaring',
@@ -2003,6 +2025,7 @@ export default {
                     perusahaan: j.perusahaan ?? '',
                     bagian: j.penempatan ?? '',
                     no_kontrak: j.no_kontrak ?? '',
+                    no_kontrak_user: j.no_kontrak_user ?? '',
                     cost_center: j.cost_center ?? '',
                     jenis_kontrak: j.jenis_kontrak ?? '',
                     mulai: j.tgl_awal_kerja ?? '',
@@ -2165,6 +2188,8 @@ export default {
             // baseline edit
             this.originalPerusahaan = this.formPekerjaan.perusahaan ?? null;
             this.originalNoKontrak = this.formPekerjaan.no_kontrak ?? '';
+            this.originalNoKontrakUser =
+                this.formPekerjaan.no_kontrak_user ?? '';
             this.originalBagian = this.formPekerjaan.bagian ?? '';
 
             this.prevPerusahaan = this.formPekerjaan.perusahaan;
@@ -2351,6 +2376,7 @@ export default {
                             jabatan: job.jabatan,
                             penempatan: job.bagian,
                             no_kontrak: job.no_kontrak,
+                            no_kontrak_user: job.no_kontrak_user,
                             cost_center: job.cost_center,
                             jenis_kontrak: job.jenis_kontrak,
                             tgl_awal_kerja: job.mulai,
@@ -2556,6 +2582,7 @@ export default {
                 perusahaan: '',
                 bagian: '',
                 no_kontrak: '',
+                no_kontrak_user: '',
                 cost_center: '',
                 jenis_kontrak: '',
                 mulai: '',

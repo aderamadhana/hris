@@ -21,9 +21,10 @@
                     <label class="dt-length-compact">
                         Tampil
                         <select v-model.number="perPage">
-                            <option :value="5">5</option>
                             <option :value="10">10</option>
                             <option :value="25">25</option>
+                            <option :value="50">50</option>
+                            <option :value="100">100</option>
                         </select>
                         data
                     </label>
@@ -126,9 +127,7 @@
                                     <td>{{ shift.jam_masuk }}</td>
                                     <td>{{ shift.jam_pulang }}</td>
                                     <td>
-                                        {{
-                                            shift.toleransi_keterlambatan
-                                        }}
+                                        {{ shift.toleransi_keterlambatan }}
                                         menit
                                     </td>
                                     <td>{{ shift.durasi_kerja }} menit</td>
@@ -249,7 +248,7 @@ export default {
             loadingShifts: false,
 
             currentPage: 1,
-            perPage: 10,
+            perPage: 50,
             totalItems: 0,
             totalPages: 0,
             showFilters: false,

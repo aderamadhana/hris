@@ -11,6 +11,17 @@
                 </div>
             </div>
         </div>
+        <div v-if="isLoadingResetPassword" class="fullpage-loader">
+            <div class="fullpage-loader__card">
+                <div class="fullpage-loader__spinner"></div>
+                <div class="fullpage-loader__title">
+                    Loading reset password karyawan...
+                </div>
+                <div class="fullpage-loader__subtitle">
+                    Mohon tunggu sebentar
+                </div>
+            </div>
+        </div>
         <section class="page employees-page">
             <!-- HEADER + ACTIONS -->
             <div class="page-header">
@@ -44,22 +55,39 @@
 
             <div class="overview-row">
                 <div class="overview-card primary">
-                    <div class="card-icon">
-                        <font-awesome-icon icon="users" />
+                    <div class="card-content">
+                        <div class="card-left">
+                            <div class="overview-label">Total Karyawan</div>
+                            <div class="overview-value">
+                                {{ totalAllKaryawan }}
+                            </div>
+                            <div class="overview-badge positive">
+                                <span>●</span> Aktif
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <font-awesome-icon icon="users" />
+                        </div>
                     </div>
-                    <div class="overview-label">Total Karyawan</div>
-                    <div class="overview-value">{{ totalAllKaryawan }}</div>
                 </div>
 
                 <div class="overview-card warning">
-                    <div class="card-icon">
-                        <font-awesome-icon icon="user-clock" />
-                    </div>
-                    <div class="overview-label">
-                        Kontrak Hampir Habis ({{ defaultExpiringDays }} hari)
-                    </div>
-                    <div class="overview-value">
-                        {{ totalKontrakHampirHabis }}
+                    <div class="card-content">
+                        <div class="card-left">
+                            <div class="overview-label">
+                                Kontrak Hampir Habis
+                            </div>
+                            <div class="overview-value">
+                                {{ totalKontrakHampirHabis }}
+                            </div>
+                            <div class="overview-badge warning">
+                                <span>●</span> {{ defaultExpiringDays }} hari
+                                lagi
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <font-awesome-icon icon="user-clock" />
+                        </div>
                     </div>
                 </div>
 
@@ -68,14 +96,25 @@
                     @click="showExpired"
                     @keydown.enter.prevent="showExpired"
                 >
-                    <div class="card-icon">
-                        <font-awesome-icon icon="user-xmark" />
-                        <!-- alternatif: <font-awesome-icon icon="triangle-exclamation" /> -->
+                    <div class="card-content">
+                        <div class="card-left">
+                            <div class="overview-label">
+                                Total Kontrak Expired
+                            </div>
+                            <div class="overview-value">
+                                {{ totalAllExpired }}
+                            </div>
+                            <div class="overview-badge negative">
+                                <span>●</span> Perlu Ditindak
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <font-awesome-icon icon="user-xmark" />
+                        </div>
                     </div>
-                    <div class="overview-label">Total Kontrak Expired</div>
-                    <div class="overview-value">{{ totalAllExpired }}</div>
                 </div>
             </div>
+
             <div v-if="isDownloading" class="fullpage-loader">
                 <div class="fullpage-loader__card">
                     <div class="fullpage-loader__spinner"></div>
@@ -214,6 +253,7 @@
                                     </th>
                                     <th class="col-status">Awal Kontrak</th>
                                     <th class="col-status">Akhir Kontrak</th>
+                                    <th class="col-status">Konfig Password</th>
                                     <th class="col-action">Detail</th>
                                 </tr>
                             </thead>
@@ -307,6 +347,18 @@
                                     <td>{{ u.position }}</td>
                                     <td>{{ u.awal_kontrak }}</td>
                                     <td>{{ u.akhir_kontrak }}</td>
+                                    <td class="col-actions">
+                                        <div class="actions-wrap">
+                                            <Button
+                                                variant="danger"
+                                                title="Lihat Detail Karyawan"
+                                                @click="resetPassword(u)"
+                                            >
+                                                <font-awesome-icon icon="key" />
+                                                Reset Password
+                                            </Button>
+                                        </div>
+                                    </td>
 
                                     <td class="col-actions">
                                         <div class="actions-wrap">
@@ -620,7 +672,7 @@ export default {
             loadingUsers: false,
 
             currentPage: 1,
-            perPage: 10,
+            perPage: 50,
             totalItems: 0,
             totalPages: 0,
 
@@ -662,6 +714,7 @@ export default {
             showFilters: false,
             contractExpired: false,
             isLoadingNonAktif: false,
+            isLoadingResetPassword: false,
         };
     },
 
@@ -858,6 +911,22 @@ export default {
         },
         openPayslip(id) {
             router.visit(`/hr/karyawan/daftar-gaji/${id}`);
+        },
+        resetPassword(u) {
+            if (!confirm(`Reset password ${u.name}?`)) return;
+            this.isLoadingResetPassword = true;
+
+            router.post(
+                `/hr/karyawan/reset-password/${u.id}`,
+                {},
+                {
+                    onSuccess: () => {
+                        triggerAlert('success', 'Password berhasil di reset.');
+                        this.fetchEmployees(1);
+                        this.isLoadingResetPassword = false;
+                    },
+                },
+            );
         },
         deleteUser(u) {
             if (!confirm(`Nonaktifkan ${u.name}?`)) return;

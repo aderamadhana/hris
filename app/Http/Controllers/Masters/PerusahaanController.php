@@ -24,23 +24,24 @@ class PerusahaanController extends Controller
         $search  = $request->string('search')->trim();
         $status  = $request->string('status')->trim();
 
-        // Ambil semua nama perusahaan UNIK dari employee_employment_histories
-        $perusahaanFromEmployment = DB::table('employee_employment_histories')
-            ->select('perusahaan as nama_perusahaan')
-            ->selectRaw('COUNT(*) as total_history')
-            ->groupBy('perusahaan')
-            ->orderByDesc('total_history');
+        // Ambil data dari Model Perusahaan
+        $query = Perusahaan::query();
 
         // Apply search
         if ($search !== '') {
-            $perusahaanFromEmployment->where('perusahaan', 'like', "%{$search}%");
+            $query->where('nama_perusahaan', 'like', "%{$search}%");
+        }
+
+        // Apply status filter
+        if ($status !== '') {
+            $query->where('status', $status);
         }
 
         // Get paginated result
-        $result = $perusahaanFromEmployment->paginate($perPage);
+        $result = $query->paginate($perPage);
 
         // Transform dan hitung total karyawan aktif
-        $data = $result->getCollection()->map(function ($item) {
+        $data = $result->getCollection()->map(function ($perusahaan) {
             // Hitung karyawan aktif yang employment terbarunya di perusahaan ini
             $totalKaryawanAktif = DB::table('employees as e')
                 ->join('employee_employment_histories as eeh', function($join) {
@@ -52,34 +53,53 @@ class PerusahaanController extends Controller
                         )');
                 })
                 ->where('e.status_active', '1')
-                ->where('eeh.perusahaan', $item->nama_perusahaan)
+                ->where(function($q) use ($perusahaan) {
+                    $q->where('eeh.perusahaan', $perusahaan->nama_perusahaan)
+                    ->orWhere('eeh.perusahaan', 'like', '%' . $perusahaan->nama_perusahaan . '%');
+                })
                 ->count();
 
-            // Cari data dari tabel perusahaan (jika ada)
-            $perusahaanData = DB::table('perusahaan')
-                ->where('nama_perusahaan', $item->nama_perusahaan)
-                ->orWhere('nama_perusahaan', 'like', '%' . $item->nama_perusahaan . '%')
-                ->first();
+            // Hitung total history dari employee_employment_histories
+            $totalHistory = DB::table('employee_employment_histories')
+                ->where(function($q) use ($perusahaan) {
+                    $q->where('perusahaan', $perusahaan->nama_perusahaan)
+                    ->orWhere('perusahaan', 'like', '%' . $perusahaan->nama_perusahaan . '%');
+                })
+                ->count();
 
             return [
-                'id' => $perusahaanData->id ?? null,
-                'kode_perusahaan' => $perusahaanData->kode_perusahaan ?? '-',
-                'nama_perusahaan' => $item->nama_perusahaan,
-                'alamat' => $perusahaanData->alamat ?? '-',
-                'tanggal_awal_mou' => $perusahaanData->tanggal_awal_mou ?? null,
-                'tanggal_akhir_mou' => $perusahaanData->tanggal_akhir_mou ?? null,
-                'berkas_mou' => $perusahaanData->berkas_mou ?? null,
-                'keterangan' => $perusahaanData->keterangan ?? null,
-                'status' => $perusahaanData->status ?? 'aktif',
+                'id' => $perusahaan->id,
+                'kode_perusahaan' => $perusahaan->kode_perusahaan ?? '-',
+                'nama_perusahaan' => $perusahaan->nama_perusahaan,
+                'alamat' => $perusahaan->alamat ?? '-',
+                'tanggal_awal_mou' => $perusahaan->tanggal_awal_mou,
+                'tanggal_akhir_mou' => $perusahaan->tanggal_akhir_mou,
+                'berkas_mou' => $perusahaan->berkas_mou,
+                'keterangan' => $perusahaan->keterangan,
+                'status' => $perusahaan->status ?? 'aktif',
                 'total_karyawan_aktif' => $totalKaryawanAktif,
-                'total_history' => $item->total_history,
-                'created_at' => $perusahaanData->created_at ?? null,
-                'updated_at' => $perusahaanData->updated_at ?? null,
+                'total_history' => 0,
+                'created_at' => $perusahaan->created_at,
+                'updated_at' => $perusahaan->updated_at,
             ];
         });
+        
+        $aktif = Perusahaan::query()
+            ->where('status', 'aktif');
+        
+        $tidak_aktif = Perusahaan::query()
+            ->where('status', 'tidak_aktif');
+
+        // Total karyawan tanpa filter lain
+        $totalAllActive = (clone $aktif)->count();
+        $totalAllNonActive = (clone $tidak_aktif)->count();
 
         return response()->json([
             'data' => $data,
+            'statistics' => [
+                'total_all_active' => $totalAllActive,
+                'total_all_non_active' => $totalAllNonActive,
+            ],
             'meta' => [
                 'total' => $result->total(),
                 'per_page' => $result->perPage(),
@@ -239,7 +259,6 @@ class PerusahaanController extends Controller
 
     public function sync(Request $request)
     {
-        // Ambil kombinasi unik perusahaan + penempatan dari riwayat kerja
         $rows = EmployeeEmployment::query()
             ->select('perusahaan', 'penempatan')
             ->whereNotNull('perusahaan')
@@ -249,65 +268,54 @@ class PerusahaanController extends Controller
 
         $stats = [
             'perusahaan_created' => 0,
-            'perusahaan_restored' => 0,
             'perusahaan_skipped' => 0,
             'divisi_created' => 0,
-            'divisi_restored' => 0,
             'divisi_skipped' => 0,
             'source_rows' => $rows->count(),
         ];
 
         DB::transaction(function () use ($rows, &$stats) {
-            // Cache existing perusahaan by normalized name (include soft deleted)
+
             $existingPerusahaan = Perusahaan::withTrashed()
                 ->get(['id', 'nama_perusahaan', 'deleted_at', 'kode_perusahaan'])
                 ->mapWithKeys(function ($p) {
                     return [$this->normalizeKey($p->nama_perusahaan) => $p];
                 });
 
-            // Cache used kode_perusahaan (include soft deleted)
             $usedKode = Perusahaan::withTrashed()
                 ->pluck('kode_perusahaan')
                 ->filter()
                 ->map(fn ($v) => Str::upper(trim($v)))
-                ->flip(); // set-like
+                ->flip();
 
-            // Cache existing divisi by (perusahaan_id + normalized divisi)
-            // (dibangun incremental saat perusahaan ditemukan)
-            $existingDivisiCache = []; // [perusahaan_id => [key => DivisiModel]]
+            $existingDivisiCache = []; // [perusahaan_id => [normalizedNamaDivisi => Divisi]]
 
             foreach ($rows as $r) {
-                $namaPerusahaanRaw = (string) $r->perusahaan;
-                $namaPerusahaan = $this->cleanText($namaPerusahaanRaw);
-
+                $namaPerusahaan = $this->cleanText((string) $r->perusahaan);
                 if ($namaPerusahaan === '') {
                     continue;
                 }
 
                 $pKey = $this->normalizeKey($namaPerusahaan);
 
-                // ====== UPSERT PERUSAHAAN (by normalized name) ======
+                // ====== CREATE PERUSAHAAN ONLY (NO UPDATE/RESTORE) ======
                 if (isset($existingPerusahaan[$pKey])) {
                     $perusahaan = $existingPerusahaan[$pKey];
+                    $stats['perusahaan_skipped']++;
 
+                    // Opsional: kalau perusahaan soft-deleted, jangan bikin divisi baru di bawahnya
                     if ($perusahaan->trashed()) {
-                        $perusahaan->restore();
-                        $perusahaan->status = 'aktif';
-                        $perusahaan->save();
-                        $stats['perusahaan_restored']++;
-                    } else {
-                        $stats['perusahaan_skipped']++;
+                        continue;
                     }
                 } else {
                     $kode = $this->generateUniqueKodePerusahaan($namaPerusahaan, $usedKode);
 
                     $perusahaan = Perusahaan::create([
-                        'kode_perusahaan' => $kode,
-                        'nama_perusahaan' => $namaPerusahaan,
-                        // kolom alamat NOT NULL -> isi default aman
-                        'alamat' => '-',
-                        'keterangan' => 'Auto-sync dari employee_employment_histories',
-                        'status' => 'aktif',
+                        'kode_perusahaan'  => $kode,
+                        'nama_perusahaan'  => $namaPerusahaan,
+                        'alamat'           => '-',
+                        'keterangan'       => 'Auto-sync dari employee_employment_histories',
+                        'status'           => 'aktif',
                     ]);
 
                     $existingPerusahaan[$pKey] = $perusahaan;
@@ -316,11 +324,8 @@ class PerusahaanController extends Controller
                     $usedKode[Str::upper($kode)] = true;
                 }
 
-                // ====== UPSERT DIVISI (penempatan) ======
-                $penempatanRaw = (string) $r->penempatan;
-                $namaDivisi = $this->cleanText($penempatanRaw);
-
-                // kalau penempatan kosong, skip
+                // ====== CREATE DIVISI ONLY (NO UPDATE/RESTORE) ======
+                $namaDivisi = $this->cleanText((string) $r->penempatan);
                 if ($namaDivisi === '') {
                     continue;
                 }
@@ -339,33 +344,25 @@ class PerusahaanController extends Controller
                 }
 
                 if (isset($existingDivisiCache[$perusahaanId][$dKey])) {
-                    $divisi = $existingDivisiCache[$perusahaanId][$dKey];
-
-                    if ($divisi->trashed()) {
-                        $divisi->restore();
-                        $divisi->status = 'aktif';
-                        $divisi->save();
-                        $stats['divisi_restored']++;
-                    } else {
-                        $stats['divisi_skipped']++;
-                    }
-                } else {
-                    $divisi = Divisi::create([
-                        'perusahaan_id' => $perusahaanId,
-                        'nama_divisi' => $namaDivisi,
-                        'keterangan' => 'Auto-sync dari employee_employment_histories (penempatan)',
-                        'status' => 'aktif',
-                        // radius_presensi sudah default di migration (500), boleh override kalau mau
-                    ]);
-
-                    $existingDivisiCache[$perusahaanId][$dKey] = $divisi;
-                    $stats['divisi_created']++;
+                    // sudah ada, termasuk yang soft-deleted -> SKIP (tanpa restore)
+                    $stats['divisi_skipped']++;
+                    continue;
                 }
+
+                $divisi = Divisi::create([
+                    'perusahaan_id' => $perusahaanId,
+                    'nama_divisi'   => $namaDivisi,
+                    'keterangan'    => 'Auto-sync dari employee_employment_histories (penempatan)',
+                    'status'        => 'aktif',
+                ]);
+
+                $existingDivisiCache[$perusahaanId][$dKey] = $divisi;
+                $stats['divisi_created']++;
             }
         });
 
         return response()->json([
-            'message' => 'Sync perusahaan & divisi selesai',
+            'message' => 'Sync perusahaan & divisi selesai (create-only)',
             'stats' => $stats,
         ]);
     }

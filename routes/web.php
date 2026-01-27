@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
+use App\Models\Loker;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
@@ -13,15 +14,35 @@ use App\Http\Controllers\ReferensiController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\PresensiLogController;
+use App\Http\Controllers\LokerController;
+use App\Http\Controllers\PengumumanController;
+use App\Http\Controllers\LamaranController;
+use App\Http\Controllers\LogAktifitasController;
 
 use App\Http\Controllers\Masters\PayrollPeriodController;
 use App\Http\Controllers\Masters\PerusahaanController;
 use App\Http\Controllers\Masters\ShiftController;
 
+
+
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
+    Route::get('/landing', function () {
+        return Inertia::render('Welcome');
+    })->name('/landing');
+
+    Route::get('/landing/{id}', function ($id) {
+        $loker = Loker::findOrFail($id);
+
+        return Inertia::render('PelamarApplyForm', [
+            'loker' => $loker
+        ]);
+    });
+
     Route::post('/login', [LoginController::class, 'store'])->name('login.store');
     Route::get('/reset-to-default', [LoginController::class, 'resetPasswordToDefault']);
+    Route::post('/apply/{loker}', [LamaranController::class, 'store'])->name('lamaran.store');
 });
 
 // Authenticated routes (untuk user yang sudah login)
@@ -30,6 +51,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profil/{id}', [EmployeeController::class, 'profil']);
+    Route::get('/profil/edit-profil/{id}', function () {
+        return Inertia::render('admin/hr/karyawan/edit-profil');
+    });
     Route::get('/change-password', [EmployeeController::class, 'changePassword']);
     Route::post('/proses-change-password', [EmployeeController::class, 'prosesChangePassword']);
 
@@ -54,6 +78,7 @@ Route::middleware('auth')->group(function () {
                 ]);
             });
             Route::post('/non-aktif/{id}', [EmployeeController::class, 'nonAktif']);
+            Route::post('/reset-password/{id}', [EmployeeController::class, 'resetPassword']);
             Route::post('/shift/{id}', [EmployeeController::class, 'changeShift']);
         });
 
@@ -89,10 +114,6 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::get('/surat-peringatan', function () {
-            return Inertia::render('UnderDeveloping');
-        });
-
-        Route::get('/lowongan-kerja', function () {
             return Inertia::render('UnderDeveloping');
         });
 
@@ -165,6 +186,33 @@ Route::middleware('auth')->group(function () {
             return Inertia::render('UnderDeveloping');
         });
     });
+    
+    Route::prefix('beranda')->group(function () {
+        Route::prefix('lowongan-kerja')->group(function () {
+            Route::get('/', function () {
+                return Inertia::render('admin/beranda/lowongan-kerja/all-loker');
+            });
+            
+            Route::get('/all', [LokerController::class, 'index']);
+            Route::post('/store', [LokerController::class, 'store']);
+            Route::put('/update/{id}', [LokerController::class, 'update']);
+            Route::delete('/delete/{id}', [LokerController::class, 'delete']);
+        });
+        Route::prefix('pengumuman')->group(function () {
+            Route::get('/', function () {
+                return Inertia::render('admin/beranda/pengumuman/all-pengumuman');
+            });
+            
+            Route::get('/all', [PengumumanController::class, 'index']);
+            Route::post('/store', [PengumumanController::class, 'store']);
+            Route::put('/update/{id}', [PengumumanController::class, 'update']);
+            Route::delete('/delete/{id}', [PengumumanController::class, 'delete']);
+        });
+    });
+
+    Route::get('/konfigurasi', function () {
+        return Inertia::render('UnderDeveloping');
+    });
 
     Route::get('/riwayat-kontrak', function () {
         return Inertia::render('UnderDeveloping');
@@ -195,6 +243,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/payroll', [PayrollController::class, 'downloadPayroll']);
         Route::get('/presensi', [PresensiController::class, 'downloadPresensi']);
         Route::get('/client', [PerusahaanController::class, 'downloadPerusahaan']);
+        Route::get('/aktifitas', [LogAktifitasController::class, 'downloadAktifitas']);
     });
 
 
@@ -239,11 +288,14 @@ Route::middleware('auth')->group(function () {
         });
         Route::get('/presensi/all', [PresensiLogController::class, 'index']);
         Route::post('/presensi/{id}/update-status', [PresensiLogController::class, 'updateStatus']);
-
         
-        Route::get('/aktivitas', function () {
-            return Inertia::render('UnderDeveloping');
+        Route::get('/aktifitas', function () {
+            return Inertia::render('log-aktifitas/all-log_aktifitas');
         });
+        Route::get('/aktifitas/all', [LogAktifitasController::class, 'index']);
+        Route::get('/aktifitas/recent', [LogAktifitasController::class, 'recentActivities']);
+        Route::post('/aktifitas/store', [LogAktifitasController::class, 'storeActivities']);
+        Route::put('/aktifitas/update/{id}', [LogAktifitasController::class, 'updateActivities']);
     });
 
     Route::prefix('admin')->group(function () {
@@ -306,19 +358,22 @@ Route::middleware('auth')->group(function () {
 
 Route::prefix('referensi')->group(function () {
     Route::get('/get-payroll_periods', [ReferensiController::class, 'getPayrollPeriod']);
+    Route::get('/get-aktifitas', [ReferensiController::class, 'getAktifitas']);
     Route::get('/get-filter_perusahaan_dan_jabatan', [ReferensiController::class, 'getFilterPerusahaanDanJabatan']);
     Route::get('/get-payroll-periods-by-employee-id/{id}', [ReferensiController::class, 'getPayrollPeriodByEmployeeId']);
     Route::get('/perusahaan-terakhir/{employeeId}', [ReferensiController::class, 'getPerusahaanTerakhir']);
     Route::get('/perusahaan-divisi', [ReferensiController::class, 'getPerusahaanDanDivisi']);
     Route::get('/get-shift-options', [ReferensiController::class, 'getShiftOptions']);
     Route::post('/generate-no-kontrak', [ReferensiController::class, 'generateNoKontrak']);
-    
+    Route::get('/landing-page', [ReferensiController::class, 'getLandingPage']);
+    Route::get('/landing-page/loker/{slug}', [ReferensiController::class, 'getDetailLoker']);
+    Route::get('/karyawan', [ReferensiController::class, 'getKaryawan']);
 });
 
 
 // Redirect root ke login atau dashboard
 Route::get('/', function () {
-    return auth()->check() ? redirect('/dashboard') : redirect('/login');
+    return auth()->check() ? redirect('/dashboard') : redirect('/landing');
 });
 
 

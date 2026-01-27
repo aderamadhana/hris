@@ -14,6 +14,7 @@ const hrOpen = ref(false);
 const marketingOpen = ref(false);
 const logOpen = ref(false);
 const insuranceOpen = ref(false);
+const berandaOpen = ref(false);
 
 // ACTIVE matchers (ubah prefix sesuai routing project kamu)
 const isHrActive = computed(() => {
@@ -24,7 +25,6 @@ const isHrActive = computed(() => {
         path.value.startsWith('/pelamar') || // kalau masih dipakai
         path.value.startsWith('/hr/payroll') ||
         path.value.startsWith('/hr/surat-peringatan') ||
-        path.value.startsWith('/hr/lowongan-kerja') ||
         path.value.startsWith('/hr/shift')
     );
 });
@@ -48,12 +48,20 @@ const isInsuranceActive = computed(() => {
     );
 });
 
+const isBerandaActive = computed(() => {
+    return (
+        path.value.startsWith('/beranda/lowongan-kerja') ||
+        path.value.startsWith('/beranda/pengumuman')
+    );
+});
+
 // helper: tutup semua group
 const closeAllGroups = () => {
     hrOpen.value = false;
     marketingOpen.value = false;
     logOpen.value = false;
     insuranceOpen.value = false;
+    berandaOpen.value = false;
 };
 
 // sinkronisasi open state saat route berubah (hanya 1 yang boleh open)
@@ -64,6 +72,7 @@ const syncOpenStates = () => {
     else if (isMarketingActive.value) marketingOpen.value = true;
     else if (isLogActive.value) logOpen.value = true;
     else if (isInsuranceActive.value) insuranceOpen.value = true;
+    else if (isBerandaActive.value) berandaOpen.value = true;
 };
 
 syncOpenStates();
@@ -94,6 +103,11 @@ const toggleInsurance = () => {
     insuranceOpen.value = next;
 };
 
+const toggleBeranda = () => {
+    const next = !berandaOpen.value;
+    closeAllGroups();
+    berandaOpen.value = next;
+};
 const fiturBelumTersedia = () => {
     triggerAlert('warning', 'Fitur masih dalam tahap pengembangan.');
 };
@@ -113,7 +127,7 @@ const fiturBelumTersedia = () => {
                 class="sidebar-item"
                 :class="{ active: path === '/dashboard' }"
             >
-                <font-awesome-icon icon="house" class="icon" />
+                <font-awesome-icon icon="tachometer-alt" class="icon" />
                 <span class="label">Dashboard</span>
             </Link>
 
@@ -158,7 +172,7 @@ const fiturBelumTersedia = () => {
                             <span>Payroll</span>
                         </Link>
 
-                        <Link
+                        <!-- <Link
                             href="/hr/surat-peringatan"
                             class="sidebar-subitem"
                             :class="{
@@ -166,17 +180,7 @@ const fiturBelumTersedia = () => {
                             }"
                         >
                             <span>Surat Peringatan</span>
-                        </Link>
-
-                        <Link
-                            href="/hr/lowongan-kerja"
-                            class="sidebar-subitem"
-                            :class="{
-                                active: path.startsWith('/hr/lowongan-kerja'),
-                            }"
-                        >
-                            <span>Lowongan Kerja</span>
-                        </Link>
+                        </Link> -->
                         <Link
                             href="/hr/shift"
                             class="sidebar-subitem"
@@ -216,19 +220,7 @@ const fiturBelumTersedia = () => {
                                 ),
                             }"
                         >
-                            <span>Client Aktif</span>
-                        </Link>
-
-                        <Link
-                            href="/marketing/client/non-aktif"
-                            class="sidebar-subitem"
-                            :class="{
-                                active: path.startsWith(
-                                    '/marketing/client/nonaktif',
-                                ),
-                            }"
-                        >
-                            <span>Client Nonaktif</span>
+                            <span>Client</span>
                         </Link>
                     </div>
                 </transition>
@@ -260,10 +252,10 @@ const fiturBelumTersedia = () => {
                         </Link>
 
                         <Link
-                            href="/logs/aktivitas"
+                            href="/logs/aktifitas"
                             class="sidebar-subitem"
                             :class="{
-                                active: path.startsWith('/logs/aktivitas'),
+                                active: path.startsWith('/logs/aktifitas'),
                             }"
                         >
                             <span>Data Aktivitas</span>
@@ -273,7 +265,7 @@ const fiturBelumTersedia = () => {
             </div>
 
             <!-- Asuransi -->
-            <div class="sidebar-group" :class="{ open: insuranceOpen }">
+            <!-- <div class="sidebar-group" :class="{ open: insuranceOpen }">
                 <button
                     type="button"
                     class="sidebar-item sidebar-item--toggle"
@@ -326,7 +318,56 @@ const fiturBelumTersedia = () => {
                         </Link>
                     </div>
                 </transition>
+            </div> -->
+
+            <!-- Asuransi -->
+            <div class="sidebar-group" :class="{ open: berandaOpen }">
+                <button
+                    type="button"
+                    class="sidebar-item sidebar-item--toggle"
+                    :class="{ active: isBerandaActive }"
+                    @click="toggleBeranda"
+                >
+                    <font-awesome-icon icon="home" class="icon" />
+                    <span class="label">Beranda</span>
+                    <span class="caret" :class="{ open: berandaOpen }">▾</span>
+                </button>
+
+                <transition name="sb-collapse">
+                    <div v-show="berandaOpen" class="sidebar-submenu">
+                        <Link
+                            href="/beranda/lowongan-kerja"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith(
+                                    '/beranda/lowongan-kerja',
+                                ),
+                            }"
+                        >
+                            <span>Lowongan Kerja</span>
+                        </Link>
+
+                        <Link
+                            href="/beranda/pengumuman"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith('/beranda/pengumuman'),
+                            }"
+                        >
+                            <span>Pengumuman</span>
+                        </Link>
+                    </div>
+                </transition>
             </div>
+
+            <!-- <Link
+                href="/konfigurasi"
+                class="sidebar-item"
+                :class="{ active: path === '/konfigurasi' }"
+            >
+                <font-awesome-icon icon="cog" class="icon" />
+                <span class="label">Konfigurasi</span>
+            </Link> -->
         </nav>
 
         <!-- KARYAWAN -->
@@ -336,7 +377,7 @@ const fiturBelumTersedia = () => {
                 class="sidebar-item"
                 :class="{ active: path === '/dashboard' }"
             >
-                <font-awesome-icon icon="house" class="icon" />
+                <font-awesome-icon icon="tachometer-alt" class="icon" />
                 <span class="label">Dashboard</span>
             </Link>
 
@@ -358,23 +399,23 @@ const fiturBelumTersedia = () => {
                 <span class="label">Slip Gaji</span>
             </Link>
 
-            <Link
+            <!-- <Link
                 href="/riwayat-kontrak"
                 class="sidebar-item"
                 :class="{ active: path.startsWith('/riwayat-kontrak') }"
             >
                 <font-awesome-icon icon="file-contract" class="icon" />
                 <span class="label">Riwayat Kontrak</span>
-            </Link>
+            </Link> -->
 
-            <Link
+            <!-- <Link
                 href="/surat-peringatan"
                 class="sidebar-item"
                 :class="{ active: path.startsWith('/surat-peringatan') }"
             >
                 <font-awesome-icon icon="triangle-exclamation" class="icon" />
                 <span class="label">Surat Peringatan</span>
-            </Link>
+            </Link> -->
         </nav>
     </aside>
 </template>

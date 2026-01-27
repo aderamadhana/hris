@@ -160,6 +160,7 @@ return new class extends Migration
             $table->string('jabatan')->nullable();
             $table->string('penempatan')->nullable();
             $table->string('no_kontrak')->nullable();
+            $table->string('no_kontrak_user')->nullable();
             $table->string('cost_center')->nullable();
             $table->string('tgl_daftar')->nullable();
             $table->string('keterangan_status')->nullable();

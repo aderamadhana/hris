@@ -8,7 +8,10 @@ use App\Models\{
     PayrollSummary,
     EmployeeEmployment,
     Shift,
-    Perusahaan
+    Perusahaan,
+    Loker,
+    Pengumuman,
+    Aktifitas
 };
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -288,4 +291,99 @@ class ReferensiController extends Controller
             'no_kontrak' => $noKontrak
         ]);
     }
+
+    public function getLandingPage(Request $request){
+        $pengumumans = Pengumuman::query()
+            ->aktif()
+            ->sudahPublish()
+            ->belumBerakhir()
+            ->urutLanding()
+            ->limit(3)
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'badge' => $p->kategori,
+                    'date'  => $p->tanggal_publish
+                        ? $p->tanggal_publish->locale('id')->translatedFormat('d M Y')
+                        : null,
+                    'title' => $p->judul,
+                    'desc'  => $p->ringkasan
+                        ?? Str::limit(strip_tags($p->isi ?? ''), 80),
+                    'slug'  => $p->slug,
+                ];
+            });
+
+        // ✅ Loker (aktif + terbaru)
+        $lokers = Loker::query()
+            ->aktif()
+            ->sudahPublish()
+            ->belumBerakhir()
+            ->orderByDesc('tanggal_publish')
+            ->limit(6)
+            ->get()
+            ->map(function ($l) {
+                return [
+                    'title'    => $l->judul,
+                    'type'     => $l->tipe_pekerjaan,
+                    'location' => $l->penempatan_nama ?? '-',
+                    'shift'    => $l->jam_kerja ?? '-',
+                    'slug'     => $l->slug,
+                    'company'  => $l->perusahaan_nama ?? null,
+                ];
+            });
+
+        return response()->json([
+            'notes' => $pengumumans,
+            'jobs' => $lokers
+        ]);
+    }
+
+    public function getDetailLoker($slug)
+    {
+        $loker = Loker::query()
+            ->where('slug', $slug)
+            ->where('aktif', 1)
+            ->whereNull('deleted_at')
+            ->firstOrFail();
+
+        return response()->json([
+            'id' => $loker->id,
+            'judul' => $loker->judul,
+            'slug' => $loker->slug,
+            'tipe_pekerjaan' => $loker->tipe_pekerjaan,
+            'perusahaan_nama' => $loker->perusahaan_nama,
+            'penempatan_nama' => $loker->penempatan_nama,
+            'jam_kerja' => $loker->jam_kerja,
+            'ringkasan' => $loker->ringkasan,
+            'deskripsi' => $loker->deskripsi,
+            'persyaratan' => $loker->persyaratan,
+            'gaji_min' => $loker->gaji_min,
+            'gaji_max' => $loker->gaji_max,
+            'mata_uang' => $loker->mata_uang,
+            'link_lamar' => $loker->link_lamar,
+            'whatsapp_kontak' => $loker->whatsapp_kontak,
+            'tanggal_publish' => optional($loker->tanggal_publish)->format('d M Y'),
+        ]);
+    }
+
+    public function getAktifitas()
+    {
+        $loker = Aktifitas::get();
+        return response()->json([
+            'success' => true,
+            'message' => 'Data aktifitas berhasil diambil',
+            'data' => $loker,
+        ]);
+    }
+
+    public function getKaryawan()
+    {
+        $employee = Employee::select('id','shift_id','nama')->where('status_active', 1)->whereNotIn('id', [1,2])->get();
+        return response()->json([
+            'success' => true,
+            'message' => 'Data karyawan berhasil diambil',
+            'data' => $employee,
+        ]);
+    }
+
 }
