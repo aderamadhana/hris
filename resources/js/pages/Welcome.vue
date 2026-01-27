@@ -169,8 +169,8 @@
                             />
                         </div>
                         <div class="photo__cap">
-                            <strong>Alm. H. Jasiman</strong>
-                            <span>Founder PT. Mitra Wira Mas </span>
+                            <strong>Pendiri</strong>
+                            <span>Founder PT. </span>
                         </div>
                     </div>
                 </section>
