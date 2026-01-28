@@ -26,6 +26,41 @@
             </div>
         </div>
     </div>
+
+    <div
+        v-if="surat_peringatan"
+        class="contract-alert"
+        :class="getSpAlertClass(surat_peringatan.tingkat)"
+    >
+        <div class="alert-left">
+            <div class="alert-badge">
+                {{ surat_peringatan.tingkat }}
+            </div>
+
+            <div class="alert-text">
+                <div class="alert-title">
+                    Surat Peringatan ({{ surat_peringatan.tingkat }})
+                </div>
+
+                <div class="alert-message">
+                    Nomor: <strong>{{ surat_peringatan.nomor_sp }}</strong> •
+                    Tanggal:
+                    <strong>{{
+                        formatTanggal(surat_peringatan.tanggal_sp)
+                    }}</strong>
+                </div>
+
+                <!-- ✅ taruh di bawah -->
+                <button
+                    type="button"
+                    class="alert-detail-btn"
+                    @click="lihatDetailSP"
+                >
+                    Lihat detail
+                </button>
+            </div>
+        </div>
+    </div>
     <div class="dashboard-header">
         <div class="header-content">
             <h1 class="dashboard-title">Dashboard Kehadiran</h1>
@@ -876,6 +911,7 @@ export default {
                 title: '',
                 message: '',
             },
+            surat_peringatan: null,
         };
     },
     watch: {
@@ -1027,6 +1063,7 @@ export default {
 
     mounted() {
         this.fetchDashboardData();
+        this.fetchSuratPeringatan();
         this.loadAvailableActivities();
         this.loadRecentActivities();
         this.fetchShiftOptions();
@@ -1040,6 +1077,33 @@ export default {
     },
 
     methods: {
+        getSpAlertClass(tingkat) {
+            // kamu bisa sesuaikan class sesuai level
+            if (tingkat === 'SP3') return 'alert-danger';
+            if (tingkat === 'SP2') return 'alert-warning';
+            return 'alert-info'; // SP1
+        },
+
+        formatTanggal(dateStr) {
+            if (!dateStr) return '-';
+            // input: YYYY-MM-DD
+            const [y, m, d] = dateStr.split('-');
+            if (!y || !m || !d) return dateStr;
+            return `${d}/${m}/${y}`;
+        },
+        async fetchSuratPeringatan() {
+            try {
+                const employeeId = this.user?.employee_id;
+                // Pastikan endpoint return data dari table `shift`
+                // format ideal: [{id, nama_shift, keterangan}]
+                const { data } = await axios.get(
+                    '/dashboard/surat-peringatan/' + employeeId,
+                );
+                this.surat_peringatan = data.data.suratPeringatanTerakhir;
+            } catch (e) {
+                console.warn('Gagal fetch shift options:', e);
+            }
+        },
         async fetchShiftOptions() {
             try {
                 // Pastikan endpoint return data dari table `shift`
@@ -1402,6 +1466,10 @@ export default {
 
         goToAbsen() {
             router.visit(`/attendance`);
+        },
+
+        lihatDetailSP() {
+            router.visit(`/surat-peringatan`);
         },
 
         getCurrentTime() {
@@ -2842,5 +2910,14 @@ export default {
 .alert-error .alert-badge {
     background: #dc2626;
     color: #fff;
+}
+.alert-detail-btn {
+    margin-top: 6px;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 600;
 }
 </style>

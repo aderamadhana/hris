@@ -22,6 +22,8 @@ use App\Http\Controllers\LogAktifitasController;
 use App\Http\Controllers\Masters\PayrollPeriodController;
 use App\Http\Controllers\Masters\PerusahaanController;
 use App\Http\Controllers\Masters\ShiftController;
+use App\Http\Controllers\Masters\SuratController;
+use App\Http\Controllers\Masters\SuratPeringatanController;
 
 
 
@@ -59,6 +61,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('dashboard')->group(function () {
         Route::get('/stats', [DashboardController::class, 'getStats']);
+        Route::get('/surat-peringatan/{id}', [DashboardController::class, 'getSuratPeringatan']);
     });
 
     Route::prefix('hr')->group(function () {
@@ -114,7 +117,7 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::get('/surat-peringatan', function () {
-            return Inertia::render('UnderDeveloping');
+            return Inertia::render('SuratPeringatan');
         });
 
         Route::prefix('shift')->group(function () {
@@ -128,6 +131,32 @@ Route::middleware('auth')->group(function () {
             Route::post('/store', [ShiftController::class, 'store']);
             Route::put('/update/{shiftId}', [ShiftController::class, 'update']);
             Route::delete('/delete/{shiftId}', [ShiftController::class, 'destroy']);
+        });
+
+        Route::prefix('arsip-surat')->group(function () {
+            Route::get('/', function () {
+                return Inertia::render('admin/hr/arsip-surat/all-arsip_surat');
+            });
+            
+            Route::get('/all', [SuratController::class, 'index']);
+            Route::get('/{suratId}/edit', [SuratController::class, 'edit']);
+            Route::get('/get-data/{id}', [SuratController::class, 'getData']);
+            Route::post('/store', [SuratController::class, 'store']);
+            Route::post('/update/{suratId}', [SuratController::class, 'update']);
+            Route::delete('/delete/{suratId}', [SuratController::class, 'destroy']);
+        });
+
+        Route::prefix('surat-peringatan')->group(function () {
+            Route::get('/', function () {
+                return Inertia::render('admin/hr/surat-peringatan/all-surat_peringatan');
+            });
+            
+            Route::get('/all', [SuratPeringatanController::class, 'index']);
+            Route::get('/{shiftId}/edit', [SuratPeringatanController::class, 'edit']);
+            Route::get('/get-data/{id}', [SuratPeringatanController::class, 'getData']);
+            Route::post('/store', [SuratPeringatanController::class, 'store']);
+            Route::put('/update/{shiftId}', [SuratPeringatanController::class, 'update']);
+            Route::delete('/delete/{shiftId}', [SuratPeringatanController::class, 'destroy']);
         });
     });
 
@@ -217,10 +246,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/riwayat-kontrak', function () {
         return Inertia::render('UnderDeveloping');
     });
-
+    
     Route::get('/surat-peringatan', function () {
-        return Inertia::render('UnderDeveloping');
+        return Inertia::render('SuratPeringatan');
     });
+
 
     Route::prefix('employee')->group(function () {
         Route::get('/', [EmployeeController::class, 'index']);

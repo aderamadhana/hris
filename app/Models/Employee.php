@@ -32,6 +32,16 @@ class Employee extends Model
             ->orderByDesc('id')  // ✅ Gunakan orderByDesc
             ->limit(1);           // ✅ Pastikan hanya ambil 1
     }
+    public function suratPeringatanTerakhir()
+    {
+        return $this->hasOne(SuratPeringatan::class, 'employee_id')
+            ->ofMany(
+                ['tanggal_sp' => 'max', 'id' => 'max'],
+                function ($q) {
+                    $q->whereNotNull('tanggal_sp');
+                }
+            );
+    }
     public function educations()
     {
         return $this->hasMany(EmployeeEducation::class);
