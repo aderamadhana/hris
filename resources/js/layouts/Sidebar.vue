@@ -25,6 +25,7 @@ const isHrActive = computed(() => {
         path.value.startsWith('/pelamar') || // kalau masih dipakai
         path.value.startsWith('/hr/payroll') ||
         path.value.startsWith('/hr/surat-peringatan') ||
+        path.value.startsWith('/hr/arsip-surat') ||
         path.value.startsWith('/hr/shift')
     );
 });
@@ -189,6 +190,25 @@ const fiturBelumTersedia = () => {
                             }"
                         >
                             <span>Shift</span>
+                        </Link>
+                        <Link
+                            href="/hr/arsip-surat"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith('/hr/arsip-surat'),
+                            }"
+                        >
+                            <span>Arsip Surat</span>
+                        </Link>
+
+                        <Link
+                            href="/hr/surat-peringatan"
+                            class="sidebar-subitem"
+                            :class="{
+                                active: path.startsWith('/hr/surat-peringatan'),
+                            }"
+                        >
+                            <span>Surat Peringatan</span>
                         </Link>
                     </div>
                 </transition>
@@ -408,14 +428,14 @@ const fiturBelumTersedia = () => {
                 <span class="label">Riwayat Kontrak</span>
             </Link> -->
 
-            <!-- <Link
+            <Link
                 href="/surat-peringatan"
                 class="sidebar-item"
                 :class="{ active: path.startsWith('/surat-peringatan') }"
             >
                 <font-awesome-icon icon="triangle-exclamation" class="icon" />
                 <span class="label">Surat Peringatan</span>
-            </Link> -->
+            </Link>
         </nav>
     </aside>
 </template>

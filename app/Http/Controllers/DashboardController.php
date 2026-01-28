@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Employee;
 use App\Models\EmployeeEmployment;
+use App\Models\SuratPeringatan;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use App\Models\Perusahaan;
 use App\Models\Divisi;
@@ -86,6 +88,47 @@ class DashboardController extends Controller
         }
     }
 
+    public function getSuratPeringatan($employeeId)
+    {
+        try {
+            $data = [
+                'suratPeringatanTerakhir' => $this->getSuratPeringatanTerakhir($employeeId),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'error' => $th->getMessage(),
+                'line' => $th->getLine()
+            ], 500);
+        }
+    }
+
+    private function getSuratPeringatanTerakhir(int $employeeId): ?array
+    {
+        $sp = SuratPeringatan::query()
+            ->where('employee_id', $employeeId)
+            ->orderByDesc('tanggal_sp')
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$sp) {
+            return null;
+        }
+
+        return [
+            'id' => $sp->id,
+            'employee_id' => $sp->employee_id,
+            'nomor_sp' => $sp->nomor_sp,
+            'tanggal_sp' => optional($sp->tanggal_sp)->format('Y-m-d'),
+            'tingkat' => $sp->tingkat,'file_url' => $sp->file_path ? Storage::disk('public')->url($sp->file_path) : null,
+        ];
+    }
 
     private function getKaryawanAktif()
     {
