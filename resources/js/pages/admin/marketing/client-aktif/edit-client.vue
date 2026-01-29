@@ -4,7 +4,6 @@ import { triggerAlert } from '@/utils/alert';
 import { Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import L from 'leaflet';
-
 import 'leaflet/dist/leaflet.css';
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -33,14 +32,22 @@ export default {
             searchTimeouts: [null],
             searchControllers: [null],
 
+            // history mou + current file url
+            historyMou: [],
+            berkasMouUrl: null,
+
             form: {
                 kode_perusahaan: '',
                 nama_perusahaan: '',
                 alamat: '',
                 status: 'aktif',
-                divisi: [this.defaultDivisi()],
+
                 tanggal_akhir_mou: '',
                 tanggal_awal_mou: '',
+                keterangan: '',
+                berkas_mou: null, // File
+
+                divisi: [this.defaultDivisi()],
             },
         };
     },
@@ -64,10 +71,26 @@ export default {
                 this.form.nama_perusahaan = p.nama_perusahaan ?? '';
                 this.form.tanggal_akhir_mou = p.tanggal_akhir_mou ?? '';
                 this.form.tanggal_awal_mou = p.tanggal_awal_mou ?? '';
+                this.form.keterangan = p.keterangan ?? '';
                 this.form.alamat = p.alamat ?? '';
                 this.form.status = p.status ?? 'aktif';
 
+                // current file url (dari controller getData)
+                this.berkasMouUrl =
+                    p.berkas_mou_url ??
+                    (p.berkas_mou ? `/storage/${p.berkas_mou}` : null);
+
+                // history mou (snake_case biasanya)
+                const hm = p.history_mou ?? p.historyMou ?? [];
+                this.historyMou = (hm || []).map((m) => ({
+                    ...m,
+                    berkas_mou_url:
+                        m.berkas_mou_url ??
+                        (m.berkas_mou ? `/storage/${m.berkas_mou}` : null),
+                }));
+
                 this.form.divisi = (p.divisi ?? []).map((d) => ({
+                    id: d.id, // penting untuk updateOrCreate di backend
                     nama_divisi: d.nama_divisi ?? '',
                     status: d.status ?? 'aktif',
                     search: '',
@@ -93,12 +116,21 @@ export default {
                 }
             } catch (err) {
                 console.error('Gagal ambil data', err);
+                triggerAlert('error', 'Gagal mengambil data perusahaan');
             }
+        },
+
+        // ================= FILE =================
+        onFileChange(e) {
+            const file = e?.target?.files?.[0] || null;
+            this.form.berkas_mou = file;
+            if (this.errors.berkas_mou) delete this.errors.berkas_mou;
         },
 
         // ================= BASE =================
         defaultDivisi() {
             return {
+                id: null,
                 nama_divisi: '',
                 status: 'aktif',
                 search: '',
@@ -143,7 +175,7 @@ export default {
             this.searchTimeouts.splice(index, 1);
             this.searchControllers.splice(index, 1);
 
-            // IMPORTANT kalau pakai id "map-{index}": setelah splice, index berubah => re-init map sisanya
+            // IMPORTANT: index map berubah setelah splice, re-init map sisanya
             this.$nextTick(async () => {
                 for (let i = index; i < this.form.divisi.length; i++) {
                     await this.initMap(i, { reverseOnInit: false });
@@ -188,7 +220,6 @@ export default {
             const el = document.getElementById(`map-${index}`);
             if (!el) return;
 
-            // tunggu container punya dimensi sebelum bikin map
             await this.waitForContainer(el);
 
             // remove map lama jika ada
@@ -207,8 +238,6 @@ export default {
 
             const zoom = hasCoord ? 16 : 13;
 
-            // === FIX MARKER ICON (ambil dari public/images) ===
-            // cache biar gak bikin icon berulang
             if (!this._leafletDefaultIcon) {
                 this._leafletDefaultIcon = L.icon({
                     iconUrl: '/assets/images/marker-icon.png',
@@ -236,7 +265,7 @@ export default {
             const marker = L.marker(center, {
                 draggable: true,
                 title: 'Drag untuk pindah lokasi',
-                icon: this._leafletDefaultIcon, // <— ini yang bikin marker muncul di server
+                icon: this._leafletDefaultIcon,
             }).addTo(map);
 
             const circle = L.circle(center, {
@@ -285,10 +314,8 @@ export default {
                 updateLocation,
             };
 
-            // set view + paksa render tiles (biasanya menyelesaikan blank)
             this.refreshLeaflet(index, center, zoom);
 
-            // trigger updateLocation setelah map siap
             await updateLocation(L.latLng(center[0], center[1]), {
                 reverse: reverseOnInit && !d.alamat_penempatan,
             });
@@ -302,7 +329,6 @@ export default {
                 parseInt(this.form.divisi[index].radius_presensi) || 100;
             mapObj.circle.setRadius(radius);
 
-            // refresh biar circle + tiles konsisten kalau container baru aja muncul
             const lat = Number(this.form.divisi[index].latitude);
             const lng = Number(this.form.divisi[index].longitude);
             const center =
@@ -341,9 +367,8 @@ export default {
             let controller;
 
             try {
-                if (this.searchControllers[index]) {
+                if (this.searchControllers[index])
                     this.searchControllers[index].abort();
-                }
 
                 controller = new AbortController();
                 this.searchControllers[index] = controller;
@@ -368,7 +393,6 @@ export default {
             } catch (e) {
                 if (e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError')
                     return;
-
                 console.warn('Search lokasi gagal:', e);
                 triggerAlert('error', 'Pencarian lokasi gagal, coba lagi');
             } finally {
@@ -427,6 +451,30 @@ export default {
                 this.errors.nama_perusahaan = 'Nama perusahaan harus diisi';
             }
 
+            // tanggal mou basic
+            if (this.form.tanggal_awal_mou && this.form.tanggal_akhir_mou) {
+                if (this.form.tanggal_akhir_mou < this.form.tanggal_awal_mou) {
+                    this.errors.tanggal_akhir_mou =
+                        'Tanggal akhir harus >= tanggal awal';
+                }
+            }
+
+            // file optional (backend tetap validasi)
+            if (this.form.berkas_mou) {
+                const allowed = [
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                ];
+                if (!allowed.includes(this.form.berkas_mou.type)) {
+                    this.errors.berkas_mou = 'Format file harus PDF/DOC/DOCX';
+                }
+                const maxBytes = 5 * 1024 * 1024;
+                if (this.form.berkas_mou.size > maxBytes) {
+                    this.errors.berkas_mou = 'Ukuran file maksimal 5MB';
+                }
+            }
+
             this.form.divisi.forEach((divisi, index) => {
                 if (!divisi.nama_divisi) {
                     this.errors[`divisi.${index}.nama_divisi`] =
@@ -442,6 +490,53 @@ export default {
             return Object.keys(this.errors).length === 0;
         },
 
+        buildFormData() {
+            const fd = new FormData();
+
+            // metode PUT via POST biar multipart stabil
+            fd.append('_method', 'PUT');
+
+            fd.append('kode_perusahaan', this.form.kode_perusahaan ?? '');
+            fd.append('nama_perusahaan', this.form.nama_perusahaan ?? '');
+            fd.append('alamat', this.form.alamat ?? '');
+            fd.append('status', this.form.status ?? 'aktif');
+
+            fd.append('tanggal_awal_mou', this.form.tanggal_awal_mou ?? '');
+            fd.append('tanggal_akhir_mou', this.form.tanggal_akhir_mou ?? '');
+            fd.append('keterangan', this.form.keterangan ?? '');
+
+            if (this.form.berkas_mou) {
+                fd.append('berkas_mou', this.form.berkas_mou);
+            }
+
+            (this.form.divisi || []).forEach((d, i) => {
+                if (d.id) fd.append(`divisi[${i}][id]`, d.id);
+
+                fd.append(`divisi[${i}][nama_divisi]`, d.nama_divisi ?? '');
+                fd.append(`divisi[${i}][status]`, d.status ?? 'aktif');
+                fd.append(
+                    `divisi[${i}][alamat_penempatan]`,
+                    d.alamat_penempatan ?? '',
+                );
+                fd.append(`divisi[${i}][latitude]`, d.latitude ?? '');
+                fd.append(`divisi[${i}][longitude]`, d.longitude ?? '');
+                fd.append(
+                    `divisi[${i}][radius_presensi]`,
+                    d.radius_presensi ?? 100,
+                );
+                fd.append(
+                    `divisi[${i}][tanggal_awal_mou]`,
+                    d.tanggal_awal_mou ?? '',
+                );
+                fd.append(
+                    `divisi[${i}][tanggal_akhir_mou]`,
+                    d.tanggal_akhir_mou ?? '',
+                );
+            });
+
+            return fd;
+        },
+
         // ================= SUBMIT =================
         submitForm() {
             if (!this.validateForm()) {
@@ -451,16 +546,18 @@ export default {
 
             this.processing = true;
 
-            router.put(
+            const payload = this.buildFormData();
+
+            router.post(
                 `/marketing/client/aktif/update/${this.perusahaan.id}`,
-                this.form,
+                payload,
                 {
+                    forceFormData: true,
                     onSuccess: () => {
                         triggerAlert(
                             'success',
                             'Data client berhasil disimpan',
                         );
-
                         router.visit(`/marketing/client/aktif`);
                     },
                     onError: (errors) => {
@@ -472,11 +569,24 @@ export default {
                     },
                     onFinish: () => {
                         this.processing = false;
-
-                        router.visit(`/marketing/client/aktif`);
                     },
                 },
             );
+        },
+        formatDateTime(iso) {
+            if (!iso) return '-';
+
+            const d = new Date(iso);
+
+            // paksa Asia/Jakarta biar konsisten (walau device user beda timezone)
+            return new Intl.DateTimeFormat('id-ID', {
+                timeZone: 'Asia/Jakarta',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+            }).format(d);
         },
     },
 };
@@ -511,12 +621,10 @@ export default {
 
                             <div class="card-body space-y-4">
                                 <div class="form-group">
-                                    <label class="field-label"
-                                        >Kode Perusahaan
-                                        <span class="text-danger"
-                                            >*</span
-                                        ></label
-                                    >
+                                    <label class="field-label">
+                                        Kode Perusahaan
+                                        <span class="text-danger">*</span>
+                                    </label>
                                     <input
                                         v-model="form.kode_perusahaan"
                                         class="form-input"
@@ -540,12 +648,10 @@ export default {
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="field-label"
-                                        >Nama Perusahaan
-                                        <span class="text-danger"
-                                            >*</span
-                                        ></label
-                                    >
+                                    <label class="field-label">
+                                        Nama Perusahaan
+                                        <span class="text-danger">*</span>
+                                    </label>
                                     <input
                                         v-model="form.nama_perusahaan"
                                         class="form-input"
@@ -576,27 +682,84 @@ export default {
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="" class="field-label"
+                                    <label class="field-label"
                                         >Tanggal Awal MOU</label
                                     >
                                     <input
                                         type="date"
                                         v-model="form.tanggal_awal_mou"
-                                        id=""
                                         class="form-input"
                                     />
                                 </div>
+
                                 <div class="form-group">
-                                    <label for="" class="field-label"
+                                    <label class="field-label"
                                         >Tanggal Akhir MOU</label
                                     >
                                     <input
                                         type="date"
                                         v-model="form.tanggal_akhir_mou"
                                         :min="form.tanggal_awal_mou"
-                                        id=""
                                         class="form-input"
+                                        :class="{
+                                            'border-red-300':
+                                                errors.tanggal_akhir_mou,
+                                        }"
                                     />
+                                    <p
+                                        v-if="errors.tanggal_akhir_mou"
+                                        class="field-error"
+                                    >
+                                        {{ errors.tanggal_akhir_mou }}
+                                    </p>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="field-label"
+                                        >Keterangan MoU</label
+                                    >
+                                    <textarea
+                                        v-model="form.keterangan"
+                                        class="form-input"
+                                        rows="2"
+                                        placeholder="Catatan MoU (opsional)"
+                                    ></textarea>
+                                    <p
+                                        v-if="errors.keterangan"
+                                        class="field-error"
+                                    >
+                                        {{ errors.keterangan }}
+                                    </p>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="field-label">
+                                        Berkas MoU (PDF/DOC/DOCX, max 5MB)
+                                    </label>
+
+                                    <div v-if="berkasMouUrl" class="mb-2">
+                                        <a
+                                            :href="berkasMouUrl"
+                                            target="_blank"
+                                            rel="noopener"
+                                            class="btn btn-sm btn-warning"
+                                        >
+                                            Lihat Berkas Saat Ini
+                                        </a>
+                                    </div>
+
+                                    <input
+                                        type="file"
+                                        class="form-input"
+                                        accept=".pdf,.doc,.docx"
+                                        @change="onFileChange"
+                                    />
+                                    <p
+                                        v-if="errors.berkas_mou"
+                                        class="field-error"
+                                    >
+                                        {{ errors.berkas_mou }}
+                                    </p>
                                 </div>
 
                                 <div class="form-group">
@@ -615,8 +778,87 @@ export default {
                         </div>
                     </div>
 
-                    <!-- DIVISI -->
+                    <!-- KANAN -->
                     <div class="lg:col-span-2 space-y-6">
+                        <!-- HISTORY MOU -->
+                        <div class="card">
+                            <div class="card-header border-b">
+                                <div>
+                                    <h3 class="card-title">Riwayat MoU</h3>
+                                    <p class="text-xs text-slate-500 mt-1">
+                                        Otomatis tercatat setiap kali ubah
+                                        tanggal/keterangan/berkas MoU lalu
+                                        simpan.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="table-responsive-custom">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>No</th>
+                                                <th>Awal</th>
+                                                <th>Akhir</th>
+                                                <th>Keterangan</th>
+                                                <th>Berkas</th>
+                                                <th>Dibuat</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-if="historyMou.length === 0">
+                                                <td colspan="6">
+                                                    Belum ada history MoU
+                                                </td>
+                                            </tr>
+
+                                            <tr
+                                                v-for="(m, i) in historyMou"
+                                                :key="m.id"
+                                            >
+                                                <td>{{ i + 1 }}</td>
+                                                <td>
+                                                    {{
+                                                        m.tanggal_awal_mou ||
+                                                        '-'
+                                                    }}
+                                                </td>
+                                                <td>
+                                                    {{
+                                                        m.tanggal_akhir_mou ||
+                                                        '-'
+                                                    }}
+                                                </td>
+                                                <td>
+                                                    {{ m.keterangan || '-' }}
+                                                </td>
+                                                <td>
+                                                    <a
+                                                        v-if="m.berkas_mou_url"
+                                                        :href="m.berkas_mou_url"
+                                                        target="_blank"
+                                                        rel="noopener"
+                                                    >
+                                                        Download
+                                                    </a>
+                                                    <span v-else>-</span>
+                                                </td>
+                                                <td>
+                                                    {{
+                                                        formatDateTime(
+                                                            m.created_at,
+                                                        )
+                                                    }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DIVISI -->
                         <div
                             v-for="(divisi, index) in form.divisi"
                             :key="index"
@@ -648,12 +890,10 @@ export default {
                                     class="gap-4 sm:grid-cols-2 grid grid-cols-1"
                                 >
                                     <div class="form-group">
-                                        <label class="field-label"
-                                            >Nama Divisi
-                                            <span class="text-danger"
-                                                >*</span
-                                            ></label
-                                        >
+                                        <label class="field-label">
+                                            Nama Divisi
+                                            <span class="text-danger">*</span>
+                                        </label>
                                         <input
                                             v-model="divisi.nama_divisi"
                                             class="form-input"
@@ -754,7 +994,6 @@ export default {
                                 </div>
 
                                 <!-- MAP -->
-                                <!-- kunci z-index Leaflet di dalam wrapper -->
                                 <div class="map-wrap relative w-full">
                                     <div
                                         :id="`map-${index}`"
@@ -826,9 +1065,9 @@ export default {
                                         </div>
 
                                         <div class="form-group">
-                                            <label class="field-label text-xs"
-                                                >Radius Presensi (meter)</label
-                                            >
+                                            <label class="field-label text-xs">
+                                                Radius Presensi (meter)
+                                            </label>
                                             <input
                                                 type="number"
                                                 v-model="divisi.radius_presensi"
@@ -879,6 +1118,7 @@ export default {
                         <i class="ti ti-x"></i>
                         Batal
                     </Link>
+
                     <button
                         type="submit"
                         class="btn btn-primary"

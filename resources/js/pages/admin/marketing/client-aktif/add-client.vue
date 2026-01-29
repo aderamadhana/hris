@@ -32,9 +32,15 @@ export default {
                 nama_perusahaan: '',
                 alamat: '',
                 status: 'aktif',
-                divisi: [this.defaultDivisi()],
-                tanggal_akhir_mou: '',
+
                 tanggal_awal_mou: '',
+                tanggal_akhir_mou: '',
+                keterangan: '',
+
+                // file harus disimpan sebagai object File
+                berkas_mou: null,
+
+                divisi: [this.defaultDivisi()],
             },
         };
     },
@@ -53,14 +59,22 @@ export default {
                 status: 'aktif',
                 search: '',
                 searchResults: [],
-                searching: false, // <- penting untuk spinner
+                searching: false,
                 alamat_penempatan: '',
                 latitude: null,
                 longitude: null,
                 radius_presensi: 100,
-                tanggal_akhir_mou: '',
                 tanggal_awal_mou: '',
+                tanggal_akhir_mou: '',
             };
+        },
+
+        onFileChange(e) {
+            const file = e?.target?.files?.[0] || null;
+            this.form.berkas_mou = file;
+
+            // bersihin error kalau user sudah pilih ulang file
+            if (this.errors.berkas_mou) delete this.errors.berkas_mou;
         },
 
         tambahDivisi() {
@@ -81,13 +95,11 @@ export default {
                 return;
             }
 
-            // stop debounce + abort request
             if (this.searchTimeouts[index])
                 clearTimeout(this.searchTimeouts[index]);
             if (this.searchControllers[index])
                 this.searchControllers[index].abort();
 
-            // remove map instance
             if (this.maps[index]) this.maps[index].map.remove();
 
             this.form.divisi.splice(index, 1);
@@ -99,23 +111,19 @@ export default {
 
         // ================= MAP =================
         async initMap(index) {
-            // Guard: jangan init ulang kalau sudah ada
             if (this.maps?.[index]?.map) {
-                // kalau map muncul di tab/modal, kadang perlu refresh ukuran
                 setTimeout(() => this.maps[index].map.invalidateSize(), 0);
                 return;
             }
 
-            // kalau ini Vue dan element dibuat via v-for, pastikan DOM sudah jadi
             if (this.$nextTick) await this.$nextTick();
 
             const el = document.getElementById(`map-${index}`);
             if (!el) return;
 
-            // Pastikan container punya tinggi (kalau 0px, map/marker bisa "hilang")
             if (!el.style.height) el.style.height = '400px';
 
-            const center = [-7.96662, 112.632632]; // Malang
+            const center = [-7.96662, 112.632632];
             const map = L.map(el, { zoomControl: true }).setView(center, 13);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -123,11 +131,7 @@ export default {
                 maxZoom: 19,
             }).addTo(map);
 
-            const marker = L.marker(center, {
-                draggable: true,
-                title: 'Drag untuk pindah lokasi',
-                // icon: new L.Icon.Default(), // optional; default sudah di-fix via mergeOptions
-            }).addTo(map);
+            const marker = L.marker(center, { draggable: true }).addTo(map);
 
             const radius = Number(
                 this.form.divisi?.[index]?.radius_presensi ?? 0,
@@ -170,8 +174,6 @@ export default {
             marker.on('dragend', (e) => updateLocation(e.target.getLatLng()));
 
             this.maps[index] = { map, marker, circle };
-
-            // Penting kalau map muncul di area yang baru dirender / modal / tab
             setTimeout(() => map.invalidateSize(), 0);
         },
 
@@ -184,17 +186,15 @@ export default {
             mapObj.circle.setRadius(radius);
         },
 
-        // ================= SEARCH (DEBOUNCE + ABORT + SPINNER) =================
+        // ================= SEARCH =================
         async searchLocation(index) {
             const q = this.form.divisi[index].search.trim();
 
-            // clear pending debounce
             if (this.searchTimeouts[index]) {
                 clearTimeout(this.searchTimeouts[index]);
                 this.searchTimeouts[index] = null;
             }
 
-            // query pendek: reset
             if (!q || q.length < 3) {
                 this.form.divisi[index].searchResults = [];
                 this.form.divisi[index].searching = false;
@@ -206,20 +206,17 @@ export default {
                 return;
             }
 
-            // debounce 400ms
             this.searchTimeouts[index] = setTimeout(() => {
                 this.doSearchLocation(index, q);
             }, 400);
         },
 
         async doSearchLocation(index, q) {
-            let controller; // <- biar aman dipakai di finally
+            let controller;
 
             try {
-                // abort request sebelumnya
-                if (this.searchControllers[index]) {
+                if (this.searchControllers[index])
                     this.searchControllers[index].abort();
-                }
 
                 controller = new AbortController();
                 this.searchControllers[index] = controller;
@@ -240,18 +237,14 @@ export default {
                     },
                 );
 
-                // kalau user sudah ngetik query baru, jangan overwrite
                 if (this.form.divisi[index].search.trim() !== q) return;
-
                 this.form.divisi[index].searchResults = res.data;
             } catch (e) {
                 if (e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError')
                     return;
-
                 console.warn('Search lokasi gagal:', e);
                 triggerAlert('error', 'Pencarian lokasi gagal, coba lagi');
             } finally {
-                // matikan spinner hanya kalau request ini adalah request terakhir untuk index tsb
                 if (
                     controller &&
                     this.searchControllers[index] === controller
@@ -262,7 +255,6 @@ export default {
         },
 
         selectLocation(index, item) {
-            // stop debounce & request
             if (this.searchTimeouts[index]) {
                 clearTimeout(this.searchTimeouts[index]);
                 this.searchTimeouts[index] = null;
@@ -305,6 +297,30 @@ export default {
                 this.errors.nama_perusahaan = 'Nama perusahaan harus diisi';
             }
 
+            // validasi tanggal mou sederhana
+            if (this.form.tanggal_awal_mou && this.form.tanggal_akhir_mou) {
+                if (this.form.tanggal_akhir_mou < this.form.tanggal_awal_mou) {
+                    this.errors.tanggal_akhir_mou =
+                        'Tanggal akhir harus >= tanggal awal';
+                }
+            }
+
+            // validasi file (opsional, backend sudah validasi juga)
+            if (this.form.berkas_mou) {
+                const allowed = [
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                ];
+                if (!allowed.includes(this.form.berkas_mou.type)) {
+                    this.errors.berkas_mou = 'Format file harus PDF/DOC/DOCX';
+                }
+                const maxBytes = 5 * 1024 * 1024;
+                if (this.form.berkas_mou.size > maxBytes) {
+                    this.errors.berkas_mou = 'Ukuran file maksimal 5MB';
+                }
+            }
+
             this.form.divisi.forEach((divisi, index) => {
                 if (!divisi.nama_divisi) {
                     this.errors[`divisi.${index}.nama_divisi`] =
@@ -320,6 +336,50 @@ export default {
             return Object.keys(this.errors).length === 0;
         },
 
+        buildFormData() {
+            const fd = new FormData();
+
+            // perusahaan
+            fd.append('kode_perusahaan', this.form.kode_perusahaan ?? '');
+            fd.append('nama_perusahaan', this.form.nama_perusahaan ?? '');
+            fd.append('alamat', this.form.alamat ?? '');
+            fd.append('status', this.form.status ?? 'aktif');
+
+            fd.append('tanggal_awal_mou', this.form.tanggal_awal_mou ?? '');
+            fd.append('tanggal_akhir_mou', this.form.tanggal_akhir_mou ?? '');
+            fd.append('keterangan', this.form.keterangan ?? '');
+
+            if (this.form.berkas_mou) {
+                fd.append('berkas_mou', this.form.berkas_mou);
+            }
+
+            // divisi array: divisi[0][nama_divisi] dst
+            (this.form.divisi || []).forEach((d, i) => {
+                fd.append(`divisi[${i}][nama_divisi]`, d.nama_divisi ?? '');
+                fd.append(`divisi[${i}][status]`, d.status ?? 'aktif');
+                fd.append(
+                    `divisi[${i}][alamat_penempatan]`,
+                    d.alamat_penempatan ?? '',
+                );
+                fd.append(`divisi[${i}][latitude]`, d.latitude ?? '');
+                fd.append(`divisi[${i}][longitude]`, d.longitude ?? '');
+                fd.append(
+                    `divisi[${i}][radius_presensi]`,
+                    d.radius_presensi ?? 100,
+                );
+                fd.append(
+                    `divisi[${i}][tanggal_awal_mou]`,
+                    d.tanggal_awal_mou ?? '',
+                );
+                fd.append(
+                    `divisi[${i}][tanggal_akhir_mou]`,
+                    d.tanggal_akhir_mou ?? '',
+                );
+            });
+
+            return fd;
+        },
+
         // ================= SUBMIT =================
         submitForm() {
             if (!this.validateForm()) {
@@ -329,7 +389,10 @@ export default {
 
             this.processing = true;
 
-            router.post('/marketing/client/aktif/store', this.form, {
+            const payload = this.buildFormData();
+
+            router.post('/marketing/client/aktif/store', payload, {
+                forceFormData: true, // penting untuk file
                 onSuccess: () => {
                     triggerAlert('success', 'Data client berhasil disimpan');
                     router.visit(`/marketing/client/aktif`);
@@ -465,7 +528,42 @@ export default {
                                         class="form-input"
                                     />
                                 </div>
+                                <div class="form-group">
+                                    <label class="field-label"
+                                        >Keterangan MoU</label
+                                    >
+                                    <textarea
+                                        v-model="form.keterangan"
+                                        class="form-input"
+                                        rows="2"
+                                        placeholder="Catatan MoU (opsional)"
+                                    ></textarea>
+                                    <p
+                                        v-if="errors.keterangan"
+                                        class="field-error"
+                                    >
+                                        {{ errors.keterangan }}
+                                    </p>
+                                </div>
 
+                                <div class="form-group">
+                                    <label class="field-label"
+                                        >Berkas MoU (PDF/DOC/DOCX, max
+                                        5MB)</label
+                                    >
+                                    <input
+                                        type="file"
+                                        class="form-input"
+                                        accept=".pdf,.doc,.docx"
+                                        @change="onFileChange"
+                                    />
+                                    <p
+                                        v-if="errors.berkas_mou"
+                                        class="field-error"
+                                    >
+                                        {{ errors.berkas_mou }}
+                                    </p>
+                                </div>
                                 <div class="form-group">
                                     <label class="field-label">Status</label>
                                     <select

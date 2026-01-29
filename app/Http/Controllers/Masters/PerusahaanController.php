@@ -7,9 +7,11 @@ use App\Models\Perusahaan;
 use App\Models\Employee;
 use App\Models\Divisi;
 use App\Models\EmployeeEmployment;
+use App\Models\HistoryMou;
 use App\Exports\PerusahaanExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Inertia\Inertia;
@@ -21,50 +23,45 @@ class PerusahaanController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->integer('per_page', 10);
-        $search  = $request->string('search')->trim();
-        $status  = $request->string('status')->trim();
 
-        // Ambil data dari Model Perusahaan
+        // FIX: Request::string()->trim() menghasilkan Stringable, jadi harus dicast ke string
+        $search  = (string) $request->string('search')->trim();
+        $status  = (string) $request->string('status')->trim();
+
         $query = Perusahaan::query();
 
-        // Apply search
         if ($search !== '') {
             $query->where('nama_perusahaan', 'like', "%{$search}%");
         }
 
-        // Apply status filter
         if ($status !== '') {
             $query->where('status', $status);
         }
 
-        // Get paginated result
         $result = $query->paginate($perPage);
 
-        // Transform dan hitung total karyawan aktif
         $data = $result->getCollection()->map(function ($perusahaan) {
+
             // Hitung karyawan aktif yang employment terbarunya di perusahaan ini
             $totalKaryawanAktif = DB::table('employees as e')
                 ->join('employee_employment_histories as eeh', function($join) {
                     $join->on('e.id', '=', 'eeh.employee_id')
                         ->whereRaw('eeh.id = (
-                            SELECT MAX(id) 
-                            FROM employee_employment_histories 
+                            SELECT MAX(id)
+                            FROM employee_employment_histories
                             WHERE employee_id = e.id
                         )');
                 })
                 ->where('e.status_active', '1')
                 ->where(function($q) use ($perusahaan) {
                     $q->where('eeh.perusahaan', $perusahaan->nama_perusahaan)
-                    ->orWhere('eeh.perusahaan', 'like', '%' . $perusahaan->nama_perusahaan . '%');
+                      ->orWhere('eeh.perusahaan', 'like', '%' . $perusahaan->nama_perusahaan . '%');
                 })
                 ->count();
 
-            // Hitung total history dari employee_employment_histories
-            $totalHistory = DB::table('employee_employment_histories')
-                ->where(function($q) use ($perusahaan) {
-                    $q->where('perusahaan', $perusahaan->nama_perusahaan)
-                    ->orWhere('perusahaan', 'like', '%' . $perusahaan->nama_perusahaan . '%');
-                })
+            // Total history MoU dari tabel history_mous
+            $totalHistoryMou = DB::table('history_mous')
+                ->where('perusahaan_id', $perusahaan->id)
                 ->count();
 
             return [
@@ -75,22 +72,23 @@ class PerusahaanController extends Controller
                 'tanggal_awal_mou' => $perusahaan->tanggal_awal_mou,
                 'tanggal_akhir_mou' => $perusahaan->tanggal_akhir_mou,
                 'berkas_mou' => $perusahaan->berkas_mou,
+                'berkas_mou_url' => $perusahaan->berkas_mou ? asset('storage/' . $perusahaan->berkas_mou) : null,
                 'keterangan' => $perusahaan->keterangan,
                 'status' => $perusahaan->status ?? 'aktif',
                 'total_karyawan_aktif' => $totalKaryawanAktif,
-                'total_history' => 0,
+
+                // pertahankan key lama biar frontend tidak pecah
+                'total_history' => $totalHistoryMou,
+                'total_history_mou' => $totalHistoryMou,
+
                 'created_at' => $perusahaan->created_at,
                 'updated_at' => $perusahaan->updated_at,
             ];
         });
-        
-        $aktif = Perusahaan::query()
-            ->where('status', 'aktif');
-        
-        $tidak_aktif = Perusahaan::query()
-            ->where('status', 'tidak_aktif');
 
-        // Total karyawan tanpa filter lain
+        $aktif = Perusahaan::query()->where('status', 'aktif');
+        $tidak_aktif = Perusahaan::query()->where('status', 'tidak_aktif');
+
         $totalAllActive = (clone $aktif)->count();
         $totalAllNonActive = (clone $tidak_aktif)->count();
 
@@ -114,7 +112,6 @@ class PerusahaanController extends Controller
         return Inertia::render('admin/marketing/client-aktif/add-client');
     }
 
-    
     public function getData(int $id)
     {
         $perusahaan = Perusahaan::query()
@@ -137,6 +134,19 @@ class PerusahaanController extends Controller
                         'updated_at'
                     )
                     ->orderBy('nama_divisi');
+                },
+                'historyMou' => function ($q) {
+                    $q->select(
+                        'id',
+                        'perusahaan_id',
+                        'tanggal_awal_mou',
+                        'tanggal_akhir_mou',
+                        'berkas_mou',
+                        'keterangan',
+                        'status',
+                        'created_at'
+                    )
+                    ->latest('tanggal_awal_mou');
                 }
             ])
             ->select(
@@ -154,17 +164,101 @@ class PerusahaanController extends Controller
             )
             ->findOrFail($id);
 
+        // Tambahkan URL file untuk history (biar frontend gampang)
+        $perusahaan->historyMou->transform(function ($m) {
+            $m->berkas_mou_url = $m->berkas_mou ? asset('storage/' . $m->berkas_mou) : null;
+            return $m;
+        });
+
+        $perusahaan->berkas_mou_url = $perusahaan->berkas_mou ? asset('storage/' . $perusahaan->berkas_mou) : null;
+
         return response()->json([
             'data' => $perusahaan,
         ]);
     }
 
-
     public function store(Request $request)
     {
-        
+        $validated = $request->validate([
+            'kode_perusahaan' => ['required','string','max:20', Rule::unique('perusahaan', 'kode_perusahaan')],
+            'nama_perusahaan' => ['required','string','max:200'],
+            'alamat' => ['required','string'],
+            'status' => ['required', Rule::in(['aktif','tidak_aktif'])],
+
+            'tanggal_awal_mou' => ['nullable','date'],
+            'tanggal_akhir_mou' => ['nullable','date','after_or_equal:tanggal_awal_mou'],
+            'keterangan' => ['nullable','string'],
+
+            'berkas_mou' => ['nullable','file','mimes:pdf,doc,docx','max:5120'],
+
+            'divisi' => ['array'],
+            'divisi.*.nama_divisi' => ['required','string','max:100'],
+            'divisi.*.status' => ['required', Rule::in(['aktif','tidak_aktif'])],
+            'divisi.*.alamat_penempatan' => ['nullable','string'],
+            'divisi.*.radius_presensi' => ['nullable','integer','min:0'],
+            'divisi.*.latitude' => ['nullable','numeric'],
+            'divisi.*.longitude' => ['nullable','numeric'],
+            'divisi.*.tanggal_awal_mou' => ['nullable','date'],
+            'divisi.*.tanggal_akhir_mou' => ['nullable','date','after_or_equal:divisi.*.tanggal_awal_mou'],
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $perusahaan = Perusahaan::create([
+                'kode_perusahaan' => $validated['kode_perusahaan'],
+                'nama_perusahaan' => $validated['nama_perusahaan'],
+                'alamat' => $validated['alamat'],
+                'status' => $validated['status'],
+                'tanggal_awal_mou' => $validated['tanggal_awal_mou'] ?? null,
+                'tanggal_akhir_mou' => $validated['tanggal_akhir_mou'] ?? null,
+                'keterangan' => $validated['keterangan'] ?? null,
+            ]);
+
+            // Upload MoU
+            $path = null;
+            if ($request->hasFile('berkas_mou')) {
+                $path = $request->file('berkas_mou')->store("mou/perusahaan/{$perusahaan->id}", 'public');
+                $perusahaan->update(['berkas_mou' => $path]);
+            }
+
+            // Buat history MoU (kalau ada payload MoU)
+            $hasMouPayload = ($validated['tanggal_awal_mou'] ?? null) || ($validated['tanggal_akhir_mou'] ?? null) || $path;
+            if ($hasMouPayload) {
+                HistoryMou::create([
+                    'perusahaan_id' => $perusahaan->id,
+                    'tanggal_awal_mou' => $validated['tanggal_awal_mou'] ?? null,
+                    'tanggal_akhir_mou' => $validated['tanggal_akhir_mou'] ?? null,
+                    'berkas_mou' => $path,
+                    'keterangan' => $validated['keterangan'] ?? null,
+                    'status' => 'aktif',
+                ]);
+            }
+
+            // Simpan divisi
+            foreach (($validated['divisi'] ?? []) as $d) {
+                $perusahaan->divisi()->create([
+                    'nama_divisi' => $d['nama_divisi'],
+                    'status' => $d['status'],
+                    'alamat_penempatan' => $d['alamat_penempatan'] ?? null,
+                    'radius_presensi' => $d['radius_presensi'] ?? 500,
+                    'latitude' => $d['latitude'] ?? null,
+                    'longitude' => $d['longitude'] ?? null,
+                    'tanggal_awal_mou' => $d['tanggal_awal_mou'] ?? null,
+                    'tanggal_akhir_mou' => $d['tanggal_akhir_mou'] ?? null,
+                ]);
+            }
+
+            DB::commit();
+            return back()->with('success', 'Perusahaan berhasil dibuat');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return back()
+                ->withErrors(['server' => 'Terjadi kesalahan saat menyimpan data.'])
+                ->withInput();
+        }
     }
-        
 
     public function edit(Perusahaan $id)
     {
@@ -185,8 +279,11 @@ class PerusahaanController extends Controller
             'nama_perusahaan' => ['required','string','max:200'],
             'alamat' => ['required','string'],
             'status' => ['required', Rule::in(['aktif','tidak_aktif'])],
+
             'tanggal_awal_mou' => ['nullable','date'],
             'tanggal_akhir_mou' => ['nullable','date','after_or_equal:tanggal_awal_mou'],
+            'keterangan' => ['nullable','string'],
+            'berkas_mou' => ['nullable','file','mimes:pdf,doc,docx','max:5120'],
 
             'divisi' => ['array'],
             'divisi.*.id' => ['nullable','integer'],
@@ -203,6 +300,7 @@ class PerusahaanController extends Controller
         DB::beginTransaction();
 
         try {
+            // Update perusahaan (basic)
             $perusahaan->update([
                 'kode_perusahaan' => $validated['kode_perusahaan'],
                 'nama_perusahaan' => $validated['nama_perusahaan'],
@@ -210,8 +308,51 @@ class PerusahaanController extends Controller
                 'status' => $validated['status'],
                 'tanggal_awal_mou' => $validated['tanggal_awal_mou'] ?? null,
                 'tanggal_akhir_mou' => $validated['tanggal_akhir_mou'] ?? null,
+                'keterangan' => $validated['keterangan'] ?? $perusahaan->keterangan,
             ]);
 
+            // Upload file baru (kalau ada)
+            $uploadedPath = null;
+            if ($request->hasFile('berkas_mou')) {
+                $uploadedPath = $request->file('berkas_mou')->store("mou/perusahaan/{$perusahaan->id}", 'public');
+                $perusahaan->update(['berkas_mou' => $uploadedPath]);
+            }
+
+            // ====== HISTORY MOU: buat record baru kalau ada perubahan ======
+            $newAwal = $validated['tanggal_awal_mou'] ?? null;
+            $newAkhir = $validated['tanggal_akhir_mou'] ?? null;
+            $newKet = $validated['keterangan'] ?? $perusahaan->keterangan;
+            $newFile = $uploadedPath ?? $perusahaan->berkas_mou;
+
+            $hasMouPayload = $newAwal || $newAkhir || $uploadedPath;
+            if ($hasMouPayload) {
+                $last = $perusahaan->historyMou()->latest('tanggal_awal_mou')->first();
+
+                $lastAwal = $last && $last->tanggal_awal_mou ? Carbon::parse($last->tanggal_awal_mou)->toDateString() : null;
+                $lastAkhir = $last && $last->tanggal_akhir_mou ? Carbon::parse($last->tanggal_akhir_mou)->toDateString() : null;
+
+                $newAwalStr = $newAwal ? Carbon::parse($newAwal)->toDateString() : null;
+                $newAkhirStr = $newAkhir ? Carbon::parse($newAkhir)->toDateString() : null;
+
+                $changed = !$last
+                    || ($lastAwal !== $newAwalStr)
+                    || ($lastAkhir !== $newAkhirStr)
+                    || ((string) ($last->keterangan ?? '') !== (string) ($newKet ?? ''))
+                    || ((string) ($last->berkas_mou ?? '') !== (string) ($newFile ?? ''));
+
+                if ($changed) {
+                    HistoryMou::create([
+                        'perusahaan_id' => $perusahaan->id,
+                        'tanggal_awal_mou' => $newAwal,
+                        'tanggal_akhir_mou' => $newAkhir,
+                        'keterangan' => $newKet,
+                        'berkas_mou' => $newFile,
+                        'status' => 'aktif',
+                    ]);
+                }
+            }
+
+            // ====== DIVISI ======
             $divisiPayload = $validated['divisi'] ?? [];
             $keptIds = [];
 
@@ -237,7 +378,7 @@ class PerusahaanController extends Controller
 
             $perusahaan->divisi()
                 ->when(count($keptIds) > 0, fn($q) => $q->whereNotIn('id', $keptIds))
-                ->when(count($keptIds) === 0, fn($q) => $q) 
+                ->when(count($keptIds) === 0, fn($q) => $q)
                 ->delete();
 
             DB::commit();
@@ -252,9 +393,10 @@ class PerusahaanController extends Controller
         }
     }
 
-    public function destroy(PayrollPeriod $payrollPeriod)
+    // FIX: Hindari typehint class yang tidak jelas (PayrollPeriod) karena bisa bikin fatal error saat file di-load
+    public function destroy($id)
     {
-        
+        //
     }
 
     public function sync(Request $request)
@@ -303,7 +445,6 @@ class PerusahaanController extends Controller
                     $perusahaan = $existingPerusahaan[$pKey];
                     $stats['perusahaan_skipped']++;
 
-                    // Opsional: kalau perusahaan soft-deleted, jangan bikin divisi baru di bawahnya
                     if ($perusahaan->trashed()) {
                         continue;
                     }
@@ -344,7 +485,6 @@ class PerusahaanController extends Controller
                 }
 
                 if (isset($existingDivisiCache[$perusahaanId][$dKey])) {
-                    // sudah ada, termasuk yang soft-deleted -> SKIP (tanpa restore)
                     $stats['divisi_skipped']++;
                     continue;
                 }
@@ -369,19 +509,16 @@ class PerusahaanController extends Controller
 
     private function cleanText(string $text): string
     {
-        // trim + collapse whitespace
         return (string) Str::of($text)->squish();
     }
 
     private function normalizeKey(string $text): string
     {
-        // key untuk dedup: lower + squish (cukup konservatif, tidak “menggabungkan” terlalu agresif)
         return (string) Str::of($text)->squish()->lower();
     }
 
     private function generateUniqueKodePerusahaan(string $namaPerusahaan, $usedKodeSet): string
     {
-        // base code: ambil inisial kata (maks 10 char), fallback 3 huruf awal kalau 1 kata
         $clean = Str::of($namaPerusahaan)
             ->upper()
             ->replaceMatches('/[^A-Z0-9 ]+/', ' ')
@@ -402,7 +539,7 @@ class PerusahaanController extends Controller
             $base = $initials ?: substr($words[0], 0, 5);
         }
 
-        $base = substr($base, 0, 18); // sisakan ruang buat suffix angka (max 20)
+        $base = substr($base, 0, 18);
         $candidate = $base;
 
         $i = 1;
@@ -415,12 +552,13 @@ class PerusahaanController extends Controller
         return $candidate;
     }
 
-    public function downloadPerusahaan(Request $request){
+    public function downloadPerusahaan(Request $request)
+    {
         $status = $request->input('status');
         $search = $request->input('search');
 
         return Excel::download(
-            new PerusahaanExport($search,$status),
+            new PerusahaanExport($search, $status),
             'perusahaan.xlsx'
         );
     }

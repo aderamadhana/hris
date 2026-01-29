@@ -33,10 +33,10 @@ class Perusahaan extends Model
         return $this->hasMany(Divisi::class);
     }
 
-    public function historyMou()
-    {
-        return $this->hasMany(HistoryMou::class);
-    }
+    // public function historyMou()
+    // {
+    //     return $this->hasMany(HistoryMou::class);
+    // }
 
     public function karyawan()
     {
@@ -157,5 +157,15 @@ class Perusahaan extends Model
             })
             ->where('perusahaan', $this->nama_perusahaan)
             ->exists();
+    }
+
+    public function historyMou()
+    {
+        return $this->hasMany(HistoryMou::class);
+    }
+    
+    public function latestMou()
+    {
+        return $this->hasOne(HistoryMou::class)->latestOfMany('tanggal_awal_mou');
     }
 }

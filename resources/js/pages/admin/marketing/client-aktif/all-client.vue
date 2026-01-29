@@ -73,6 +73,7 @@
                     </div>
                 </div>
             </div>
+
             <!-- Toolbar -->
             <div class="dt-toolbar-mobile">
                 <!-- Row 1: Length & Search -->
@@ -81,11 +82,12 @@
                         Tampil
                         <select
                             v-model.number="perPage"
-                            @change="fetchPerusahaan"
+                            @change="fetchPerusahaan(1)"
                         >
                             <option :value="5">5</option>
                             <option :value="10">10</option>
                             <option :value="25">25</option>
+                            <option :value="50">50</option>
                         </select>
                         data
                     </label>
@@ -99,7 +101,7 @@
                     </div>
                 </div>
 
-                <!-- Row 2: Filters (collapsible) -->
+                <!-- Row 2: Filters -->
                 <div class="dt-filters-wrapper">
                     <button
                         class="filter-toggle-btn"
@@ -137,6 +139,8 @@
                                     <th>Alamat</th>
                                     <th>Awal MOU</th>
                                     <th>Akhir MOU</th>
+                                    <th>Berkas MOU</th>
+                                    <th>History MOU</th>
                                     <th>Status</th>
                                     <th>Total Karyawan</th>
                                     <th>Aksi</th>
@@ -145,7 +149,10 @@
 
                             <tbody>
                                 <tr v-if="loading">
-                                    <td colspan="8" class="loading-row">
+                                    <td
+                                        :colspan="columnsCount"
+                                        class="loading-row"
+                                    >
                                         <div class="table-spinner">
                                             <span class="spinner"></span>
                                             <span class="spinner-text"
@@ -156,7 +163,10 @@
                                 </tr>
 
                                 <tr v-else-if="items.length === 0">
-                                    <td colspan="8" class="empty-row">
+                                    <td
+                                        :colspan="columnsCount"
+                                        class="empty-row"
+                                    >
                                         Tidak ada data
                                     </td>
                                 </tr>
@@ -172,6 +182,39 @@
                                     <td>{{ item.alamat || '-' }}</td>
                                     <td>{{ item.tanggal_awal_mou || '-' }}</td>
                                     <td>{{ item.tanggal_akhir_mou || '-' }}</td>
+
+                                    <!-- Berkas MoU -->
+                                    <td>
+                                        <a
+                                            v-if="item.berkas_mou_url"
+                                            :href="item.berkas_mou_url"
+                                            target="_blank"
+                                            rel="noopener"
+                                            class="action-btn primary"
+                                            title="Lihat Berkas MoU"
+                                            style="
+                                                display: inline-flex;
+                                                align-items: center;
+                                                gap: 6px;
+                                            "
+                                        >
+                                            <font-awesome-icon
+                                                icon="file-arrow-down"
+                                            />
+                                            <span>Lihat</span>
+                                        </a>
+                                        <span v-else>-</span>
+                                    </td>
+
+                                    <!-- Total History MoU -->
+                                    <td>
+                                        {{
+                                            item.total_history_mou ??
+                                            item.total_history ??
+                                            0
+                                        }}
+                                    </td>
+
                                     <td>
                                         <span
                                             class="status-pill"
@@ -188,7 +231,9 @@
                                             }}
                                         </span>
                                     </td>
+
                                     <td>{{ item.total_karyawan_aktif }}</td>
+
                                     <td class="col-actions">
                                         <div class="actions-wrap">
                                             <Link
@@ -217,7 +262,7 @@
                         </table>
                     </div>
 
-                    <!-- FOOTER DATATABLE: INFO + PAGINATION -->
+                    <!-- FOOTER DATATABLE -->
                     <div class="dt-footer" v-if="!loading">
                         <div class="dt-info">
                             Menampilkan
@@ -281,8 +326,14 @@ export default {
         return {
             search: '',
             status: 'aktif',
+            showFilters: false,
+
             items: [],
-            statistics: [],
+            statistics: {
+                total_all_active: 0,
+                total_all_non_active: 0,
+            },
+
             loading: false,
             isDownloading: false,
             isDownloadingClient: false,
@@ -291,19 +342,31 @@ export default {
             perPage: 50,
             totalItems: 0,
             totalPages: 0,
+
+            _searchTimer: null,
         };
     },
 
     watch: {
         search() {
-            this.fetchPerusahaan();
+            // debounce biar tidak request tiap ketik
+            clearTimeout(this._searchTimer);
+            this._searchTimer = setTimeout(() => {
+                this.fetchPerusahaan(1);
+            }, 300);
         },
         status() {
-            this.fetchPerusahaan();
+            this.fetchPerusahaan(1);
+        },
+        perPage() {
+            this.fetchPerusahaan(1);
         },
     },
 
     computed: {
+        columnsCount() {
+            return 11;
+        },
         startIndex() {
             return (this.currentPage - 1) * this.perPage;
         },
@@ -315,9 +378,7 @@ export default {
         },
         pages() {
             const pages = [];
-            for (let i = 1; i <= this.totalPages; i++) {
-                pages.push(i);
-            }
+            for (let i = 1; i <= this.totalPages; i++) pages.push(i);
             return pages;
         },
     },
@@ -335,11 +396,14 @@ export default {
                     },
                 });
 
-                this.items = res.data.data;
-                this.currentPage = res.data.meta.current_page;
-                this.statistics = res.data.statistics;
-                this.totalItems = res.data.meta.total;
-                this.totalPages = res.data.meta.last_page;
+                this.items = res.data.data || [];
+                this.currentPage = res.data.meta?.current_page ?? 1;
+                this.statistics = res.data.statistics ?? {
+                    total_all_active: 0,
+                    total_all_non_active: 0,
+                };
+                this.totalItems = res.data.meta?.total ?? 0;
+                this.totalPages = res.data.meta?.last_page ?? 0;
             } catch (e) {
                 console.log(e);
                 triggerAlert('error', 'Gagal memuat data perusahaan');
@@ -349,6 +413,7 @@ export default {
         },
 
         goToPage(page) {
+            if (page < 1 || page > this.totalPages) return;
             this.fetchPerusahaan(page);
         },
 
@@ -374,11 +439,9 @@ export default {
                 const { data } = await axios.get(
                     '/marketing/client/aktif/sync',
                 );
-
-                // contoh: tampilkan hasil
                 console.log(data.stats);
                 triggerAlert('success', data.message);
-                this.fetchPerusahaan();
+                this.fetchPerusahaan(1);
             } catch (error) {
                 console.error('Sync gagal', error);
                 triggerAlert('error', 'Sync gagal');
@@ -386,6 +449,7 @@ export default {
                 this.isDownloading = false;
             }
         },
+
         async downloadClient() {
             try {
                 this.isDownloadingClient = true;
@@ -422,6 +486,7 @@ export default {
                 window.URL.revokeObjectURL(url);
             } catch (error) {
                 console.error('Download gagal', error);
+                triggerAlert('error', 'Download gagal');
             } finally {
                 this.isDownloadingClient = false;
             }
@@ -429,7 +494,7 @@ export default {
     },
 
     mounted() {
-        this.fetchPerusahaan();
+        this.fetchPerusahaan(1);
     },
 };
 </script>

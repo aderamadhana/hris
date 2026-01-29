@@ -2,56 +2,42 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class HistoryMou extends Model
 {
-    use HasFactory;
+    use SoftDeletes;
 
-    protected $table = 'history_mou';
+    protected $table = 'history_mous';
 
     protected $fillable = [
         'perusahaan_id',
-        'tanggal_awal',
-        'tanggal_akhir',
+        'tanggal_awal_mou',
+        'tanggal_akhir_mou',
         'berkas_mou',
         'keterangan',
         'status',
     ];
 
     protected $casts = [
-        'tanggal_awal' => 'date',
-        'tanggal_akhir' => 'date',
+        'tanggal_awal_mou' => 'date:Y-m-d',
+        'tanggal_akhir_mou' => 'date:Y-m-d',
     ];
 
-    // Relationships
     public function perusahaan()
     {
         return $this->belongsTo(Perusahaan::class);
     }
 
-    // Scopes
-    public function scopeAktif($query)
-    {
-        return $query->where('status', 'aktif');
-    }
-
-    public function scopeExpired($query)
-    {
-        return $query->where('status', 'expired');
-    }
-
-    // Accessors
     public function getBerkasMouUrlAttribute()
     {
         return $this->berkas_mou ? asset('storage/' . $this->berkas_mou) : null;
     }
 
-    // Methods
-    public function isActive()
+    public function isActive(): bool
     {
-        $today = now()->toDateString();
-        return $today >= $this->tanggal_awal && $today <= $this->tanggal_akhir && $this->status === 'aktif';
+        $today = now()->startOfDay();
+        return $today->between($this->tanggal_awal_mou, $this->tanggal_akhir_mou);
     }
 }
