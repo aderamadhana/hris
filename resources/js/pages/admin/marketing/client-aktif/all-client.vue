@@ -190,20 +190,17 @@
                                             :href="item.berkas_mou_url"
                                             target="_blank"
                                             rel="noopener"
-                                            class="action-btn primary"
-                                            title="Lihat Berkas MoU"
-                                            style="
-                                                display: inline-flex;
-                                                align-items: center;
-                                                gap: 6px;
-                                            "
+                                            class="mou-file-link mou-file-link--compact"
                                         >
                                             <font-awesome-icon
-                                                icon="file-arrow-down"
+                                                icon="download"
+                                                class="icon"
                                             />
-                                            <span>Lihat</span>
+                                            <span>MoU</span>
                                         </a>
-                                        <span v-else>-</span>
+                                        <span v-else class="mou-file-empty"
+                                            >-</span
+                                        >
                                     </td>
 
                                     <!-- Total History MoU -->

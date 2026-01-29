@@ -51,7 +51,11 @@ export default {
             },
         };
     },
-
+    computed: {
+        selectedFileName() {
+            return this.form.berkas_mou?.name || '';
+        },
+    },
     mounted() {
         this.$nextTick(() => {
             this.getData();
@@ -59,6 +63,15 @@ export default {
     },
 
     methods: {
+        clearSelectedFile() {
+            this.form.berkas_mou = null;
+
+            // reset input biar bisa pilih file yang sama lagi
+            const el = document.getElementById('mouFile');
+            if (el) el.value = '';
+
+            if (this.errors.berkas_mou) delete this.errors.berkas_mou;
+        },
         // ================= FETCH =================
         async getData() {
             try {
@@ -733,27 +746,71 @@ export default {
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="field-label">
-                                        Berkas MoU (PDF/DOC/DOCX, max 5MB)
-                                    </label>
+                                    <div class="mou-head">
+                                        <label class="field-label">
+                                            Berkas MoU
+                                            <span class="mou-sub"
+                                                >(PDF/DOC/DOCX • max 5MB)</span
+                                            >
+                                        </label>
 
-                                    <div v-if="berkasMouUrl" class="mb-2">
                                         <a
+                                            v-if="berkasMouUrl"
                                             :href="berkasMouUrl"
                                             target="_blank"
                                             rel="noopener"
-                                            class="btn btn-sm btn-warning"
+                                            class="mou-btn mou-btn--ghost"
+                                            title="Lihat berkas MoU saat ini"
                                         >
-                                            Lihat Berkas Saat Ini
+                                            <font-awesome-icon
+                                                icon="download"
+                                                class="icon"
+                                            />
+                                            Lihat
                                         </a>
                                     </div>
 
-                                    <input
-                                        type="file"
-                                        class="form-input"
-                                        accept=".pdf,.doc,.docx"
-                                        @change="onFileChange"
-                                    />
+                                    <div class="mou-upload">
+                                        <!-- native input disembunyikan -->
+                                        <input
+                                            id="mouFile"
+                                            type="file"
+                                            class="mou-file-input"
+                                            accept=".pdf,.doc,.docx"
+                                            @change="onFileChange"
+                                        />
+
+                                        <label
+                                            for="mouFile"
+                                            class="mou-btn mou-btn--primary"
+                                        >
+                                            <i class="ti ti-upload mou-ic"></i>
+                                            Pilih File
+                                        </label>
+
+                                        <div
+                                            class="mou-filename"
+                                            :class="{
+                                                'is-empty': !selectedFileName,
+                                            }"
+                                        >
+                                            {{
+                                                selectedFileName ||
+                                                'Belum ada file dipilih'
+                                            }}
+                                        </div>
+
+                                        <button
+                                            v-if="form.berkas_mou"
+                                            type="button"
+                                            class="mou-btn mou-btn--link"
+                                            @click="clearSelectedFile"
+                                            title="Batalkan file yang dipilih"
+                                        >
+                                            Hapus
+                                        </button>
+                                    </div>
+
                                     <p
                                         v-if="errors.berkas_mou"
                                         class="field-error"
@@ -833,16 +890,25 @@ export default {
                                                 <td>
                                                     {{ m.keterangan || '-' }}
                                                 </td>
-                                                <td>
+                                                <td class="mou-file-cell">
                                                     <a
                                                         v-if="m.berkas_mou_url"
                                                         :href="m.berkas_mou_url"
                                                         target="_blank"
                                                         rel="noopener"
+                                                        class="mou-file-link mou-file-link--compact"
                                                     >
-                                                        Download
+                                                        <font-awesome-icon
+                                                            icon="download"
+                                                            class="icon"
+                                                        />
+                                                        <span>Download</span>
                                                     </a>
-                                                    <span v-else>-</span>
+                                                    <span
+                                                        v-else
+                                                        class="mou-file-empty"
+                                                        >-</span
+                                                    >
                                                 </td>
                                                 <td>
                                                     {{
