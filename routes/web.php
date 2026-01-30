@@ -323,6 +323,8 @@ Route::middleware('auth')->group(function () {
             return Inertia::render('log-aktifitas/all-log_aktifitas');
         });
         Route::get('/aktifitas/all', [LogAktifitasController::class, 'index']);
+        Route::post('/aktifitas/import', [LogAktifitasController::class, 'importAktifitas']);
+        Route::get('/aktifitas/import-log/{id}', [LogAktifitasController::class, 'showImportLog']);
         Route::get('/aktifitas/recent', [LogAktifitasController::class, 'recentActivities']);
         Route::post('/aktifitas/store', [LogAktifitasController::class, 'storeActivities']);
         Route::put('/aktifitas/update/{id}', [LogAktifitasController::class, 'updateActivities']);

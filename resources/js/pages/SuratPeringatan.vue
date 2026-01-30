@@ -1,18 +1,48 @@
 <template>
     <AppLayout>
-        <div v-if="surat_peringatan" class="sp-info-card">
+        <div
+            v-if="surat_peringatan && isSpStillActive(surat_peringatan)"
+            class="sp-info-card"
+        >
             <div class="sp-info-head">
                 <div>
                     <div class="sp-info-title">
                         Informasi Surat Peringatan Terakhir
                     </div>
+
                     <div class="sp-info-sub">
                         Nomor:
-                        <strong>{{ surat_peringatan.nomor_sp }}</strong> •
-                        Tanggal:
+                        <strong>{{ surat_peringatan.nomor_sp }}</strong>
+                        • Tanggal:
                         <strong>{{
                             formatTanggal(surat_peringatan.tanggal_sp)
                         }}</strong>
+
+                        <template v-if="surat_peringatan.tanggal_berakhir">
+                            • Berlaku s/d:
+                            <strong>{{
+                                formatTanggal(surat_peringatan.tanggal_berakhir)
+                            }}</strong>
+                        </template>
+
+                        <template v-if="surat_peringatan.periode_bulan">
+                            • Periode:
+                            <strong
+                                >{{
+                                    surat_peringatan.periode_bulan
+                                }}
+                                bulan</strong
+                            >
+                        </template>
+                    </div>
+
+                    <div
+                        v-if="surat_peringatan.pelanggaran"
+                        class="sp-info-sub"
+                        style="margin-top: 6px"
+                    >
+                        Alasan:
+                        <strong>{{ surat_peringatan.pelanggaran }}</strong>
                     </div>
                 </div>
 
@@ -58,7 +88,7 @@
                     ></iframe>
                 </div>
 
-                <!-- PREVIEW IMAGE (opsional) -->
+                <!-- PREVIEW IMAGE -->
                 <div
                     v-else-if="
                         surat_peringatan.file_url &&
@@ -82,6 +112,7 @@
                 </div>
             </div>
         </div>
+
         <div
             v-else
             ref="root"
@@ -260,6 +291,30 @@ export default {
     },
 
     methods: {
+        parseYMD(value) {
+            if (!value) return null;
+
+            if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+                return new Date(value.slice(0, 10) + 'T00:00:00');
+            }
+
+            const d = new Date(value);
+            return Number.isNaN(d.getTime()) ? null : d;
+        },
+
+        isSpStillActive(sp) {
+            if (!sp?.tanggal_berakhir) return true; // atau false kalau mau strict
+
+            const end = this.parseYMD(sp.tanggal_berakhir);
+            if (!end) return true;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            end.setHours(0, 0, 0, 0);
+
+            // tampil sampai tanggal berakhir, hilang setelah lewat
+            return today <= end;
+        },
         reCalcParentPadding(el) {
             const parent = el?.parentElement;
             if (!parent) return;

@@ -111,24 +111,32 @@ class DashboardController extends Controller
 
     private function getSuratPeringatanTerakhir(int $employeeId): ?array
     {
+        $today = now()->toDateString();
+
         $sp = SuratPeringatan::query()
             ->where('employee_id', $employeeId)
+            ->where(function ($q) use ($today) {
+                $q->whereNull('tanggal_berakhir')
+                ->orWhereDate('tanggal_berakhir', '>=', $today);
+            })
             ->orderByDesc('tanggal_sp')
             ->orderByDesc('id')
             ->first();
 
-        if (!$sp) {
-            return null;
-        }
+        if (!$sp) return null;
 
         return [
             'id' => $sp->id,
             'employee_id' => $sp->employee_id,
             'nomor_sp' => $sp->nomor_sp,
             'tanggal_sp' => optional($sp->tanggal_sp)->format('Y-m-d'),
-            'tingkat' => $sp->tingkat,'file_url' => $sp->file_path ? Storage::disk('public')->url($sp->file_path) : null,
+            'tingkat' => $sp->tingkat,
+            'periode_bulan' => $sp->periode_bulan,
+            'tanggal_berakhir' => optional($sp->tanggal_berakhir)->format('Y-m-d'),
+            'file_url' => $sp->file_url, // kalau sudah ada accessor
         ];
     }
+
 
     private function getKaryawanAktif()
     {

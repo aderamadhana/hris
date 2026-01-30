@@ -15,21 +15,18 @@ class SuratPeringatanController extends Controller
         $page    = (int) $request->get('page', 1);
 
         $query = SuratPeringatan::query()
-            // ambil kolom employee seperlunya (ubah sesuai tabel employees kamu)
             ->with(['employee:id,nama,no_ktp']);
 
-        // Search: nomor_sp atau nama/no_ktp employee
         if ($request->filled('search')) {
             $search = $request->search;
 
             $query->where(function ($q) use ($search) {
                 $q->where('nomor_sp', 'like', "%{$search}%")
-                  ->orWhereHas('employee', function ($e) use ($search) {
-                      $e->where('nama', 'like', "%{$search}%")
-                        ->orWhere('no_ktp', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('employee', function ($e) use ($search) {
+                        $e->where('nama', 'like', "%{$search}%")
+                          ->orWhere('no_ktp', 'like', "%{$search}%");
+                    });
 
-                // kalau user ketik angka, bisa match employee_id juga
                 if (ctype_digit((string) $search)) {
                     $q->orWhere('employee_id', (int) $search);
                 }
@@ -55,37 +52,9 @@ class SuratPeringatanController extends Controller
 
         $items = $query->paginate($perPage, ['*'], 'page', $page);
 
-        $data = $items->getCollection()->map(function ($sp) {
-            $nama = $sp->employee->nama ?? null;
-            $no_ktp  = $sp->employee->no_ktp ?? null;
-
-            return [
-                'id' => $sp->id,
-                'employee_id' => $sp->employee_id,
-
-                // flatten (buat tabel vue lebih gampang)
-                'nama_karyawan' => $nama,
-                'no_ktp' => $no_ktp,
-
-                // nested (opsional)
-                'employee' => $sp->employee ? [
-                    'id' => $sp->employee->id,
-                    'nama' => $nama,
-                    'no_ktp'  => $no_ktp,
-                ] : null,
-
-                'nomor_sp' => $sp->nomor_sp,
-                'tanggal_sp' => optional($sp->tanggal_sp)->format('Y-m-d'),
-                'tingkat' => $sp->tingkat,
-                'pelanggaran' => $sp->pelanggaran,
-                'tanggal_kejadian' => optional($sp->tanggal_kejadian)->format('Y-m-d'),
-
-                'file_path' => $sp->file_path,
-                'file_url' => $sp->file_path
-                    ? Storage::disk('public')->url($sp->file_path)
-                    : null,
-            ];
-        });
+        $data = $items->getCollection()
+            ->map(fn ($sp) => $this->transform($sp))
+            ->values();
 
         return response()->json([
             'data' => $data,
@@ -109,34 +78,8 @@ class SuratPeringatanController extends Controller
     {
         $sp = SuratPeringatan::with(['employee:id,nama,no_ktp'])->findOrFail($id);
 
-        $nama = $sp->employee->nama ?? null;
-        $no_ktp  = $sp->employee->no_ktp ?? null;
-
         return response()->json([
-            'data' => [
-                'id' => $sp->id,
-                'employee_id' => $sp->employee_id,
-
-                'nama_karyawan' => $nama,
-                'no_ktp' => $no_ktp,
-
-                'employee' => $sp->employee ? [
-                    'id' => $sp->employee->id,
-                    'nama' => $nama,
-                    'no_ktp'  => $no_ktp,
-                ] : null,
-
-                'nomor_sp' => $sp->nomor_sp,
-                'tanggal_sp' => optional($sp->tanggal_sp)->format('Y-m-d'),
-                'tingkat' => $sp->tingkat,
-                'pelanggaran' => $sp->pelanggaran,
-                'tanggal_kejadian' => optional($sp->tanggal_kejadian)->format('Y-m-d'),
-
-                'file_path' => $sp->file_path,
-                'file_url' => $sp->file_path
-                    ? Storage::disk('public')->url($sp->file_path)
-                    : null,
-            ],
+            'data' => $this->transform($sp),
         ]);
     }
 
@@ -149,6 +92,10 @@ class SuratPeringatanController extends Controller
             'tingkat' => 'required|in:SP1,SP2,SP3',
             'pelanggaran' => 'required|string',
             'tanggal_kejadian' => 'nullable|date',
+
+            // ✅ baru
+            'periode_bulan' => 'required|integer|min:1|max:36',
+
             'file' => 'required|file|max:5120|mimes:pdf,doc,docx,jpg,jpeg,png',
         ]);
 
@@ -161,6 +108,10 @@ class SuratPeringatanController extends Controller
             'tingkat' => $validated['tingkat'],
             'pelanggaran' => $validated['pelanggaran'],
             'tanggal_kejadian' => $validated['tanggal_kejadian'] ?? null,
+
+            // ✅ simpan periode_bulan, tanggal_berakhir dihitung oleh model
+            'periode_bulan' => $validated['periode_bulan'],
+
             'file_path' => $path,
         ]);
 
@@ -178,6 +129,10 @@ class SuratPeringatanController extends Controller
             'tingkat' => 'required|in:SP1,SP2,SP3',
             'pelanggaran' => 'required|string',
             'tanggal_kejadian' => 'nullable|date',
+
+            // ✅ baru
+            'periode_bulan' => 'required|integer|min:1|max:36',
+
             'file' => 'nullable|file|max:5120|mimes:pdf,doc,docx,jpg,jpeg,png',
         ]);
 
@@ -194,6 +149,10 @@ class SuratPeringatanController extends Controller
         $sp->tingkat = $validated['tingkat'];
         $sp->pelanggaran = $validated['pelanggaran'];
         $sp->tanggal_kejadian = $validated['tanggal_kejadian'] ?? null;
+
+        // ✅ simpan periode_bulan, tanggal_berakhir dihitung oleh model
+        $sp->periode_bulan = $validated['periode_bulan'];
+
         $sp->save();
 
         return redirect()->back()->with('success', 'Surat peringatan berhasil diupdate');
@@ -210,5 +169,42 @@ class SuratPeringatanController extends Controller
         $sp->delete();
 
         return redirect()->back()->with('success', 'Surat peringatan berhasil dihapus');
+    }
+
+    private function transform(SuratPeringatan $sp): array
+    {
+        $nama  = $sp->employee->nama ?? null;
+        $noKtp = $sp->employee->no_ktp ?? null;
+
+        return [
+            'id' => $sp->id,
+            'employee_id' => $sp->employee_id,
+
+            // flatten
+            'nama_karyawan' => $nama,
+            'no_ktp' => $noKtp,
+
+            // nested
+            'employee' => $sp->employee ? [
+                'id' => $sp->employee->id,
+                'nama' => $nama,
+                'no_ktp' => $noKtp,
+            ] : null,
+
+            'nomor_sp' => $sp->nomor_sp,
+            'tanggal_sp' => optional($sp->tanggal_sp)->format('Y-m-d'),
+            'tingkat' => $sp->tingkat,
+            'pelanggaran' => $sp->pelanggaran,
+            'tanggal_kejadian' => optional($sp->tanggal_kejadian)->format('Y-m-d'),
+
+            // ✅ baru
+            'periode_bulan' => $sp->periode_bulan,
+            'tanggal_berakhir' => optional($sp->tanggal_berakhir)->format('Y-m-d'),
+
+            'file_path' => $sp->file_path,
+            'file_url' => $sp->file_path
+                ? Storage::disk('public')->url($sp->file_path)
+                : null,
+        ];
     }
 }

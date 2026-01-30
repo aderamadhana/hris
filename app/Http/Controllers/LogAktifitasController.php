@@ -9,11 +9,16 @@ use App\Models\Perusahaan;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use App\Models\LogAktifitas;
+use App\Models\ImportLogAktifitas;
 use App\Models\Employee;
 use App\Models\Aktifitas;
 use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\LogAktifitasExport;
+use App\Imports\AktifitasImport;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Excel as ExcelExcel;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class LogAktifitasController extends Controller
 {
@@ -425,6 +430,103 @@ class LogAktifitasController extends Controller
             new LogAktifitasExport($search,$status, $filtered_jabatan, $filtered_perusahaan, $filtered_tanggal_dari, $filtered_tanggal_sampai),
             'log_aktifitas.xlsx'
         );
+    }
+
+    public function importAktifitas(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
+        ]);
+
+        $log = null;
+
+        try {
+            $path = $request->file('file')->store('imports');
+
+            if (!Storage::disk('local')->exists($path)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'File upload failed',
+                ], 500);
+            }
+
+            Log::info('File uploaded', [
+                'path' => $path,
+                'full_path' => Storage::disk('local')->path($path),
+                'size' => $request->file('file')->getSize(),
+            ]);
+
+            $log = ImportLogAktifitas::create([
+                'file'    => $path,
+                'status'  => 'pending',
+                'total'   => 0,
+                'success' => 0,
+                'failed'  => 0,
+                'errors'  => null,
+            ]);
+
+            Log::info('Import log created', ['log_id' => $log->id]);
+
+            Excel::queueImport(
+                new AktifitasImport($log->id),
+                $path,
+                'local'
+            );
+
+            Log::info('Import queued successfully', [
+                'log_id' => $log->id,
+                'path' => $path,
+            ]);
+
+            return response()->json([
+                'success'   => true,
+                'import_id' => $log->id,
+                'message'   => 'Import sedang diproses. Gunakan import_id untuk cek status.',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Import queue failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            if ($log) {
+                // simpan error sebagai JSON array object
+                $log->update([
+                    'status' => 'failed',
+                    'errors' => json_encode([[
+                        'type' => 'queue_failed',
+                        'error' => $e->getMessage(),
+                    ]]),
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'error'   => 'Failed to queue import: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function showImportLog($id)
+    {
+        try {
+            $log = ImportLogAktifitas::findOrFail($id);
+
+            return response()->json([
+                'id'         => $log->id,
+                'file'       => $log->file,
+                'status'     => $log->status,
+                'total'      => (int) $log->total,
+                'success'    => (int) $log->success,
+                'failed'     => (int) $log->failed,
+                'errors'     => $log->errors ? json_decode($log->errors, true) : [],
+                'created_at' => $log->created_at,
+                'updated_at' => $log->updated_at,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => 'Import log not found',
+            ], 404);
+        }
     }
 
 }
