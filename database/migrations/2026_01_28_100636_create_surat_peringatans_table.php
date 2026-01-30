@@ -8,29 +8,35 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('surat_peringatans', function (Blueprint $table) {
-            $table->id();
+        $table->id();
 
-            $table->string('nomor_sp')->index();
-            $table->date('tanggal_sp')->index();
+        $table->string('nomor_sp')->index();
+        $table->date('tanggal_sp')->index();
 
-            // data karyawan (simple, tanpa relasi)
-            $table->string('nama_karyawan');
-            $table->string('nip')->nullable()->index();
-            $table->string('jabatan')->nullable();
-            $table->string('divisi')->nullable();
+        // periode SP
+        $table->unsignedTinyInteger('periode_bulan'); // contoh: 1, 3, 6
+        $table->date('tanggal_berakhir')->index();
 
-            // tingkat SP
-            $table->enum('tingkat', ['SP1', 'SP2', 'SP3'])->default('SP1')->index();
+        // data karyawan
+        $table->string('nama_karyawan');
+        $table->string('nip')->nullable()->index();
+        $table->string('jabatan')->nullable();
+        $table->string('divisi')->nullable();
 
-            // isi
-            $table->text('pelanggaran');          // alasan/pelanggaran
-            $table->date('tanggal_kejadian')->nullable();
+        // tingkat SP
+        $table->enum('tingkat', ['SP1', 'SP2', 'SP3'])
+            ->default('SP1')
+            ->index();
 
-            // file upload (pdf/doc/image)
-            $table->string('file_path');          // contoh: surat-peringatan/abc123.pdf
+        // isi
+        $table->text('pelanggaran');
+        $table->date('tanggal_kejadian')->nullable();
 
-            $table->timestamps();
-        });
+        // file upload
+        $table->string('file_path');
+
+        $table->timestamps();
+    });
     }
 
     public function down(): void

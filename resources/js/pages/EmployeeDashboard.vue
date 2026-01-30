@@ -27,8 +27,9 @@
         </div>
     </div>
 
+    <!-- ALERT SP: hanya tampil kalau masih aktif -->
     <div
-        v-if="surat_peringatan"
+        v-if="surat_peringatan && isSpStillActive(surat_peringatan)"
         class="contract-alert"
         :class="getSpAlertClass(surat_peringatan.tingkat)"
     >
@@ -43,14 +44,32 @@
                 </div>
 
                 <div class="alert-message">
-                    Nomor: <strong>{{ surat_peringatan.nomor_sp }}</strong> •
-                    Tanggal:
+                    Nomor: <strong>{{ surat_peringatan.nomor_sp }}</strong>
+                    • Tanggal:
                     <strong>{{
                         formatTanggal(surat_peringatan.tanggal_sp)
                     }}</strong>
+
+                    <template v-if="surat_peringatan.tanggal_berakhir">
+                        • Berlaku s/d:
+                        <strong>{{
+                            formatTanggal(surat_peringatan.tanggal_berakhir)
+                        }}</strong>
+                    </template>
+
+                    <template v-if="surat_peringatan.periode_bulan">
+                        • Periode:
+                        <strong
+                            >{{ surat_peringatan.periode_bulan }} bulan</strong
+                        >
+                    </template>
                 </div>
 
-                <!-- ✅ taruh di bawah -->
+                <!-- opsional: ringkas alasan -->
+                <div v-if="surat_peringatan.pelanggaran" class="alert-message">
+                    Alasan: <strong>{{ surat_peringatan.pelanggaran }}</strong>
+                </div>
+
                 <button
                     type="button"
                     class="alert-detail-btn"
@@ -61,6 +80,7 @@
             </div>
         </div>
     </div>
+
     <div class="dashboard-header">
         <div class="header-content">
             <h1 class="dashboard-title">Dashboard Kehadiran</h1>
@@ -1077,6 +1097,32 @@ export default {
     },
 
     methods: {
+        parseYMD(value) {
+            if (!value) return null;
+
+            if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+                return new Date(value.slice(0, 10) + 'T00:00:00');
+            }
+
+            const d = new Date(value);
+            return Number.isNaN(d.getTime()) ? null : d;
+        },
+
+        isSpStillActive(sp) {
+            // kalau tanggal_berakhir kosong, anggap tetap tampil (sesuaikan kalau mau strict)
+            if (!sp?.tanggal_berakhir) return true;
+
+            const end = this.parseYMD(sp.tanggal_berakhir);
+            if (!end) return true;
+
+            // bandingkan by date-only
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            end.setHours(0, 0, 0, 0);
+
+            // tampil selama today <= end, hilang saat today > end
+            return today <= end;
+        },
         getSpAlertClass(tingkat) {
             // kamu bisa sesuaikan class sesuai level
             if (tingkat === 'SP3') return 'alert-danger';

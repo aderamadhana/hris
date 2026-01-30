@@ -230,7 +230,7 @@
                 </section>
 
                 <!-- MITRA -->
-                <section id="mitra" class="row">
+                <!-- <section id="mitra" class="row">
                     <div class="reveal block" style="--d: 90">
                         <div class="block__head head-row">
                             <div>
@@ -275,7 +275,7 @@
                             </div>
                         </div>
                     </div>
-                </section>
+                </section> -->
 
                 <!-- PENGUMUMAN + LOKER -->
                 <section class="row row--split">
@@ -424,21 +424,24 @@
 
                         <div class="footer__col">
                             <h4>Kontak</h4>
-
                             <div class="footer__contactItem">
                                 <font-awesome-icon icon="location-dot" />
-                                <span>Jl. Contoh Alamat No. 10, Jakarta</span>
+                                <span
+                                    >Jl. Raya Surabaya - Mojokerto Km.43, Desa
+                                    Kramattemenggung, Kecamatan Tarik, Kabupaten
+                                    Sidoarjo, Jawa Timur, kode pos 61265</span
+                                >
                             </div>
 
                             <div class="footer__contactItem">
                                 <font-awesome-icon icon="phone" />
-                                <span>+62 812-0000-0000</span>
+                                <span>+62 321-365-041</span>
                             </div>
 
-                            <div class="footer__contactItem">
+                            <!-- <div class="footer__contactItem">
                                 <font-awesome-icon icon="envelope" />
                                 <span>info@mitrawiramas.co.id</span>
-                            </div>
+                            </div> -->
                         </div>
 
                         <div class="footer__col">
@@ -449,9 +452,9 @@
                             <a href="#sejarah" @click="setActive('#sejarah')"
                                 >Sejarah</a
                             >
-                            <a href="#mitra" @click="setActive('#mitra')"
+                            <!-- <a href="#mitra" @click="setActive('#mitra')"
                                 >Mitra</a
-                            >
+                            > -->
                             <a
                                 href="#pengumuman"
                                 @click="setActive('#pengumuman')"
@@ -467,17 +470,16 @@
                             <p class="footer__socialText">
                                 Ikuti update terbaru kami
                             </p>
-
                             <div class="social">
-                                <a href="#"
+                                <a
+                                    target="_blank"
+                                    href="https://www.instagram.com/hrdmitrawiramas/"
                                     ><font-awesome-icon
                                         :icon="['fab', 'instagram']"
                                 /></a>
-                                <a href="#"
-                                    ><font-awesome-icon
-                                        :icon="['fab', 'linkedin']"
-                                /></a>
-                                <a href="#"
+                                <a
+                                    target="_blank"
+                                    href="https://www.facebook.com/mitrawira.mas?locale=id_ID"
                                     ><font-awesome-icon
                                         :icon="['fab', 'facebook']"
                                 /></a>
@@ -637,7 +639,7 @@ export default {
             navLinks: [
                 { label: 'Beranda', hash: '#beranda' },
                 { label: 'Sejarah', hash: '#sejarah' },
-                { label: 'Mitra', hash: '#mitra' },
+                //{ label: 'Mitra', hash: '#mitra' },
                 { label: 'Pengumuman', hash: '#pengumuman' },
                 { label: 'Loker', hash: '#loker' },
                 { label: 'Kontak', hash: '#kontak' },

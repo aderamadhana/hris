@@ -72,6 +72,52 @@
                     </span>
                 </div>
 
+                <!-- Periode Bulan -->
+                <div class="form-group">
+                    <label class="field-label">
+                        Periode (Bulan) <span class="required">*</span>
+                    </label>
+                    <select
+                        v-model.number="form.periode_bulan"
+                        class="form-input"
+                        required
+                    >
+                        <option :value="''">-- Pilih Periode --</option>
+                        <option v-for="m in periodeOptions" :key="m" :value="m">
+                            {{ m }} bulan
+                        </option>
+                    </select>
+                    <span v-if="errors.periode_bulan" class="error-text">
+                        {{ errors.periode_bulan }}
+                    </span>
+                </div>
+
+                <!-- Tanggal Berakhir (readonly/disabled tampil) -->
+                <div class="form-group">
+                    <label class="field-label">Tanggal Berakhir</label>
+
+                    <input
+                        type="date"
+                        class="form-input"
+                        :value="form.tanggal_berakhir"
+                        disabled
+                    />
+
+                    <!-- biar tetap ikut terkirim -->
+                    <input type="hidden" v-model="form.tanggal_berakhir" />
+
+                    <small
+                        v-if="!form.tanggal_sp && form.periode_bulan"
+                        class="text-muted"
+                    >
+                        Isi tanggal SP untuk menghitung tanggal berakhir.
+                    </small>
+
+                    <span v-if="errors.tanggal_berakhir" class="error-text">
+                        {{ errors.tanggal_berakhir }}
+                    </span>
+                </div>
+
                 <!-- Karyawan (employee_id) -->
                 <div class="form-group" style="grid-column: 1 / -1">
                     <label class="field-label">
@@ -225,6 +271,8 @@ export default {
             processingUpdate: false,
             processingDelete: false,
             fileName: '',
+            periodeOptions: [1, 2, 3, 6, 12], // sesuaikan
+
             form: {
                 nomor_sp: this.surat_peringatan?.nomor_sp ?? '',
                 tanggal_sp: this.surat_peringatan?.tanggal_sp ?? '',
@@ -232,15 +280,48 @@ export default {
                 tanggal_kejadian: this.surat_peringatan?.tanggal_kejadian ?? '',
                 employee_id: this.surat_peringatan?.employee_id ?? '',
                 pelanggaran: this.surat_peringatan?.pelanggaran ?? '',
+                periode_bulan: this.surat_peringatan?.periode_bulan ?? '',
+                tanggal_berakhir: this.surat_peringatan?.tanggal_berakhir ?? '',
                 file: null,
             },
+
             errors: {},
             data_karyawan: [],
         };
     },
 
+    watch: {
+        'form.tanggal_sp': 'syncTanggalBerakhir',
+        'form.periode_bulan': 'syncTanggalBerakhir',
+
+        // kalau props berubah (mis. buka modal untuk item lain tanpa recreate komponen)
+        surat_peringatan: {
+            immediate: true,
+            deep: true,
+            handler(sp) {
+                if (!sp) return;
+
+                this.form.nomor_sp = sp.nomor_sp ?? '';
+                this.form.tanggal_sp = sp.tanggal_sp ?? '';
+                this.form.tingkat = sp.tingkat ?? 'SP1';
+                this.form.tanggal_kejadian = sp.tanggal_kejadian ?? '';
+                this.form.employee_id = sp.employee_id ?? '';
+                this.form.pelanggaran = sp.pelanggaran ?? '';
+                this.form.periode_bulan = sp.periode_bulan ?? '';
+                this.form.tanggal_berakhir = sp.tanggal_berakhir ?? '';
+
+                this.fileName = '';
+                this.form.file = null;
+
+                // pastikan selalu konsisten dgn aturan baru
+                this.syncTanggalBerakhir();
+            },
+        },
+    },
+
     mounted() {
         this.fetchKaryawan();
+        this.syncTanggalBerakhir();
     },
 
     methods: {
@@ -250,9 +331,54 @@ export default {
             this.fileName = file ? file.name : '';
         },
 
+        syncTanggalBerakhir() {
+            const sp = this.form.tanggal_sp;
+            const months = this.form.periode_bulan;
+
+            if (!sp || !months) {
+                this.form.tanggal_berakhir = '';
+                return;
+            }
+
+            this.form.tanggal_berakhir = this.addMonthsYYYYMMDD(
+                sp,
+                Number(months),
+            );
+        },
+
+        addMonthsYYYYMMDD(ymd, monthsToAdd) {
+            const [Y, M, D] = (ymd || '').split('-').map(Number);
+            if (!Y || !M || !D) return '';
+
+            const origDay = D;
+            const baseMonthIndex = M - 1 + monthsToAdd;
+            const targetYear = Y + Math.floor(baseMonthIndex / 12);
+            const targetMonth = ((baseMonthIndex % 12) + 12) % 12; // 0..11
+
+            const lastDay = this.daysInMonth(targetYear, targetMonth);
+            const clampedDay = Math.min(origDay, lastDay);
+
+            const dt = new Date(targetYear, targetMonth, clampedDay);
+            return this.formatYYYYMMDD(dt);
+        },
+
+        daysInMonth(year, monthIndex0) {
+            return new Date(year, monthIndex0 + 1, 0).getDate();
+        },
+
+        formatYYYYMMDD(dt) {
+            const yyyy = dt.getFullYear();
+            const mm = String(dt.getMonth() + 1).padStart(2, '0');
+            const dd = String(dt.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        },
+
         submitSP() {
             this.processingUpdate = true;
             this.errors = {};
+
+            // safety: hitung ulang sebelum submit
+            this.syncTanggalBerakhir();
 
             router.post(
                 `/hr/surat-peringatan/update/${this.surat_peringatan.id}`,
@@ -328,7 +454,6 @@ export default {
                 const res = await axios.get('/referensi/karyawan');
                 this.data_karyawan = res.data.data || [];
             } catch (err) {
-                console.error(err);
                 triggerAlert('error', 'Gagal memuat karyawan.');
             }
         },

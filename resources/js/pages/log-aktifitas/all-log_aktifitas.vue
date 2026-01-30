@@ -13,6 +13,15 @@
                 </div>
                 <div class="page-actions">
                     <Button
+                        variant="success"
+                        size="md"
+                        @click="openImportKaryawanModal"
+                        class="download-btn"
+                    >
+                        <font-awesome-icon icon="upload" class="icon" />
+                        Upload Log Aktifitas
+                    </Button>
+                    <Button
                         variant="warning"
                         size="md"
                         :loading="isDownloading"
@@ -732,6 +741,12 @@
                 </div>
             </div>
         </Modal>
+
+        <ImportAktifitas
+            v-if="showImportAktifitasModal"
+            @closeModal="closeModalImportAktifitas"
+            @refreshData="fetchActivities"
+        />
     </AppLayout>
 </template>
 
@@ -743,9 +758,10 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
 import { Link } from '@inertiajs/vue3';
 import axios from 'axios';
+import ImportAktifitas from '../import/ImportAktifitas.vue';
 
 export default {
-    components: { AppLayout, Button, Link, Select2, Modal },
+    components: { AppLayout, Button, Link, Select2, Modal, ImportAktifitas },
 
     data() {
         return {
@@ -796,6 +812,8 @@ export default {
             },
             data_karyawan: [],
             shiftOptions: [],
+
+            showImportAktifitasModal: false,
         };
     },
 
@@ -879,6 +897,13 @@ export default {
     // },
 
     methods: {
+        openImportKaryawanModal() {
+            this.showImportAktifitasModal = true;
+        },
+        closeModalImportAktifitas() {
+            this.showImportAktifitasModal = false;
+            this.selectedFileKaryawan = null;
+        },
         async fetchShiftOptions() {
             try {
                 // Pastikan endpoint return data dari table `shift`

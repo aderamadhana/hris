@@ -18,7 +18,6 @@
             </div>
 
             <div class="dt-toolbar-mobile">
-                <!-- Row 1: Length & Search -->
                 <div class="dt-row-main">
                     <label class="dt-length-compact">
                         Tampil
@@ -35,12 +34,11 @@
                         <input
                             v-model="search"
                             type="search"
-                            placeholder="Cari nomor SP / nama / NIP"
+                            placeholder="Cari nomor SP / nama / NIP / KTP"
                         />
                     </div>
                 </div>
 
-                <!-- Row 2: Filters (collapsible) -->
                 <div class="dt-filters-wrapper">
                     <button
                         class="filter-toggle-btn"
@@ -66,7 +64,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Tanggal Dari</label>
+                            <label>Tanggal SP Dari</label>
                             <input
                                 type="date"
                                 v-model="tanggal_dari"
@@ -75,26 +73,16 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Tanggal Sampai</label>
+                            <label>Tanggal SP Sampai</label>
                             <input
                                 type="date"
                                 v-model="tanggal_sampai"
                                 class="filter-input"
                             />
                         </div>
-
-                        <!-- Kalau mau tombol reset, aktifkan lagi -->
-                        <!--
-                        <div class="form-group" style="align-self: end">
-                            <Button variant="secondary" @click="resetFilter">
-                                Reset
-                            </Button>
-                        </div>
-                        -->
                     </div>
                 </div>
 
-                <!-- TABLE CARD -->
                 <div class="table-card">
                     <div class="table-responsive-custom">
                         <table class="table">
@@ -105,13 +93,17 @@
                                     <th>Tanggal SP</th>
                                     <th>Nama Karyawan</th>
                                     <th>Tingkat</th>
+                                    <th>Pelanggaran</th>
+                                    <th>Tanggal Kejadian</th>
+                                    <th>Tanggal Berakhir</th>
+                                    <th>Periode (bulan)</th>
                                     <th>File</th>
                                 </tr>
                             </thead>
 
                             <tbody>
                                 <tr v-if="loadingSP">
-                                    <td colspan="8" class="loading-row">
+                                    <td :colspan="colspan" class="loading-row">
                                         <div class="table-spinner">
                                             <span class="spinner"></span>
                                             <span class="spinner-text"
@@ -122,7 +114,7 @@
                                 </tr>
 
                                 <tr v-else-if="spData.length === 0">
-                                    <td colspan="8" class="empty-row">
+                                    <td :colspan="colspan" class="empty-row">
                                         Tidak ada data ...
                                     </td>
                                 </tr>
@@ -152,9 +144,8 @@
                                         </button>
                                     </td>
 
-                                    <td>{{ sp.tanggal_sp }}</td>
+                                    <td>{{ formatDate(sp.tanggal_sp) }}</td>
 
-                                    <!-- ✅ Ambil dari relasi employee (fallback ke flatten) -->
                                     <td>
                                         {{
                                             sp.employee?.nama ||
@@ -169,7 +160,19 @@
                                         }}
                                     </td>
 
-                                    <td>{{ sp.tingkat }}</td>
+                                    <td>{{ sp.tingkat || '-' }}</td>
+                                    <td class="wrap">
+                                        {{ sp.pelanggaran || '-' }}
+                                    </td>
+                                    <td>
+                                        {{ formatDate(sp.tanggal_kejadian) }}
+                                    </td>
+                                    <td>
+                                        {{ formatDate(sp.tanggal_berakhir) }}
+                                    </td>
+                                    <td style="text-align: center">
+                                        {{ sp.periode_bulan ?? '-' }}
+                                    </td>
 
                                     <td>
                                         <a
@@ -187,7 +190,6 @@
                         </table>
                     </div>
 
-                    <!-- FOOTER -->
                     <div
                         class="dt-footer"
                         v-if="!loadingSP && spData.length > 0"
@@ -268,9 +270,7 @@ import AddSuratPeringatan from './add-surat_peringatan.vue';
 import EditSuratPeringatan from './edit-surat_peringatan.vue';
 
 export default {
-    props: {
-        filters: Object,
-    },
+    props: { filters: Object },
 
     components: {
         AppLayout,
@@ -299,25 +299,33 @@ export default {
 
             showModalAddSP: false,
             showModalEditSP: false,
+
+            _debounceTimer: null,
+            _requestSeq: 0,
         };
     },
 
     watch: {
+        // debounce supaya gak spam request tiap ketik / klik filter
         search() {
-            this.fetchSPs(1);
+            this.queueFetch(1);
         },
         tingkat() {
-            this.fetchSPs(1);
+            this.queueFetch(1);
         },
         tanggal_dari() {
-            this.fetchSPs(1);
+            this.queueFetch(1);
         },
         tanggal_sampai() {
-            this.fetchSPs(1);
+            this.queueFetch(1);
         },
     },
 
     computed: {
+        colspan() {
+            // No, Nomor, Tgl SP, Nama, Tingkat, Pelanggaran, Tgl Kejadian, Tgl Berakhir, Periode, File
+            return 10;
+        },
         startIndex() {
             if (this.totalItems === 0) return 0;
             return (this.currentPage - 1) * this.perPage;
@@ -333,17 +341,36 @@ export default {
             if (this.totalPages <= 1) return [];
             const range = 2;
             const pages = [];
-
-            let start = Math.max(1, this.currentPage - range);
-            let end = Math.min(this.totalPages, this.currentPage + range);
-
+            const start = Math.max(1, this.currentPage - range);
+            const end = Math.min(this.totalPages, this.currentPage + range);
             for (let i = start; i <= end; i++) pages.push(i);
             return pages;
         },
     },
 
     methods: {
+        queueFetch(page = 1) {
+            clearTimeout(this._debounceTimer);
+            this._debounceTimer = setTimeout(() => {
+                this.fetchSPs(page);
+            }, 300);
+        },
+
+        formatDate(val) {
+            if (!val) return '-';
+            // kalau backend sudah kirim 'YYYY-MM-DD', biarkan
+            if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val))
+                return val.slice(0, 10);
+            const d = new Date(val);
+            if (Number.isNaN(d.getTime())) return String(val);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        },
+
         async fetchSPs(page = 1) {
+            const seq = ++this._requestSeq;
             this.loadingSP = true;
 
             try {
@@ -358,28 +385,28 @@ export default {
                     },
                 });
 
-                this.spData = res.data.data;
-                this.currentPage = res.data.meta.current_page;
-                this.perPage = res.data.meta.per_page;
-                this.totalItems = res.data.meta.total;
-                this.totalPages = res.data.meta.last_page;
+                // race guard: kalau ada request lebih baru, abaikan hasil lama
+                if (seq !== this._requestSeq) return;
+
+                this.spData = res.data.data || [];
+                this.currentPage = res.data.meta?.current_page ?? 1;
+                this.perPage = res.data.meta?.per_page ?? this.perPage;
+                this.totalItems = res.data.meta?.total ?? 0;
+                this.totalPages = res.data.meta?.last_page ?? 0;
             } catch (error) {
-                triggerAlert('error', 'Gagal load surat peringatan');
+                if (seq === this._requestSeq) {
+                    triggerAlert('error', 'Gagal load surat peringatan');
+                }
             } finally {
-                this.loadingSP = false;
+                if (seq === this._requestSeq) {
+                    this.loadingSP = false;
+                }
             }
         },
 
         goToPage(page) {
             if (page < 1 || page > this.totalPages) return;
             this.fetchSPs(page);
-        },
-
-        resetFilter() {
-            this.tingkat = '';
-            this.tanggal_dari = '';
-            this.tanggal_sampai = '';
-            this.fetchSPs(1);
         },
 
         tambahSP() {
@@ -403,3 +430,10 @@ export default {
     },
 };
 </script>
+
+<style scoped>
+.wrap {
+    white-space: normal;
+    word-break: break-word;
+}
+</style>
