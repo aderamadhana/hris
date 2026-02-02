@@ -429,6 +429,15 @@ const fiturBelumTersedia = () => {
             </Link> -->
 
             <Link
+                href="/aktifitas"
+                class="sidebar-item"
+                :class="{ active: path.startsWith('/aktifitas') }"
+            >
+                <font-awesome-icon icon="clipboard-list" class="icon" />
+                <span class="label">Aktifitas</span>
+            </Link>
+
+            <Link
                 href="/surat-peringatan"
                 class="sidebar-item"
                 :class="{ active: path.startsWith('/surat-peringatan') }"

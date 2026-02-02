@@ -13,6 +13,7 @@
                 </div>
                 <div class="page-actions">
                     <Button
+                        v-if="user.role_id != 2"
                         variant="success"
                         size="md"
                         @click="openImportKaryawanModal"
@@ -86,7 +87,7 @@
                     </button>
 
                     <div class="dt-filters" :class="{ show: showFilters }">
-                        <div class="form-group">
+                        <div class="form-group" v-if="user.role_id != 2">
                             <label for="">Perusahaan</label>
                             <Select2
                                 v-model="filtered_perusahaan"
@@ -102,7 +103,7 @@
                                 </option>
                             </Select2>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" v-if="user.role_id != 2">
                             <label for="">Divisi / Dept</label>
                             <Select2
                                 v-model="filtered_jabatan"
@@ -382,6 +383,8 @@
                             <Select2
                                 id="karyawan"
                                 v-model="activityForm.employee_id"
+                                :disabled="user.role_id == 2"
+                                readonly
                                 class="form-input"
                                 required
                             >
@@ -756,7 +759,7 @@ import Modal from '@/components/Modal.vue';
 import Select2 from '@/components/Select2.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { triggerAlert } from '@/utils/alert';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import ImportAktifitas from '../import/ImportAktifitas.vue';
 
@@ -764,7 +767,9 @@ export default {
     components: { AppLayout, Button, Link, Select2, Modal, ImportAktifitas },
 
     data() {
+        const page = usePage();
         return {
+            user: page.props.auth.user,
             search: '',
             status: '',
             items: [],
@@ -1004,6 +1009,8 @@ export default {
                         filtered_perusahaan: this.filtered_perusahaan,
                         filtered_tanggal_dari: this.filtered_tanggal_dari,
                         filtered_tanggal_sampai: this.filtered_tanggal_sampai,
+                        employee_id:
+                            this.user.role_id == 2 ? this.user.employee_id : '',
                     },
                 });
 
@@ -1050,6 +1057,7 @@ export default {
                         filtered_perusahaan: this.filtered_perusahaan,
                         filtered_tanggal_dari: this.filtered_tanggal_dari,
                         filtered_tanggal_sampai: this.filtered_tanggal_sampai,
+                        employee_id: this.user.employee_id,
                     },
                 });
 
@@ -1312,12 +1320,21 @@ export default {
         },
     },
 
-    mounted() {
-        this.fetchLogActivities();
-        this.fetchShiftOptions();
-        this.fetchKaryawan();
-        this.fetchActivities();
-        this.getFilteredPerusahaanDanJabatan();
+    async mounted() {
+        await this.fetchLogActivities();
+        await this.fetchShiftOptions();
+        await this.fetchKaryawan();
+        await this.fetchActivities();
+        await this.getFilteredPerusahaanDanJabatan();
+
+        this.activityForm.employee_id = this.user.employee_id;
+        const selectedKaryawan = this.data_karyawan.find(
+            (a) => a.id === this.activityForm.employee_id,
+        );
+
+        if (selectedKaryawan) {
+            this.activityForm.shift = selectedKaryawan.shift_id;
+        }
     },
 };
 </script>

@@ -312,6 +312,19 @@ Route::middleware('auth')->group(function () {
     });
 
     //ADMIN VIEW
+    Route::prefix('aktifitas')->group(function () {
+        Route::get('/', function () {
+            return Inertia::render('log-aktifitas/all-log_aktifitas');
+        });
+        Route::get('/all', [LogAktifitasController::class, 'index']);
+        Route::post('/import', [LogAktifitasController::class, 'importAktifitas']);
+        Route::get('/import-log/{id}', [LogAktifitasController::class, 'showImportLog']);
+        Route::get('/recent', [LogAktifitasController::class, 'recentActivities']);
+        Route::post('/store', [LogAktifitasController::class, 'storeActivities']);
+        Route::put('/update/{id}', [LogAktifitasController::class, 'updateActivities']);
+    });
+
+    //ADMIN VIEW
     Route::prefix('logs')->group(function () {
         Route::get('/presensi', function () {
             return Inertia::render('presensi/all-presensi');

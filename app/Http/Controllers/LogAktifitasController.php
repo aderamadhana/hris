@@ -30,6 +30,7 @@ class LogAktifitasController extends Controller
         $perusahaanId        = $request->query('filtered_perusahaan');  // ID
         $tanggalDari   = $request->query('filtered_tanggal_dari');
         $tanggalSampai = $request->query('filtered_tanggal_sampai');
+        $employeeId = $request->query('employee_id');
         $perPage             = min((int) $request->query('per_page', 10), 100);
 
         $jabatanName = null;
@@ -78,6 +79,10 @@ class LogAktifitasController extends Controller
             $query->whereHas('employee.currentEmployment', function ($q) use ($perusahaanName) {
                 $q->where('perusahaan', $perusahaanName);
             });
+        }
+        
+        if ($employeeId) {
+            $query->where('employee_id', $employeeId);
         }
 
         $paginator = $query->paginate($perPage);
@@ -425,9 +430,18 @@ class LogAktifitasController extends Controller
         $filtered_perusahaan = $request->input('filtered_perusahaan');
         $filtered_tanggal_dari = $request->input('filtered_tanggal_dari');
         $filtered_tanggal_sampai = $request->input('filtered_tanggal_sampai');
+        $employee_id = $request->input('employee_id');
+
 
         return Excel::download(
-            new LogAktifitasExport($search,$status, $filtered_jabatan, $filtered_perusahaan, $filtered_tanggal_dari, $filtered_tanggal_sampai),
+            new LogAktifitasExport(
+                $search,
+                $filtered_jabatan,
+                $filtered_perusahaan,
+                $filtered_tanggal_dari,
+                $filtered_tanggal_sampai,
+                $employee_id
+            ),
             'log_aktifitas.xlsx'
         );
     }
