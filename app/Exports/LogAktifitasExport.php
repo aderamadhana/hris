@@ -22,6 +22,7 @@ class LogAktifitasExport implements
     private ?int $perusahaanId;
     private ?string $tanggalDari;
     private ?string $tanggalSampai;
+    private ?int $employeeId;
     private int $no = 0;
 
     public function __construct(
@@ -29,13 +30,15 @@ class LogAktifitasExport implements
         $jabatanId = null,
         $perusahaanId = null,
         $tanggalDari = null,
-        $tanggalSampai = null
+        $tanggalSampai = null,
+        $employeeId = null
     ) {
         $this->search = trim((string) $search);
         $this->jabatanId = $jabatanId;
         $this->perusahaanId = $perusahaanId;
         $this->tanggalDari = $tanggalDari;
         $this->tanggalSampai = $tanggalSampai;
+        $this->employeeId = $employeeId;
     }
 
     public function query()
@@ -73,6 +76,10 @@ class LogAktifitasExport implements
                     $q->where('penempatan', $jabatanName);
                 });
             }
+        }
+
+        if($this->employeeId){
+            $query->where('employee_id', $this->employeeId);
         }
 
         if ($this->perusahaanId) {
