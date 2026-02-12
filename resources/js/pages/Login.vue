@@ -101,7 +101,7 @@
 
                     <p class="footer-note">
                         Butuh bantuan?
-                        <a href="https://wa.me/628813123960" target="_blank"
+                        <a href="https://wa.me/6285730562563" target="_blank"
                             >Hubungi admin HR</a
                         >
                     </p>

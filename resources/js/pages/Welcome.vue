@@ -465,7 +465,7 @@
 
                             <div class="footer__contactItem">
                                 <font-awesome-icon icon="phone" />
-                                <span>+62 321-365-041</span>
+                                <span>+62 857-3056-2563</span>
                             </div>
 
                             <!-- <div class="footer__contactItem">
