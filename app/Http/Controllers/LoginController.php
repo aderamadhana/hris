@@ -34,11 +34,7 @@ class LoginController extends Controller
         ]);
 
         // Cari employee berdasarkan NRP (NIK)
-        $employee = Employee::where('status_active', 1)
-        ->whereHas('user', function ($q) use ($request) {
-            $q->where('no_ktp', $request->nik);
-        })
-        ->first();
+        $employee = Employee::where('status_active', 1)->where('no_ktp',$request->nik)->first();
 
         // Validasi: Employee tidak ditemukan
         if (!$employee) {
