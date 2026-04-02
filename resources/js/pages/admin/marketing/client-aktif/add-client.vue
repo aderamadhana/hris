@@ -298,40 +298,40 @@ export default {
             }
 
             // validasi tanggal mou sederhana
-            if (this.form.tanggal_awal_mou && this.form.tanggal_akhir_mou) {
-                if (this.form.tanggal_akhir_mou < this.form.tanggal_awal_mou) {
-                    this.errors.tanggal_akhir_mou =
-                        'Tanggal akhir harus >= tanggal awal';
-                }
-            }
+            // if (this.form.tanggal_awal_mou && this.form.tanggal_akhir_mou) {
+            //     if (this.form.tanggal_akhir_mou < this.form.tanggal_awal_mou) {
+            //         this.errors.tanggal_akhir_mou =
+            //             'Tanggal akhir harus >= tanggal awal';
+            //     }
+            // }
 
-            // validasi file (opsional, backend sudah validasi juga)
-            if (this.form.berkas_mou) {
-                const allowed = [
-                    'application/pdf',
-                    'application/msword',
-                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                ];
-                if (!allowed.includes(this.form.berkas_mou.type)) {
-                    this.errors.berkas_mou = 'Format file harus PDF/DOC/DOCX';
-                }
-                const maxBytes = 5 * 1024 * 1024;
-                if (this.form.berkas_mou.size > maxBytes) {
-                    this.errors.berkas_mou = 'Ukuran file maksimal 5MB';
-                }
-            }
+            // // validasi file (opsional, backend sudah validasi juga)
+            // if (this.form.berkas_mou) {
+            //     const allowed = [
+            //         'application/pdf',
+            //         'application/msword',
+            //         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            //     ];
+            //     if (!allowed.includes(this.form.berkas_mou.type)) {
+            //         this.errors.berkas_mou = 'Format file harus PDF/DOC/DOCX';
+            //     }
+            //     const maxBytes = 5 * 1024 * 1024;
+            //     if (this.form.berkas_mou.size > maxBytes) {
+            //         this.errors.berkas_mou = 'Ukuran file maksimal 5MB';
+            //     }
+            // }
 
-            this.form.divisi.forEach((divisi, index) => {
-                if (!divisi.nama_divisi) {
-                    this.errors[`divisi.${index}.nama_divisi`] =
-                        'Nama divisi harus diisi';
-                }
+            // this.form.divisi.forEach((divisi, index) => {
+            //     if (!divisi.nama_divisi) {
+            //         this.errors[`divisi.${index}.nama_divisi`] =
+            //             'Nama divisi harus diisi';
+            //     }
 
-                if (!divisi.latitude || !divisi.longitude) {
-                    this.errors[`divisi.${index}.lokasi`] =
-                        'Lokasi harus dipilih di peta';
-                }
-            });
+            //     if (!divisi.latitude || !divisi.longitude) {
+            //         this.errors[`divisi.${index}.lokasi`] =
+            //             'Lokasi harus dipilih di peta';
+            //     }
+            // });
 
             return Object.keys(this.errors).length === 0;
         },
