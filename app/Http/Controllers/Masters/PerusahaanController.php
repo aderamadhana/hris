@@ -274,10 +274,10 @@ class PerusahaanController extends Controller
         $perusahaan = Perusahaan::findOrFail($id);
 
         $validated = $request->validate([
-            'kode_perusahaan' => [
-                'required','string','max:20',
-                Rule::unique('perusahaan', 'kode_perusahaan')->ignore($perusahaan->id),
-            ],
+            // 'kode_perusahaan' => [
+            //     'required','string','max:20',
+            //     Rule::unique('perusahaan', 'kode_perusahaan')->ignore($perusahaan->id),
+            // ],
             'nama_perusahaan' => ['required','string','max:200'],
             'alamat' => ['required','string'],
             'status' => ['required', Rule::in(['aktif','tidak_aktif'])],
