@@ -173,6 +173,7 @@ Route::middleware('auth')->group(function () {
                 Route::get('/sync', [PerusahaanController::class, 'sync']);
                 Route::post('/store', [PerusahaanController::class, 'store']);
                 Route::put('/update/{id}', [PerusahaanController::class, 'update']);
+                Route::delete('/{id}', [PerusahaanController::class, 'delete']);
             });
             Route::get('/non-aktif', function () {
                 return Inertia::render('UnderDeveloping');

@@ -38,6 +38,8 @@ class PerusahaanController extends Controller
             $query->where('status', $status);
         }
 
+        $query->whereNot('id', 5);
+
         $result = $query->paginate($perPage);
 
         $data = $result->getCollection()->map(function ($perusahaan) {
@@ -86,7 +88,7 @@ class PerusahaanController extends Controller
             ];
         });
 
-        $aktif = Perusahaan::query()->where('status', 'aktif');
+        $aktif = Perusahaan::query()->where('status', 'aktif')->whereNot('id', 5);
         $tidak_aktif = Perusahaan::query()->where('status', 'tidak_aktif');
 
         $totalAllActive = (clone $aktif)->count();
@@ -394,9 +396,14 @@ class PerusahaanController extends Controller
     }
 
     // FIX: Hindari typehint class yang tidak jelas (PayrollPeriod) karena bisa bikin fatal error saat file di-load
-    public function destroy($id)
+    public function delete($id)
     {
-        //
+        $perusahaan = Perusahaan::findOrFail($id);
+        $perusahaan->delete();
+
+        return response()->json([
+            'message' => 'Perushaan berhasil dihapus',
+        ]);
     }
 
     public function sync(Request $request)
