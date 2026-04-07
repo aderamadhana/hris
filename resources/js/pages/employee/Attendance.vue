@@ -7,7 +7,7 @@
                     <h2 class="page-title">Absensi Kehadiran</h2>
                     <p class="page-subtitle">
                         Catat kehadiran dengan foto realtime, jam otomatis, dan
-                        lokasi akses saat ini.
+                        lokasi akses saat ini
                     </p>
                 </div>
             </div>
