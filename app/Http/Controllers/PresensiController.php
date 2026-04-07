@@ -637,4 +637,62 @@ class PresensiController extends Controller
             'presensi.xlsx'
         );
     }
+
+    public function hapusIO(Request $request, $id)
+    {
+        $request->validate([
+            'part' => ['required', 'in:in,out'],
+        ]);
+
+        $rekap = RekapPresensiHarian::findOrFail($id);
+
+        $jenis = $request->part === 'in' ? 'masuk' : 'pulang'; // sesuaikan nilai enum
+
+        // Hapus record di tabel presensi
+        $presensi = Presensi::where('employee_id', $rekap->employee_id)
+            ->where('tanggal_presensi', $rekap->tanggal)
+            ->where('jenis_presensi', $jenis)
+            ->first();
+            
+        if ($request->part === 'in' && !is_null($rekap->waktu_pulang)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak dapat menghapus data masuk karena karyawan sudah clock out.',
+            ], 422);
+        }
+
+        if ($presensi) {
+            if ($presensi->foto_presensi) {
+                Storage::delete($presensi->foto_presensi);
+            }
+            $presensi->delete();
+        }
+
+        // Update rekap_presensi_harian
+        if ($request->part === 'in') {
+            $rekap->update([
+                'waktu_masuk'        => null,
+                'foto_masuk'         => null,
+                'lat_masuk'          => null,
+                'long_masuk'         => null,
+                'valid_lokasi_masuk' => 0,
+                'akurasi_gps_masuk'  => null,
+                'total_jam_kerja'    => null,
+                'durasi_kerja_menit' => null,
+            ]);
+        } else {
+            $rekap->update([
+                'waktu_pulang'        => null,
+                'foto_pulang'         => null,
+                'lat_pulang'          => null,
+                'long_pulang'         => null,
+                'valid_lokasi_pulang' => 0,
+                'akurasi_gps_pulang'  => null,
+                'total_jam_kerja'     => null,
+                'durasi_kerja_menit'  => null,
+            ]);
+        }
+
+        return response()->json(['message' => 'Berhasil dihapus.']);
+    }
 }

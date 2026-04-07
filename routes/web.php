@@ -325,12 +325,16 @@ Route::middleware('auth')->group(function () {
         Route::put('/update/{id}', [LogAktifitasController::class, 'updateActivities']);
     });
 
+    Route::patch('/presensi/{id}/hapus-io', [PresensiController::class, 'hapusIO'])
+    ->name('presensi.hapus-io');
+    
     //ADMIN VIEW
     Route::prefix('logs')->group(function () {
         Route::get('/presensi', function () {
             return Inertia::render('presensi/all-presensi');
         });
         Route::get('/presensi/all', [PresensiLogController::class, 'index']);
+        Route::delete('/presensi/hapus', [PresensiController::class, 'hapusPresensi']);
         Route::post('/presensi/{id}/update-status', [PresensiLogController::class, 'updateStatus']);
         
         Route::get('/aktifitas', function () {

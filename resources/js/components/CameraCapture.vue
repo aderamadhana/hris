@@ -439,6 +439,7 @@ export default {
                 this.isSubmitting = false;
                 this.capturedImage = null;
                 this.capturedBlob = null;
+                this.$emit('refreshLog');
             }
         },
 

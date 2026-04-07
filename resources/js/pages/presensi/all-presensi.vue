@@ -812,7 +812,6 @@ export default {
         },
 
         async deleteIO(item, part) {
-            // part: 'in' | 'out'
             if (!item?.id) return;
 
             const label = part === 'in' ? 'IN' : 'OUT';
@@ -826,20 +825,9 @@ export default {
             this.deletingIO[item.id][part] = true;
 
             try {
-                // Pilih salah satu pola API:
+                await axios.patch(`/presensi/${item.id}/hapus-io`, { part });
 
-                // A) Endpoint khusus delete bagian:
-                // await axios.delete(`/api/presensi/${item.id}/${part}`);
-
-                // B) PATCH null-kan field:
-                const payload =
-                    part === 'in'
-                        ? { clock_in: null, foto_masuk_url: null }
-                        : { clock_out: null, foto_pulang_url: null };
-
-                await axios.patch(`/api/presensi/${item.id}`, payload);
-
-                // Update UI lokal (tanpa reload)
+                // Update UI lokal
                 if (!item.data_presensi) item.data_presensi = {};
                 if (part === 'in') {
                     item.data_presensi.clock_in = null;
@@ -847,19 +835,19 @@ export default {
                 } else {
                     item.data_presensi.clock_out = null;
                     item.data_presensi.foto_pulang_url = null;
+                    item.data_presensi.total_jam_kerja_hhmm = null;
+                    item.data_presensi.durasi_label = 'Belum clock-out';
                 }
-
-                // Kalau durasi dihitung dari in/out, biasanya perlu refresh dari server.
-                // Minimal: null-kan tampilan durasi agar tidak misleading.
-                item.data_presensi.total_jam_kerja_hhmm = null;
-                item.data_presensi.durasi_label = '-';
+                triggerAlert('success', 'Presensi berhasil dihapus.');
             } catch (e) {
-                console.error(e);
-                alert('Gagal menghapus data. Cek log / response API.');
+                const msg =
+                    e.response?.data?.message || 'Gagal menghapus data.';
+                triggerAlert('error', msg);
             } finally {
                 this.deletingIO[item.id][part] = false;
             }
         },
+
         openPreview(src, title = '') {
             if (!src) return;
             this.preview = { open: true, src, title };

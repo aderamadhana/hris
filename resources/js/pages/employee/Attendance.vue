@@ -167,7 +167,10 @@
                         </div>
                     </div>
 
-                    <CameraCapture v-bind="cameraProps" />
+                    <CameraCapture
+                        v-bind="cameraProps"
+                        @refreshLog="refreshLog"
+                    />
                 </div>
 
                 <!-- KANAN -->

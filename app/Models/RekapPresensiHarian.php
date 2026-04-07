@@ -34,7 +34,6 @@ class RekapPresensiHarian extends Model
     ];
 
     protected $casts = [
-        'tanggal' => 'date',
         'waktu_masuk' => 'datetime:H:i:s',
         'waktu_pulang' => 'datetime:H:i:s',
         'lat_masuk' => 'decimal:8',
