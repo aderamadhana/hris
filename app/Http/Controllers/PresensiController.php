@@ -24,28 +24,34 @@ class PresensiController extends Controller
             'divisi_id' => 'required',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
+            'accuracy' => 'nullable|numeric',
             'foto' => 'required|image|max:5120', // 5MB
             'jenis_presensi' => 'required|in:masuk,pulang',
-            'tanggal' => 'required|date',
             'jarak_dari_lokasi' => 'required|numeric',
         ]);
 
         DB::beginTransaction();
 
-        try {
-            $tanggal = Carbon::parse($request->tanggal)->format('Y-m-d');
+        $fotoPath = null;
 
-            // ✅ Ambil employee dengan shift
+        try {
+            $tz = 'Asia/Jakarta';
+            $now = now($tz);
+            $tanggal = $now->toDateString();
+            $waktu = $now->format('H:i:s');
+
             $employee = Employee::with('shift')->findOrFail($request->employee_id);
 
             if (!$employee->shift_id) {
+                DB::rollBack();
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Karyawan belum memiliki shift. Hubungi admin.',
                 ], 422);
             }
 
-            // ✅ CEK APAKAH SUDAH ADA PRESENSI HARI INI
+            // Cek apakah sudah presensi hari ini untuk jenis yang sama
             $existingPresensi = Presensi::where('employee_id', $request->employee_id)
                 ->whereDate('tanggal_presensi', $tanggal)
                 ->where('jenis_presensi', $request->jenis_presensi)
@@ -53,26 +59,81 @@ class PresensiController extends Controller
 
             if ($existingPresensi) {
                 DB::rollBack();
-                
+
+                $waktuExisting = $existingPresensi->getRawOriginal('waktu_presensi') ?? $existingPresensi->waktu_presensi;
+
+                try {
+                    if (preg_match('/^\d{2}:\d{2}(:\d{2})?$/', (string) $waktuExisting)) {
+                        $formattedExistingTime = Carbon::today($tz)
+                            ->setTimeFromTimeString($waktuExisting)
+                            ->format('H:i');
+                    } else {
+                        $formattedExistingTime = Carbon::parse($waktuExisting, $tz)->format('H:i');
+                    }
+                } catch (\Throwable $e) {
+                    $formattedExistingTime = (string) $waktuExisting;
+                }
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda sudah melakukan presensi ' . $request->jenis_presensi . ' hari ini.',
                     'data' => [
-                        'waktu_presensi' => Carbon::parse($existingPresensi->waktu_presensi)->format('H:i'),
+                        'waktu_presensi' => $formattedExistingTime,
                         'status' => $existingPresensi->status,
                     ],
                 ], 422);
             }
 
-            // Upload foto
-            $fotoPath = null;
+            // Validasi khusus presensi pulang:
+            // harus sudah ada presensi masuk, dan jaraknya harus > 30 menit
+            if ($request->jenis_presensi === 'pulang') {
+                $presensiMasuk = Presensi::where('employee_id', $request->employee_id)
+                    ->whereDate('tanggal_presensi', $tanggal)
+                    ->where('jenis_presensi', 'masuk')
+                    ->first();
+
+                if (!$presensiMasuk) {
+                    DB::rollBack();
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Anda belum melakukan presensi masuk hari ini.',
+                    ], 422);
+                }
+
+                $rawWaktuMasuk = $presensiMasuk->getRawOriginal('waktu_presensi') ?? $presensiMasuk->waktu_presensi;
+
+                if (preg_match('/^\d{2}:\d{2}(:\d{2})?$/', (string) $rawWaktuMasuk)) {
+                    // Jika kolom TIME
+                    $waktuMasuk = Carbon::today($tz)->setTimeFromTimeString($rawWaktuMasuk);
+                } else {
+                    // Fallback untuk data lama / cast datetime
+                    $waktuMasuk = Carbon::parse($rawWaktuMasuk, $tz);
+                }
+
+                $selisihMenit = $waktuMasuk->diffInMinutes($now);
+
+                if ($selisihMenit <= 30) {
+                    DB::rollBack();
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Presensi pulang hanya bisa dilakukan setelah lebih dari 30 menit dari waktu masuk.',
+                        'data' => [
+                            'waktu_masuk' => $waktuMasuk->format('H:i'),
+                            'selisih_menit' => $selisihMenit,
+                            'minimal_menit' => 31,
+                        ],
+                    ], 422);
+                }
+            }
+
             if ($request->hasFile('foto')) {
                 $file = $request->file('foto');
                 $filename = 'presensi_' . $request->employee_id . '_' . time() . '.' . $file->extension();
                 $fotoPath = $file->storeAs('presensi', $filename, 'public');
             }
 
-            // ✅ Simpan presensi dengan shift_id
             $presensi = Presensi::create([
                 'employee_id' => $request->employee_id,
                 'shift_id' => $employee->shift_id,
@@ -80,7 +141,7 @@ class PresensiController extends Controller
                 'divisi_id' => $request->divisi_id,
                 'tanggal_presensi' => $tanggal,
                 'jenis_presensi' => $request->jenis_presensi,
-                'waktu_presensi' => now(),
+                'waktu_presensi' => $waktu,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
                 'akurasi_gps' => $request->accuracy,
@@ -89,7 +150,6 @@ class PresensiController extends Controller
                 'status' => $this->determineStatus($request, $employee->shift),
             ]);
 
-            // Update atau buat rekap harian
             $this->updateRekapHarian($presensi);
 
             DB::commit();
@@ -99,12 +159,10 @@ class PresensiController extends Controller
                 'message' => 'Presensi ' . $request->jenis_presensi . ' berhasil disimpan',
                 'data' => $presensi->load(['shift', 'employee']),
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
-            // Hapus foto jika ada error
-            if (isset($fotoPath) && $fotoPath) {
+            if ($fotoPath) {
                 Storage::disk('public')->delete($fotoPath);
             }
 
@@ -117,6 +175,8 @@ class PresensiController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menyimpan presensi: ' . $e->getMessage(),
+                'messages' => $e->getMessage(),
+                'line' => $e->getLine(),
             ], 500);
         }
     }
