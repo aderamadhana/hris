@@ -53,7 +53,7 @@ class PresensiController extends Controller
 
             // Cek apakah sudah presensi hari ini untuk jenis yang sama
             $existingPresensi = Presensi::where('employee_id', $request->employee_id)
-                ->whereDate('tanggal_presensi', $tanggal)
+                ->where('tanggal_presensi', $tanggal)
                 ->where('jenis_presensi', $request->jenis_presensi)
                 ->first();
 
@@ -88,7 +88,7 @@ class PresensiController extends Controller
             // harus sudah ada presensi masuk, dan jaraknya harus > 30 menit
             if ($request->jenis_presensi === 'pulang') {
                 $presensiMasuk = Presensi::where('employee_id', $request->employee_id)
-                    ->whereDate('tanggal_presensi', $tanggal)
+                    ->where('tanggal_presensi', $tanggal)
                     ->where('jenis_presensi', 'masuk')
                     ->first();
 
@@ -199,7 +199,7 @@ class PresensiController extends Controller
         // 3. Cek keterlambatan (hanya untuk presensi masuk)
         if ($request->jenis_presensi === 'masuk' && $shift) {
             // ✅ Cek apakah shift fleksibel (kode FLEX atau nama mengandung "fleksibel")
-            $isFlexibleShift = strtoupper($shift->kode_shift) === 'FLEX' 
+            $isFlexibleShift = strtoupper($shift->kode_shift) === 'FLEX'
                             || stripos($shift->nama_shift, 'fleksibel') !== false;
 
             // ✅ Jika shift fleksibel, tidak perlu cek keterlambatan
@@ -282,7 +282,7 @@ class PresensiController extends Controller
             'tanggal' => 'nullable|date',
         ]);
 
-        $tanggal = $request->tanggal 
+        $tanggal = $request->tanggal
             ? Carbon::parse($request->tanggal)->format('Y-m-d')
             : Carbon::today()->format('Y-m-d');
 
@@ -290,23 +290,23 @@ class PresensiController extends Controller
         $employee = Employee::with('shift')->find($request->employee_id);
 
         $presensiMasuk = Presensi::where('employee_id', $request->employee_id)
-            ->whereDate('tanggal_presensi', $tanggal)
+            ->where('tanggal_presensi', $tanggal)
             ->where('jenis_presensi', 'masuk')
             ->first();
 
         $presensiPulang = Presensi::where('employee_id', $request->employee_id)
-            ->whereDate('tanggal_presensi', $tanggal)
+            ->where('tanggal_presensi', $tanggal)
             ->where('jenis_presensi', 'pulang')
             ->first();
 
         // ✅ Cek apakah shift fleksibel
         $isFlexibleShift = false;
         $shiftInfo = null;
-        
+
         if ($employee->shift) {
-            $isFlexibleShift = strtoupper($employee->shift->kode_shift) === 'FLEX' 
+            $isFlexibleShift = strtoupper($employee->shift->kode_shift) === 'FLEX'
                             || stripos($employee->shift->nama_shift, 'fleksibel') !== false;
-            
+
             $shiftInfo = [
                 'id' => $employee->shift->id,
                 'nama_shift' => $employee->shift->nama_shift,
@@ -363,7 +363,7 @@ class PresensiController extends Controller
         ]);
 
         $employeeId = $request->employee_id;
-        
+
         $tanggal = $request->tanggal ? Carbon::parse($request->tanggal) : Carbon::today();
         $bulan = $request->bulan ?? $tanggal->month;
         $tahun = $request->tahun ?? $tanggal->year;
@@ -372,7 +372,7 @@ class PresensiController extends Controller
             // Query untuk satu hari spesifik
             if ($request->tanggal) {
                 $log = $this->getLogHariIni($employeeId, $tanggal);
-                
+
                 return response()->json([
                     'success' => true,
                     'data' => $log,
@@ -502,9 +502,9 @@ class PresensiController extends Controller
                 // ✅ Format shift info
                 $shiftInfo = null;
                 if ($item->shift) {
-                    $isFlexible = strtoupper($item->shift->kode_shift) === 'FLEX' 
+                    $isFlexible = strtoupper($item->shift->kode_shift) === 'FLEX'
                                || stripos($item->shift->nama_shift, 'fleksibel') !== false;
-                    
+
                     $shiftInfo = $item->shift->nama_shift . ($isFlexible ? ' (Fleksibel)' : '');
                 }
 
@@ -573,8 +573,8 @@ class PresensiController extends Controller
                 'izin' => $totalIzin,
                 'sakit' => $totalSakit,
                 'tidak_valid' => $totalTidakValid,
-                'persentase_kehadiran' => $totalHariKerja > 0 
-                    ? round(($rekaps->count() / $totalHariKerja) * 100, 2) 
+                'persentase_kehadiran' => $totalHariKerja > 0
+                    ? round(($rekaps->count() / $totalHariKerja) * 100, 2)
                     : 0,
             ],
             'jam_kerja' => [
@@ -713,7 +713,7 @@ class PresensiController extends Controller
             ->where('tanggal_presensi', $rekap->tanggal)
             ->where('jenis_presensi', $jenis)
             ->first();
-            
+
         if ($request->part === 'in' && !is_null($rekap->waktu_pulang)) {
             return response()->json([
                 'success' => false,
