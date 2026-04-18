@@ -152,6 +152,7 @@ class PresensiController extends Controller
 
             $this->updateRekapHarian($presensi);
 
+
             DB::commit();
 
             return response()->json([
