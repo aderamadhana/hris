@@ -10,11 +10,11 @@ class Presensi extends Model
     use HasFactory;
 
     protected $table = 'presensi';
-    
+
     protected $guarded = [];
 
     protected $casts = [
-        'tanggal_presensi' => 'date',
+        // 'tanggal_presensi' => 'date',
         'waktu_presensi' => 'datetime:H:i:s',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
