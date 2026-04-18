@@ -556,7 +556,7 @@ class PresensiLogController extends Controller
         ]);
 
         DB::beginTransaction();
-        
+
         try {
             // Update rekap presensi harian
             $rekap = RekapPresensiHarian::findOrFail($id);
@@ -565,7 +565,7 @@ class PresensiLogController extends Controller
 
             // Update status di tabel presensi untuk tanggal dan employee yang sama
             Presensi::where('employee_id', $rekap->employee_id)
-                ->whereDate('tanggal_presensi', $rekap->tanggal)
+                ->where('tanggal_presensi', $rekap->tanggal)
                 ->update([
                     'status' => $request->status_kehadiran
                 ]);
@@ -580,7 +580,7 @@ class PresensiLogController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengubah status kehadiran',

@@ -77,7 +77,7 @@ class Presensi extends Model
 
     public function scopeTanggal($query, $tanggal)
     {
-        return $query->whereDate('tanggal_presensi', $tanggal);
+        return $query->where('tanggal_presensi', $tanggal);
     }
 
     public function scopeBulanIni($query)
