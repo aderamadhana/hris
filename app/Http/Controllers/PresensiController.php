@@ -741,6 +741,7 @@ class PresensiController extends Controller
         $rekap = RekapPresensiHarian::findOrFail($id);
         $jenis = $request->part === 'in' ? 'masuk' : 'pulang';
 
+
         $presensi = Presensi::where('employee_id', $rekap->employee_id)
             ->where('tanggal_presensi', $rekap->tanggal)
             ->where('jenis_presensi', $jenis)
