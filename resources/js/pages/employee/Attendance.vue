@@ -52,11 +52,10 @@
                                         >
                                             <font-awesome-icon
                                                 v-if="!locationLoading"
-                                                :icon="
-                                                    currentCoords
-                                                        ? faRotate
-                                                        : faLocationCrosshairs
-                                                "
+                                                :icon="currentCoords
+                                                    ? faRotate
+                                                    : faLocationCrosshairs
+                                                    "
                                                 class="btn-ic"
                                             />
                                             <font-awesome-icon
@@ -69,8 +68,8 @@
                                                 locationLoading
                                                     ? 'Mengambil...'
                                                     : currentCoords
-                                                      ? 'Ambil Ulang Lokasi'
-                                                      : 'Ambil Lokasi'
+                                                        ? 'Ambil Ulang Lokasi'
+                                                        : 'Ambil Lokasi'
                                             }}
                                         </button>
 
@@ -88,18 +87,12 @@
                                     </div>
 
                                     <div class="att-meta">
-                                        <span
-                                            ><b>Radius:</b>
-                                            {{ radiusText }}</span
-                                        >
-                                        <span
-                                            ><b>Akurasi:</b>
-                                            {{ accuracyText }}</span
-                                        >
-                                        <span v-if="lastLocationAt"
-                                            ><b>Update:</b>
-                                            {{ lastLocationAt }}</span
-                                        >
+                                        <span><b>Radius:</b>
+                                            {{ radiusText }}</span>
+                                        <span><b>Akurasi:</b>
+                                            {{ accuracyText }}</span>
+                                        <span v-if="lastLocationAt"><b>Update:</b>
+                                            {{ lastLocationAt }}</span>
                                     </div>
 
                                     <div class="att-location-address">
@@ -107,11 +100,9 @@
                                             {{ locationStatusHint }}
                                         </span>
 
-                                        <span
-                                            v-else-if="
-                                                locationStatus === 'loading'
-                                            "
-                                        >
+                                        <span v-else-if="
+                                            locationStatus === 'loading'
+                                        ">
                                             Mengambil lokasi dari perangkat...
                                         </span>
 
@@ -152,14 +143,11 @@
                                 <span class="att-distance-text">
                                     <b>{{ locationStatusLabel }}</b>
                                     <template v-if="currentCoords">
-                                        — Jarak: {{ distanceText }}</template
-                                    >
-                                    <template
-                                        v-if="
-                                            locationStatusHint &&
-                                            locationStatus !== 'ok'
-                                        "
-                                    >
+                                        — Jarak: {{ distanceText }}</template>
+                                    <template v-if="
+                                        locationStatusHint &&
+                                        locationStatus !== 'ok'
+                                    ">
                                         · {{ locationStatusHint }}
                                     </template>
                                 </span>
@@ -206,7 +194,10 @@
 
                         <div class="clock-sidebar">
                             <!-- Loading State -->
-                            <div v-if="loading" class="table-spinner">
+                            <div
+                                v-if="loading"
+                                class="table-spinner"
+                            >
                                 <span class="spinner"></span>
                                 <span class="spinner-text">Memuat data...</span>
                             </div>
@@ -214,9 +205,7 @@
                                 <!-- ✅ Shift Info Section (NEW) -->
                                 <div class="side-section shift-section">
                                     <div class="side-label">
-                                        <font-awesome-icon
-                                            :icon="['fas', 'clock']"
-                                        />
+                                        <font-awesome-icon :icon="['fas', 'clock']" />
                                         Shift Hari Ini
                                     </div>
                                     <div class="shift-info-block">
@@ -238,13 +227,14 @@
                                 <!-- Clock In Section -->
                                 <div class="side-section">
                                     <div class="side-label">
-                                        <font-awesome-icon
-                                            :icon="['fas', 'right-to-bracket']"
-                                        />
+                                        <font-awesome-icon :icon="['fas', 'right-to-bracket']" />
                                         Clock In
                                     </div>
 
-                                    <div v-if="firstIn" class="side-block">
+                                    <div
+                                        v-if="firstIn"
+                                        class="side-block"
+                                    >
                                         <div class="side-time">
                                             {{ firstIn.time }}
                                             <!-- ✅ Late badge (jika terlambat) -->
@@ -252,21 +242,17 @@
                                                 v-if="isLateClockIn"
                                                 class="late-badge"
                                             >
-                                                <font-awesome-icon
-                                                    :icon="['fas', 'clock']"
-                                                />
+                                                <font-awesome-icon :icon="['fas', 'clock']" />
                                                 Terlambat
                                             </span>
                                         </div>
 
                                         <div class="side-location">
                                             <span class="side-location-icon">
-                                                <font-awesome-icon
-                                                    :icon="[
-                                                        'fas',
-                                                        'location-dot',
-                                                    ]"
-                                                />
+                                                <font-awesome-icon :icon="[
+                                                    'fas',
+                                                    'location-dot',
+                                                ]" />
                                             </span>
                                             <span class="side-location-text">
                                                 {{ firstIn.location }}
@@ -275,23 +261,19 @@
 
                                         <div
                                             class="side-note"
-                                            :class="
-                                                getStatusClass(firstIn.status)
-                                            "
-                                        >
-                                            <font-awesome-icon
-                                                :icon="
-                                                    firstIn.status === 'hadir'
-                                                        ? [
-                                                              'fas',
-                                                              'circle-check',
-                                                          ]
-                                                        : [
-                                                              'fas',
-                                                              'circle-exclamation',
-                                                          ]
+                                            :class="getStatusClass(firstIn.status)
                                                 "
-                                            />
+                                        >
+                                            <font-awesome-icon :icon="firstIn.status === 'hadir'
+                                                ? [
+                                                    'fas',
+                                                    'circle-check',
+                                                ]
+                                                : [
+                                                    'fas',
+                                                    'circle-exclamation',
+                                                ]
+                                                " />
                                             {{ firstIn.note }}
                                         </div>
 
@@ -341,7 +323,10 @@
                                         </div>
                                     </div>
 
-                                    <div v-else class="side-empty">
+                                    <div
+                                        v-else
+                                        class="side-empty"
+                                    >
                                         <font-awesome-icon
                                             :icon="['fas', 'clock']"
                                             class="empty-icon"
@@ -364,28 +349,27 @@
                                 <!-- Clock Out Section -->
                                 <div class="side-section">
                                     <div class="side-label">
-                                        <font-awesome-icon
-                                            :icon="[
-                                                'fas',
-                                                'right-from-bracket',
-                                            ]"
-                                        />
+                                        <font-awesome-icon :icon="[
+                                            'fas',
+                                            'right-from-bracket',
+                                        ]" />
                                         Clock Out
                                     </div>
 
-                                    <div v-if="lastOut" class="side-block">
+                                    <div
+                                        v-if="lastOut"
+                                        class="side-block"
+                                    >
                                         <div class="side-time">
                                             {{ lastOut.time }}
                                         </div>
 
                                         <div class="side-location">
                                             <span class="side-location-icon">
-                                                <font-awesome-icon
-                                                    :icon="[
-                                                        'fas',
-                                                        'location-dot',
-                                                    ]"
-                                                />
+                                                <font-awesome-icon :icon="[
+                                                    'fas',
+                                                    'location-dot',
+                                                ]" />
                                             </span>
                                             <span class="side-location-text">
                                                 {{ lastOut.location }}
@@ -394,23 +378,19 @@
 
                                         <div
                                             class="side-note"
-                                            :class="
-                                                getStatusClass(lastOut.status)
-                                            "
-                                        >
-                                            <font-awesome-icon
-                                                :icon="
-                                                    lastOut.status === 'hadir'
-                                                        ? [
-                                                              'fas',
-                                                              'circle-check',
-                                                          ]
-                                                        : [
-                                                              'fas',
-                                                              'circle-exclamation',
-                                                          ]
+                                            :class="getStatusClass(lastOut.status)
                                                 "
-                                            />
+                                        >
+                                            <font-awesome-icon :icon="lastOut.status === 'hadir'
+                                                ? [
+                                                    'fas',
+                                                    'circle-check',
+                                                ]
+                                                : [
+                                                    'fas',
+                                                    'circle-exclamation',
+                                                ]
+                                                " />
                                             {{ lastOut.note }}
                                         </div>
 
@@ -467,21 +447,16 @@
                                         :class="{ waiting: !!firstIn }"
                                     >
                                         <font-awesome-icon
-                                            :icon="
-                                                firstIn
-                                                    ? ['fas', 'hourglass-half']
-                                                    : ['fas', 'clock']
-                                            "
+                                            :icon="firstIn
+                                                ? ['fas', 'hourglass-half']
+                                                : ['fas', 'clock']
+                                                "
                                             class="empty-icon"
                                         />
 
-                                        <span v-if="firstIn"
-                                            >Menunggu clock out</span
-                                        >
-                                        <span v-else
-                                            >Clock out akan tersedia setelah
-                                            clock in</span
-                                        >
+                                        <span v-if="firstIn">Menunggu clock out</span>
+                                        <span v-else>Clock out akan tersedia setelah
+                                            clock in</span>
 
                                         <!-- ✅ Show expected time hanya kalau sudah clock in & shift tidak fleksibel -->
                                         <div
@@ -809,15 +784,22 @@ export default {
     },
 
     methods: {
+        _localISODate(d = new Date()) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        },
         async fetchTodayLog() {
             this.loading = true;
             const employee_id = this.user.employee_id;
+            const today = this._localISODate(new Date());
 
             try {
                 const response = await axios.get('/presensi/log-harian', {
                     params: {
                         employee_id: employee_id,
-                        tanggal: new Date().toISOString().split('T')[0],
+                        tanggal: today,
                     },
                 });
 
@@ -1012,8 +994,8 @@ export default {
             const a =
                 Math.sin(dLat / 2) ** 2 +
                 Math.cos(toRad(lat1)) *
-                    Math.cos(toRad(lat2)) *
-                    Math.sin(dLon / 2) ** 2;
+                Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) ** 2;
 
             return 2 * R * Math.asin(Math.sqrt(a));
         },
@@ -1408,12 +1390,15 @@ export default {
 .att-distance-ok {
     color: #15803d;
 }
+
 .att-distance-bad {
     color: #b91c1c;
 }
+
 .att-distance-warn {
     color: #b45309;
 }
+
 .att-distance-idle {
     color: #374151;
 }
@@ -1454,7 +1439,7 @@ export default {
     color: #4b5563;
 }
 
-.info-list li + li {
+.info-list li+li {
     margin-top: 4px;
 }
 
@@ -1594,18 +1579,22 @@ export default {
     background: #f0fdf4;
     color: #166534;
 }
+
 .side-note.status-warning {
     background: #fef3c7;
     color: #92400e;
 }
+
 .side-note.status-danger {
     background: #fef2f2;
     color: #991b1b;
 }
+
 .side-note.status-info {
     background: #eff6ff;
     color: #1e40af;
 }
+
 .side-note.status-default {
     background: #f1f5f9;
     color: #475569;
@@ -1795,7 +1784,8 @@ export default {
 /* KUNCI LAYOUT CLOCK IN/OUT */
 .right-column .side-block {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 76px; /* kanan khusus thumbnail */
+    grid-template-columns: minmax(0, 1fr) 76px;
+    /* kanan khusus thumbnail */
     grid-template-areas:
         'time   photo'
         'loc    photo'
@@ -1946,6 +1936,7 @@ export default {
         justify-self: stretch;
     }
 }
+
 .shift-section {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
@@ -2042,6 +2033,7 @@ export default {
     0% {
         transform: rotate(0deg);
     }
+
     100% {
         transform: rotate(360deg);
     }

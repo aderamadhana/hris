@@ -1,16 +1,22 @@
 <template>
     <div class="camera-wrapper">
         <!-- Video Shell -->
-        <div class="video-shell" v-show="!capturedImage">
+        <div
+            class="video-shell"
+            v-show="!capturedImage"
+        >
             <div class="video-header">
-                <span class="status-dot" :class="{ active: !!stream }"></span>
+                <span
+                    class="status-dot"
+                    :class="{ active: !!stream }"
+                ></span>
                 <span class="status-text">
                     {{
                         stream
                             ? 'Kamera aktif'
                             : cameraError
-                              ? 'Kamera bermasalah'
-                              : 'Menghubungkan kamera...'
+                                ? 'Kamera bermasalah'
+                                : 'Menghubungkan kamera...'
                     }}
                 </span>
 
@@ -29,12 +35,23 @@
                 </button>
             </div>
 
-            <video ref="video" autoplay playsinline class="video-feed"></video>
+            <video
+                ref="video"
+                autoplay
+                playsinline
+                class="video-feed"
+            ></video>
         </div>
 
         <!-- Captured Image Preview -->
-        <div class="captured-preview" v-if="capturedImage">
-            <img :src="capturedImage" alt="Foto Presensi" />
+        <div
+            class="captured-preview"
+            v-if="capturedImage"
+        >
+            <img
+                :src="capturedImage"
+                alt="Foto Presensi"
+            />
         </div>
 
         <!-- Camera Actions -->
@@ -47,7 +64,10 @@
                     @click="retakePhoto"
                     :disabled="isSubmitting || isCapturing || isReloading"
                 >
-                    <font-awesome-icon :icon="faRotate" class="btn-ic" />
+                    <font-awesome-icon
+                        :icon="faRotate"
+                        class="btn-ic"
+                    />
                     Ambil Ulang Foto
                 </Button>
 
@@ -72,16 +92,14 @@
                     variant="primary"
                     size="lg"
                     @click="capture"
-                    :disabled="
-                        locationStatus === 'idle' || isCapturing || isReloading
-                    "
-                    :title="
-                        !inRange
-                            ? locationStatus === 'poor_gps'
-                                ? locationStatusHint
-                                : 'Di luar jangkauan presensi. Ambil ulang lokasi.'
-                            : 'Ambil foto untuk presensi'
-                    "
+                    :disabled="locationStatus === 'idle' || isCapturing || isReloading
+                        "
+                    :title="!inRange
+                        ? locationStatus === 'poor_gps'
+                            ? locationStatusHint
+                            : 'Di luar jangkauan presensi. Ambil ulang lokasi.'
+                        : 'Ambil foto untuk presensi'
+                        "
                 >
                     <font-awesome-icon
                         :icon="isCapturing ? faSpinner : faCamera"
@@ -94,7 +112,10 @@
         </div>
 
         <!-- Camera / Location Hints -->
-        <div v-if="cameraError" class="camera-hint error">
+        <div
+            v-if="cameraError"
+            class="camera-hint error"
+        >
             <font-awesome-icon
                 :icon="faTriangleExclamation"
                 class="hint-icon"
@@ -120,16 +141,26 @@
             </span>
         </div>
 
-        <div v-if="inRange && !capturedImage" class="camera-hint success">
-            <font-awesome-icon :icon="faCircleCheck" class="hint-icon" />
-            <span
-                >Lokasi valid. Silakan ambil foto untuk melakukan
-                presensi.</span
-            >
+        <div
+            v-if="inRange && !capturedImage"
+            class="camera-hint success"
+        >
+            <font-awesome-icon
+                :icon="faCircleCheck"
+                class="hint-icon"
+            />
+            <span>Lokasi valid. Silakan ambil foto untuk melakukan
+                presensi.</span>
         </div>
 
-        <div v-if="capturedImage" class="camera-hint info">
-            <font-awesome-icon :icon="faCircleInfo" class="hint-icon" />
+        <div
+            v-if="capturedImage"
+            class="camera-hint info"
+        >
+            <font-awesome-icon
+                :icon="faCircleInfo"
+                class="hint-icon"
+            />
             <span>
                 Periksa foto Anda. Klik "Ambil Ulang" jika ingin mengulang, atau
                 "Konfirmasi" untuk melanjutkan.
@@ -225,6 +256,12 @@ export default {
 
     methods: {
         // ================= CAMERA =================
+        _localISODate(d = new Date()) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        },
         async initCamera() {
             this.cameraError = '';
 
@@ -268,7 +305,7 @@ export default {
         stopCamera() {
             try {
                 if (this.$refs.video) this.$refs.video.srcObject = null;
-            } catch (_) {}
+            } catch (_) { }
 
             if (this.stream) {
                 this.stream.getTracks().forEach((track) => track.stop());
@@ -360,6 +397,7 @@ export default {
 
             try {
                 const formData = new FormData();
+                const today = this._localISODate(new Date());
 
                 formData.append('employee_id', this.employeeId);
                 formData.append('user_id', this.userId);
@@ -384,7 +422,7 @@ export default {
                 formData.append('waktu', new Date().toISOString());
                 formData.append(
                     'tanggal',
-                    new Date().toISOString().split('T')[0],
+                    today,
                 );
 
                 formData.append(
@@ -477,12 +515,10 @@ export default {
     border-radius: 18px;
     overflow: hidden;
     border: 1px solid #e5e7eb;
-    background: radial-gradient(
-        circle at top,
-        #dbeafe 0%,
-        #e5e7eb 35%,
-        #f3f4f6 100%
-    );
+    background: radial-gradient(circle at top,
+            #dbeafe 0%,
+            #e5e7eb 35%,
+            #f3f4f6 100%);
     box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
 }
 
@@ -581,7 +617,7 @@ export default {
 }
 
 /* make buttons behave nicely even if Button component wraps */
-.camera-actions > * {
+.camera-actions>* {
     flex: 1 1 240px;
     min-width: 220px;
 }
@@ -629,13 +665,15 @@ export default {
 
 /* ========== Responsive Breakpoints ========== */
 @media (max-width: 768px) {
+
     .video-feed,
     .captured-preview img {
         max-height: min(520px, 62vh);
-        aspect-ratio: 3 / 4; /* lebih enak di HP (portrait feel) */
+        aspect-ratio: 3 / 4;
+        /* lebih enak di HP (portrait feel) */
     }
 
-    .camera-actions > * {
+    .camera-actions>* {
         flex: 1 1 100%;
         min-width: 0;
     }
@@ -653,6 +691,7 @@ export default {
 }
 
 @media (max-width: 420px) {
+
     .video-feed,
     .captured-preview img {
         max-height: 65vh;
